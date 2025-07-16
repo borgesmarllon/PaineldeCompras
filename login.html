@@ -934,46 +934,120 @@
                     </div>
                 `,
                 Dashboard: `
-                    <div class="space-y-8">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="bg-white p-6 rounded-xl shadow-lg flex items-center space-x-4">
-                                <div class="bg-blue-100 p-4 rounded-full"><i class="fas fa-dollar-sign fa-2x text-blue-600"></i></div>
-                                <div>
-                                    <p class="text-gray-500 text-sm">Valor Total Gasto</p>
-                                    <p id="totalValueCard" class="text-2xl font-bold text-gray-800">R$ 0,00</p>
-                                </div>
-                            </div>
-                            <div class="bg-white p-6 rounded-xl shadow-lg flex items-center space-x-4">
-                                <div class="bg-green-100 p-4 rounded-full"><i class="fas fa-receipt fa-2x text-green-600"></i></div>
-                                <div>
-                                    <p class="text-gray-500 text-sm">Total de Pedidos</p>
-                                    <p id="totalOrdersCard" class="text-2xl font-bold text-gray-800">0</p>
-                                </div>
-                            </div>
-                        </div>
+                    <body class="p-4 sm:p-6 lg:p-8">
+                                <div class="max-w-7xl mx-auto">
+                                    <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
+                                        <div>
+                                            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Dashboard de Análise</h1>
+                                            <p id="nomeEmpresa" class="text-gray-500">Carregando Empresa...</p> </div>
+                                            <button id="backToMenuFromDashboard" class="px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 flex items-center space-x-2">
+                                              <i class="fas fa-arrow-left"></i>
+                                              <span>Voltar ao Menu</span>
+                                          </button>
+                                        </div>
+                                    </header>
 
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div class="bg-white p-6 rounded-xl shadow-lg">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-4">Pedidos por Mês</h3>
-                                <div class="h-64"><canvas id="monthlyOrdersChart"></canvas></div>
-                            </div>
-                            <div class="bg-white p-6 rounded-xl shadow-lg">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-4">Top 5 Fornecedores (por valor)</h3>
-                                <div class="h-64"><canvas id="topSuppliersChart"></canvas></div>
-                            </div>
-                        </div>
+                                    <details class="bg-white rounded-xl shadow-md p-6 mb-6">
+                                        <summary class="font-semibold text-lg text-gray-700 cursor-pointer flex justify-between items-center">
+                                            Filtros Avançados
+                                            <i class="fas fa-chevron-down chevron-icon"></i>
+                                        </summary>
+                                        <div class="mt-4 pt-4 border-t">
+                                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                                <div>
+                                                    <label for="dateStart" class="block text-sm font-medium text-gray-700">Data de Início</label>
+                                                    <input type="date" id="dateStart" class="mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
+                                                </div>
+                                                <div>
+                                                    <label for="dateEnd" class="block text-sm font-medium text-gray-700">Data de Fim</label>
+                                                    <input type="date" id="dateEnd" class="mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
+                                                </div>
+                                                <div>
+                                                    <label for="supplier" class="block text-sm font-medium text-gray-700">Fornecedor</label>
+                                                    <select id="supplier" class="mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
+                                                        <option value="">Todos</option>
+                                                        </select>
+                                                </div>
+                                                <div>
+                                                    <label for="state" class="block text-sm font-medium text-gray-700">Estado (UF)</label>
+                                                    <select id="state" class="mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
+                                                        <option value="">Todos</option>
+                                                        </select>
+                                                </div>
+                                            </div>
+                                            <div class="flex justify-end space-x-3 mt-4 pt-4 border-t">
+                                                <button id="clearFiltersButton" class="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300">Limpar</button>
+                                                <button id="applyFiltersButton" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">Aplicar Filtros</button>
+                                            </div>
+                                        </div>
+                                    </details>
 
-                        <div class="bg-white p-6 rounded-xl shadow-lg">
-                             <h3 class="text-lg font-semibold text-gray-800 mb-4">Sugestões de Itens</h3>
-                             <div id="aiSuggestions" class="text-gray-700 prose prose-sm max-w-none">
-                                <p class="text-gray-500 italic">Nenhuma sugestão disponível.</p>
-                             </div>
-                        </div>
-                        
-                        <div class="mt-6 text-center">
-                            <button id="backToMenuFromDashboard" class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-700">Voltar ao Início</button>
-                        </div>
-                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        
+                                        <div class="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4">
+                                            <div class="bg-blue-100 p-4 rounded-full"><i class="fas fa-dollar-sign fa-2x text-blue-600"></i></div>
+                                            <div>
+                                                <p class="text-gray-500 text-sm">Valor Total Gasto</p>
+                                                <p id="totalGasto" class="text-3xl font-bold text-gray-800">Carregando...</p> 
+                                            </div>
+                                        </div>
+
+                                        <div class="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4">
+                                            <div class="bg-green-100 p-4 rounded-full"><i class="fas fa-receipt fa-2x text-green-600"></i></div>
+                                            <div>
+                                                <p class="text-gray-500 text-sm">Total de Pedidos</p>
+                                                <p id="totalPedidos" class="text-3xl font-bold text-gray-800">Carregando...</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4">
+                                            <div class="bg-yellow-100 p-4 rounded-full"><i class="fas fa-chart-pie fa-2x text-yellow-600"></i></div>
+                                            <div>
+                                                <p class="text-gray-500 text-sm">Ticket Médio por Pedido</p>
+                                                <p id="ticketMedio" class="text-3xl font-bold text-gray-800">Carregando...</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="md:col-span-2 bg-white p-6 rounded-xl shadow-md">
+                                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Pedidos e Gastos por Mês</h3>
+                                            <div class="h-72"><canvas id="monthlyAnalysisChart"></canvas></div>
+                                        </div>
+
+                                        <div class="md:col-span-1 bg-white p-6 rounded-xl shadow-md">
+                                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Top 5 Fornecedores (por valor)</h3>
+                                            <div class="h-72"><canvas id="topSuppliersChart"></canvas></div>
+                                        </div>
+
+                                        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
+                                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Pedidos Recentes</h3>
+                                            <div class="overflow-x-auto">
+                                                <table class="min-w-full">
+                                                    <thead class="bg-gray-50">
+                                                        <tr>
+                                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pedido</th>
+                                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Fornecedor</th>
+                                                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Valor</th>
+                                                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="recentOrdersTableBody" class="divide-y divide-gray-200">
+                                                        </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-md">
+                                            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                                <i class="fas fa-lightbulb mr-3 text-purple-500"></i>
+                                                Análise e Sugestões da IA
+                                            </h3>
+                                            <div id="iaSuggestions" class="space-y-3 text-sm text-gray-700">
+                                                </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+
                 `,
                 Relatorios: `
                     <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl p-8 space-y-6">
@@ -1175,9 +1249,16 @@
         
         function salvarEdicaoPedido() {
             console.log('💾 Iniciando salvamento de edição do pedido');
+
+            const dadosOriginais = EdicaoPedido.getDados();
+
+            if (!dadosOriginais) {
+                showToast('Erro: Dados do pedido não encontrados.', 'error', 'Erro Interno');
+                return;
+            }
             
             // Verificar se ainda está em modo de edição válido
-            if (!EdicaoPedido.validarPermissaoEdicao()) {
+            if (!verificarSePermiteEdicao(dadosOriginais)) {
                 showToast('Tempo de edição expirado ou dados inválidos. Redirecionando...', 'warning', 'Tempo Expirado');
                 setTimeout(() => {
                     EdicaoPedido.limpar();
@@ -1185,71 +1266,43 @@
                 }, 2000);
                 return;
             }
-            
-            const salvarButton = document.getElementById('salvarPedidoButton');
-            const dadosOriginais = EdicaoPedido.getDados();
-            
-            if (!dadosOriginais) {
-                showToast('Erro: Dados do pedido não encontrados.', 'error', 'Erro Interno');
+
+            if (!window.itensAdicionados || window.itensAdicionados.length === 0) {
+                showToast('Adicione pelo menos um item ao pedido.', 'error', 'Itens Obrigatórios');
                 return;
-            }
-            
-            // Coletar dados do formulário (reutilizando a lógica existente)
-            const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
-            const idDaEmpresa = empresaAtual.id || empresaAtual.codigo;
-            
+            }            
+
+            const salvarButton = document.getElementById('salvarPedidoButton');
             // Validar campos obrigatórios básicos
             const fornecedor = document.getElementById('fornecedorPedido')?.value;
             if (!fornecedor) {
                 showToast('Por favor, selecione um fornecedor.', 'error', 'Campo Obrigatório');
                 return;
             }
+
+             // Coleta os itens diretamente da variável global, que já contém todas as alterações.
+              const itens = window.itensAdicionados.map(item => ({
+                  descricao: item.descricao,
+                  quantidade: item.quantidade,
+                  unidade: item.unidade,
+                  precoUnitario: item.precoUnitario,
+                  totalItem: item.subtotal || (item.quantidade * item.precoUnitario) // Garante que o subtotal seja calculado
+              }));
+
+              const totalGeral = itens.reduce((total, item) => total + item.totalItem, 0);
+              
+            // Coletar dados do formulário (reutilizando a lógica existente)
+            const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
+            const idDaEmpresa = empresaAtual.id || empresaAtual.codigo;
             
             // Coletar itens
-            const itens = [];
-            const itensContainer = document.getElementById('itensContainer');
-            if (!itensContainer || itensContainer.children.length === 0) {
-                showToast('Adicione pelo menos um item ao pedido.', 'error', 'Itens Obrigatórios');
-                return;
-            }
+            //const itens = [];
+            //let totalGeral = 0;
+            //let itemValido = true;
             
-            let totalGeral = 0;
-            let itemValido = true;
             
-            Array.from(itensContainer.children).forEach((itemDiv, index) => {
-                const descricao = document.getElementById(`itemDescricao${index}`)?.value || '';
-                const unidade = document.getElementById(`itemUnidade${index}`)?.value || '';
-                const quantidade = parseFloat(document.getElementById(`itemQuantidade${index}`)?.value || '0');
-                const precoUnitario = parseFloat(document.getElementById(`itemPrecoUnitario${index}`)?.value || '0');
-                
-                if (!descricao.trim()) {
-                    showToast(`Descrição do item ${index + 1} é obrigatória.`, 'error', 'Item Incompleto');
-                    itemValido = false;
-                    return;
-                }
-                
-                if (quantidade <= 0 || precoUnitario <= 0) {
-                    showToast(`Quantidade e preço do item ${index + 1} devem ser maiores que zero.`, 'error', 'Valores Inválidos');
-                    itemValido = false;
-                    return;
-                }
-                
-                const totalItem = quantidade * precoUnitario;
-                totalGeral += totalItem;
-                
-                itens.push({
-                    descricao: descricao.trim(),
-                    unidade: unidade.trim(),
-                    quantidade: quantidade,
-                    precoUnitario: precoUnitario,
-                    totalItem: totalItem
-                });
-            });
             
-            if (!itemValido) {
-                return;
-            }
-            
+
             // Preparar dados para edição
             const dadosEdicao = {
                 numeroDoPedido: dadosOriginais.numeroDoPedido,
@@ -1259,7 +1312,9 @@
                 observacoes: document.getElementById('observacoes')?.value || '',
                 itens: itens,
                 totalGeral: totalGeral,
-                empresaId: idDaEmpresa
+                empresaId: idDaEmpresa,
+                dataCriacao: dadosOriginais.dataCriacao,
+                usuarioCriador: dadosOriginais.usuarioCriador
             };
             
             console.log('📤 Dados para edição:', dadosEdicao);
@@ -1282,13 +1337,12 @@
                         salvarButton.innerHTML = '<i class="fas fa-save mr-2"></i>Salvar Alterações';
                     }
                     
-                    if (response.status === 'success') {
+                    if (response && response.status === 'success') {
                         showToast('Pedido editado com sucesso!', 'success', 'Sucesso');
-                        EdicaoPedido.limpar();
-                        
+                        EdicaoPedido.limpar();                        
                         setTimeout(() => {
                             loadPageContent('BuscarPedido', setupBuscaScreen);
-                        }, 2000);
+                        }, 1500);
                     } else {
                         showToast(response.message || 'Erro ao salvar alterações.', 'error', 'Erro no Salvamento');
                     }
@@ -1792,11 +1846,13 @@
                     if (response.status === 'success' && response.data.length > 0) {
                         // Ordenar pedidos por data decrescente
                         const pedidosOrdenados = response.data.sort((a, b) => {
-                            return new Date(b.data + 'T12:00:00') - new Date(a.data + 'T12:00:00');
+                        const dateA = new Date((a.dataCriacao || a.data).replace(' ', 'T'));
+                        const dateB = new Date((b.dataCriacao || b.data).replace(' ', 'T'));
+                        return dateB - dateA; // Ordena do mais recente para o mais antigo
                         });
                         
                         // Pegar os últimos 5 pedidos
-                        const ultimosPedidos = pedidosOrdenados.slice(0, 5);
+                        const ultimosPedidos = pedidosOrdenados.slice(0, 2);
                         
                         const cardContainer = document.createElement('div');
                         cardContainer.className = 'bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-6';
@@ -1819,7 +1875,14 @@
                             console.log(`🔍 DEBUG - Estado do pedido ${index + 1}:`, pedido.estadoFornecedor);
                             
                             const valorTotal = `R$ ${parseFloat(pedido.totalGeral || 0).toFixed(2).replace('.', ',')}`;
-                            const dataFormatada = new Date(pedido.data + 'T12:00:00').toLocaleDateString('pt-BR');
+                            const dataFormatada = new Date((pedido.dataCriacao || pedido.data).replace(' ', 'T'))
+                            .toLocaleString('pt-BR', { 
+                                day: '2-digit', 
+                                month: '2-digit', 
+                                year: 'numeric', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                            });
                             const isRecente = index === 0;
                             
                             const pedidoCard = document.createElement('div');
@@ -1941,7 +2004,9 @@
                                 if (responsePedidos.status === 'success' && responsePedidos.data.length > 0) {
                                     // Ordenar por data decrescente para garantir que são os mais recentes
                                     var pedidosOrdenados = responsePedidos.data.sort((a, b) => {
-                                        return new Date(b.data + 'T12:00:00') - new Date(a.data + 'T12:00:00');
+                                    var dateA = new Date((a.dataCriacao || a.data).replace(' ', 'T'));
+                                    var dateB = new Date((b.dataCriacao || b.data).replace(' ', 'T'));
+                                    return dateB - dateA; // Ordena do mais recente para o mais antigo
                                     });
                                     
                                     // Pegar os 2 mais recentes
@@ -1951,7 +2016,14 @@
                                     
                                     ultimosDoisPedidos.forEach(function(pedido, index) {
                                         var valorTotal = `R$ ${parseFloat(pedido.totalGeral || 0).toFixed(2).replace('.', ',')}`;
-                                        var dataUltimoPedido = new Date(pedido.data + 'T12:00:00').toLocaleDateString('pt-BR');
+                                        var dataUltimoPedido = new Date((pedido.dataCriacao || pedido.data).replace(' ', 'T'))
+                                          .toLocaleString('pt-BR', { 
+                                              day: '2-digit', 
+                                              month: '2-digit', 
+                                              year: 'numeric', 
+                                              hour: '2-digit', 
+                                              minute: '2-digit' 
+                                          });
                                         var isRecente = index === 0; // O primeiro é o mais recente
                                         
                                         cardsHtml += `
@@ -3336,6 +3408,20 @@ function preencherItensContainer(itens) {
         
         function preencherCamposEdicao(dados) {
             console.log('📝 Preenchendo campos para edição:', dados);
+
+            let itensArray = dados.itens;
+            if (typeof itensArray === 'string' && itensArray) {
+                try {
+                    itensArray = JSON.parse(itensArray);
+                    console.log("✅ [preencherCamposEdicao] A string de itens foi convertida para um array com sucesso.");
+                } catch (e) {
+                    console.error("[preencherCamposEdicao] Erro ao converter a string de itens. A lista de itens não será preenchida.", e);
+                    itensArray = []; // Define como array vazio em caso de erro
+                }
+            } else if (!Array.isArray(itensArray)) {
+                console.warn("[preencherCamposEdicao] O campo 'itens' não é um array e não pôde ser convertido. A lista de itens não será preenchida.");
+                itensArray = []; // Garante que seja um array para evitar erros futuros
+            }
             
             // Preencher número do pedido
             if (dados.numeroDoPedido) {
@@ -3437,43 +3523,42 @@ function preencherItensContainer(itens) {
             }
             
             // Preencher itens
-            if (dados.itens && dados.itens.length > 0) {
-                console.log('📋 Preenchendo itens:', dados.itens.length, 'itens encontrados');
-                window.itensAdicionados = dados.itens.map(item => ({
-                    descricao: item.descricao,
-                    quantidade: parseFloat(item.quantidade) || 0,
-                    unidade: item.unidade || 'UN',
-                    precoUnitario: parseFloat(item.precoUnitario) || 0,
-                    subtotal: parseFloat(item.totalItem) || (parseFloat(item.quantidade) * parseFloat(item.precoUnitario))
-                }));
-                
-                setTimeout(() => {
-                    console.log('📊 Carregando itens na tabela...');
-                    preencherItensContainer(dados.itens);
-                    
-                    // Atualizar total geral
-                    const totalCalculado = dados.totalGeral || dados.itens.reduce((total, item) => {
-                        return total + (parseFloat(item.totalItem) || 0);
-                    }, 0);
-                    
-                    console.log('💰 Total calculado:', totalCalculado);
-                    
-                    const totalGeralElement = document.getElementById('totalGeral');
-                    const summaryTotalElement = document.getElementById('summary-total');
-                    
-                    if (totalGeralElement) {
-                        totalGeralElement.textContent = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
-                        console.log('✅ Total geral atualizado no campo totalGeral');
-                    }
-                    
-                    if (summaryTotalElement) {
-                        summaryTotalElement.textContent = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
-                        console.log('✅ Total geral atualizado no resumo');
-                    }
-                    
-                }, 1500);
-            }
-        }
+            if (itensArray && itensArray.length > 0) {
+              console.log('📋 Preenchendo itens:', itensArray.length, 'itens encontrados');
+              
+              // Usa o array convertido
+              window.itensAdicionados = itensArray.map(item => ({
+                  descricao: item.descricao,
+                  quantidade: parseFloat(item.quantidade) || 0,
+                  unidade: item.unidade || 'UN',
+                  precoUnitario: parseFloat(item.precoUnitario) || 0,
+                  subtotal: parseFloat(item.totalItem) || (parseFloat(item.quantidade) * parseFloat(item.precoUnitario))
+              }));
+              
+              setTimeout(() => {
+                  console.log('📊 Carregando itens na tabela...');
+                  // Usa o array convertido
+                  preencherItensContainer(itensArray);
+                  
+                  // Atualizar total geral
+                  const totalCalculado = dados.totalGeral || itensArray.reduce((total, item) => {
+                      return total + (parseFloat(item.totalItem) || 0);
+                  }, 0);
+                  
+                  console.log('💰 Total calculado:', totalCalculado);
+                  
+                  const totalGeralElement = document.getElementById('totalGeral');
+                  const summaryTotalElement = document.getElementById('summary-total');
+                  
+                  if (totalGeralElement) {
+                      totalGeralElement.textContent = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
+                  }
+                  if (summaryTotalElement) {
+                      summaryTotalElement.textContent = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
+                  }
+              }, 1500);
+          }
+      }
         
         function adicionarAvisoTempoEdicao(dados) {
             // Verificar se ainda pode editar
@@ -3548,15 +3633,13 @@ function preencherItensContainer(itens) {
         
         function setupPedidoScreen(modoEdicao = false, dadosEdicao = null) {
             console.log('🔧 setupPedidoScreen iniciado', { modoEdicao, dadosEdicao });
-            
-            // Verificar se está em modo visualização (diferente de edição)
+
+            let fornecedoresCarregados = false;
+            let veiculosCarregados = false;
+
+            // --- LÓGICA DE VERIFICAÇÃO DE MODO ---
             const modoVisualizacao = localStorage.getItem('modoVisualizacao');
-            const origemVisualizacao = localStorage.getItem('origemVisualizacao'); // 'dashboard-admin' ou 'menu-usuario'
-            
-            console.log('🔧 modoVisualizacao:', modoVisualizacao);
-            console.log('🔧 origemVisualizacao:', origemVisualizacao);
-            console.log('🔧 modoEdicao:', modoEdicao);
-            
+            const origemVisualizacao = localStorage.getItem('origemVisualizacao');
             const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
             const idDaEmpresa = empresaAtual.id || empresaAtual.codigo;
 
@@ -3564,29 +3647,66 @@ function preencherItensContainer(itens) {
                 showGlobalModal('Erro', 'Não foi possível identificar a empresa. Por favor, faça o login novamente.');
                 return;
             }
-            
-            // Configurar interface para modo de edição
-            if (modoEdicao && dadosEdicao) {
-                console.log('🔧 Configurando modo de edição:', dadosEdicao);
-                // Configurar campos primeiro, depois carregar selects
-                setupModoEdicao(dadosEdicao);
+
+            // --- LIMPEZA E CONFIGURAÇÃO DOS BOTÕES ---
+            const salvarPedidoBtn = document.getElementById('salvarPedidoButton');
+            const salvarRascunhoBtn = document.getElementById('salvarRascunhoButton');
+            const cancelarPedidoBtn = document.getElementById('cancelarPedidoButton');
+            const addItemBtn = document.getElementById('addItemButton');
+
+            if (!salvarPedidoBtn) {
+                console.error("ERRO CRÍTICO: Botão 'salvarPedidoButton' não foi encontrado.");
+                return;
             }
+
+            // Clona os botões para limpar event listeners antigos e evitar chamadas duplicadas
+            const newSalvarButton = salvarPedidoBtn.cloneNode(true);
+            salvarPedidoBtn.parentNode.replaceChild(newSalvarButton, salvarPedidoBtn);
+
+            const newRascunhoButton = salvarRascunhoBtn ? salvarRascunhoBtn.cloneNode(true) : null;
+            if(newRascunhoButton) salvarRascunhoBtn.parentNode.replaceChild(newRascunhoButton, salvarRascunhoBtn);
             
-            // Carregar fornecedores e veículos com cache e em paralelo
-            console.log('🔧 Carregando fornecedores e veículos...');
+            const newCancelarButton = cancelarPedidoBtn ? cancelarPedidoBtn.cloneNode(true) : null;
+            if(newCancelarButton) cancelarPedidoBtn.parentNode.replaceChild(newCancelarButton, cancelarPedidoBtn);
             
-            let fornecedoresCarregados = false;
-            let veiculosCarregados = false;
-            
-            function verificarCarregamentoCompleto() {
-                if (fornecedoresCarregados && veiculosCarregados && modoEdicao && dadosEdicao) {
-                    console.log('🔧 Todos os dados carregados, preenchendo campos...');
-                    setTimeout(() => {
-                        preencherCamposEdicao(dadosEdicao);
-                    }, 300); // Reduzido de 500ms para 300ms
-                }
-            }
-            
+            const newItemBtn = addItemBtn ? addItemBtn.cloneNode(true) : null;
+            if(newItemBtn) addItemBtn.parentNode.replaceChild(newItemBtn, addItemBtn);
+
+            // --- LÓGICA CONDICIONAL PARA CRIAÇÃO VS EDIÇÃO ---
+            if (modoEdicao) {
+                // ==================
+                // MODO EDIÇÃO
+                // ==================
+                console.log("... configurando para MODO EDIÇÃO.");
+                setupModoEdicao(dadosEdicao); // Sua função para mudar a aparência da tela
+                
+                // Adiciona o event listener CORRETO para salvar a edição
+                newSalvarButton.addEventListener('click', salvarEdicaoPedido);
+                console.log("✅ Event listener do botão Salvar configurado para 'salvarEdicaoPedido'.");
+
+            } else {
+                // ==================
+                // MODO CRIAÇÃO (ou visualização que vira criação)
+                // ==================
+                console.log("... configurando para MODO CRIAÇÃO.");
+                // Adiciona o event listener CORRETO para criar um novo pedido
+                newSalvarButton.addEventListener('click', salvarPedido);
+                console.log("✅ Event listener do botão Salvar configurado para 'salvarPedido'.");
+                if(newRascunhoButton) newRascunhoButton.addEventListener('click', salvarRascunho);
+                    }
+                    
+                    // Configuração de botões comuns a ambos os modos
+                    if(newCancelarButton) {
+                        newCancelarButton.addEventListener('click', () => {
+                            if(typeof EdicaoPedido !== 'undefined') EdicaoPedido.limpar();
+                            if(typeof limparDadosEdicaoRascunho !== 'undefined') limparDadosEdicaoRascunho();
+                            loadPageContent('BuscarPedido', setupBuscaScreen);
+                        });
+                    }
+                    if(newItemBtn) newItemBtn.addEventListener('click', adicionarItem);
+
+           
+
             // Verificar se podemos usar o cache
             if (isCacheValid()) {
                 console.log('🚀 Usando dados do cache para carregamento rápido');
@@ -3777,59 +3897,7 @@ function preencherItensContainer(itens) {
                 }
             }
 
-            // Modo criação - configuração normal
-            const salvarPedidoBtn = document.getElementById('salvarPedidoButton');
-            const salvarRascunhoBtn = document.getElementById('salvarRascunhoButton');
-            const cancelarPedidoBtn = document.getElementById('cancelarPedidoButton');
-            const addItemBtn = document.getElementById('addItemButton');
-            
-            console.log('🔧 Configurando event listeners para modo criação');
-            console.log('🔧 Botões encontrados:', {
-                salvarPedido: !!salvarPedidoBtn,
-                salvarRascunho: !!salvarRascunhoBtn,
-                cancelar: !!cancelarPedidoBtn,
-                addItem: !!addItemBtn
-            });
-            
-            if (salvarPedidoBtn) {
-                // Verificar se já tem event listener para evitar duplicação
-                const newButton = salvarPedidoBtn.cloneNode(true);
-                salvarPedidoBtn.parentNode.replaceChild(newButton, salvarPedidoBtn);
-                newButton.addEventListener('click', salvarPedido);
-                console.log('✅ Event listener adicionado ao botão salvar pedido');
-            } else {
-                console.warn('⚠️ Botão salvarPedidoButton não encontrado');
-            }
-            if (salvarRascunhoBtn) {
-                const newRascunhoButton = salvarRascunhoBtn.cloneNode(true);
-                salvarRascunhoBtn.parentNode.replaceChild(newRascunhoButton, salvarRascunhoBtn);
-                newRascunhoButton.addEventListener('click', salvarRascunho);
-                console.log('✅ Event listener adicionado ao botão salvar rascunho');
-            } else {
-                console.warn('⚠️ Botão salvarRascunhoButton não encontrado');
-            }
-            
-            if (cancelarPedidoBtn) {
-                const newCancelarButton = cancelarPedidoBtn.cloneNode(true);
-                cancelarPedidoBtn.parentNode.replaceChild(newCancelarButton, cancelarPedidoBtn);
-                newCancelarButton.addEventListener('click', () => {
-                    // Limpar dados de edição de rascunho
-                    limparDadosEdicaoRascunho();
-                    loadPageContent('Menu', setupMenuScreen);
-                });
-                console.log('✅ Event listener adicionado ao botão cancelar');
-            } else {
-                console.warn('⚠️ Botão cancelarPedidoButton não encontrado');
-            }
-            if (addItemBtn) {
-                addItemBtn.addEventListener('click', adicionarItem);
-                addItemBtn.hasClickListener = true; // Marcar como configurado
-                console.log('✅ Event listener adicionado ao botão Adicionar Item');
-            } else {
-                console.warn('⚠️ Botão addItemButton não encontrado!');
-            }
-            
-            // Configurar eventos do formulário de entrada principal
+          // Configurar eventos do formulário de entrada principal
             const itemQuantidadeInput = document.getElementById('itemQuantidade');
             const itemPrecoUnitarioInput = document.getElementById('itemPrecoUnitario');
             const itemDescricaoInput = document.getElementById('itemDescricao');
@@ -3921,6 +3989,47 @@ function preencherItensContainer(itens) {
                     addItemBtnCheck.hasClickListener = true;
                 }
             }, 500);
+
+            // Carregar fornecedores e veículos com cache e em paralelo
+            console.log('🔧 Carregando fornecedores e veículos...');
+            
+            
+            
+            function verificarCarregamentoCompleto() {
+                if (fornecedoresCarregados && veiculosCarregados && modoEdicao && dadosEdicao) {
+                    console.log('🔧 Todos os dados carregados, preenchendo campos...');
+                    setTimeout(() => {
+                        preencherCamposEdicao(dadosEdicao);
+                    }, 300); // Reduzido de 500ms para 300ms
+                }
+            }
+            // Simulação do seu carregamento de dados
+          Promise.all([
+              new Promise(resolve => google.script.run.withSuccessHandler(data => {
+                  if(typeof populateFornecedores === 'function') populateFornecedores(data);
+                  fornecedoresCarregados = true;
+                  resolve();
+              }).getFornecedoresList()),
+              new Promise(resolve => google.script.run.withSuccessHandler(data => {
+                  if(typeof populateVeiculos === 'function') populateVeiculos(data);
+                  veiculosCarregados = true;
+                  resolve();
+              }).getVeiculosList())
+          ]).then(verificarCarregamentoCompleto);
+          
+          if (!modoEdicao) {
+            // Inicializa a data apenas se for um novo pedido
+            const today = new Date();
+            const dataPedidoElement = document.getElementById('dataPedido');
+            if (dataPedidoElement) {
+                const ano = today.getFullYear();
+                const mes = String(today.getMonth() + 1).padStart(2, '0');
+                const dia = String(today.getDate()).padStart(2, '0');
+                dataPedidoElement.value = `${ano}-${mes}-${dia}`;
+            }
+          }
+                                  
+            
         }
 
         // Função específica para garantir modo somente leitura
@@ -5105,39 +5214,463 @@ function preencherItensContainer(itens) {
             }
         }
 
-        function setupDashboardScreen() {
-            const backButton = document.getElementById('backToMenuFromDashboard');
+        // --- Variáveis Globais (para os gráficos) ---
+    let monthlyChart;
+    let suppliersChart;
+
+    // --- Função Principal de Setup do Dashboard ---
+    function setupDashboardScreen() {
+       console.log("--- Iniciando setupDashboardScreen ---");
+        // Obter a empresa logada do localStorage
+        const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
+        const nomeEmpresaElement = document.getElementById('nomeEmpresa');
+        const rawEmpresa = localStorage.getItem('empresaSelecionada');
+        console.log("Conteúdo bruto do localStorage 'empresaSelecionada':", rawEmpresa);
+
+        // Tente parsear o JSON
+    //let empresaAtual = {};
+    //try {
+      //  empresaAtual = JSON.parse(rawEmpresa || '{}');
+      //  console.log("Objeto empresaAtual (parseado):", empresaAtual);
+     //   console.log("Valor de empresaAtual.nome:", empresaAtual.nome);
+     //   console.log("Valor de empresaAtual.id:", empresaAtual.id); // Verifique também o ID!
+   // } catch (e) {
+   //     console.error("Erro ao parsear JSON de empresaSelecionada do localStorage:", e);
+   // }
+
+    if (nomeEmpresaElement && empresaAtual.empresa) {
+    nomeEmpresaElement.textContent = empresaAtual.empresa; 
+    console.log("Nome da empresa definido no HTML:", empresaAtual.empresa);
+      } else if (nomeEmpresaElement) {
+          nomeEmpresaElement.textContent = 'Empresa não definida';
+          console.log("Nome da empresa não encontrado em empresaAtual.empresa. Definido como 'Empresa não definida'.");
+      }
+    console.log("--- Fim da verificação de empresa no setupDashboardScreen ---");
+
+        
+
+        // Referências aos elementos HTML
+        const totalGastoElem = document.getElementById('totalGasto');
+        const totalPedidosElem = document.getElementById('totalPedidos');
+        const ticketMedioElem = document.getElementById('ticketMedio');
+        const recentOrdersTableBody = document.getElementById('recentOrdersTableBody');
+        const iaSuggestionsDiv = document.getElementById('iaSuggestions');
+        
+        const supplierSelect = document.getElementById('supplier');
+        const stateSelect = document.getElementById('state');
+        const dateStartInput = document.getElementById('dateStart');
+        const dateEndInput = document.getElementById('dateEnd');
+        const applyFiltersButton = document.getElementById('applyFiltersButton');
+        const clearFiltersButton = document.getElementById('clearFiltersButton');
+
+        // --- Funções de Carregamento de Dados ---
+
+        // Carrega todos os dados do dashboard do Apps Script
+        function loadDashboardData(filters = {}) {
+            showToast('Buscando dados do dashboard...', 'info', 'Carregando...');
+
+            // Adiciona a empresa logada aos filtros
+            const currentFilters = { ...filters, empresa: empresaAtual };
+
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    if (data.status === 'error') {
+                        showToast('error', 'Erro no Backend!', data.message || 'Falha ao carregar dados do dashboard.');
+                        return;
+                    }
+
+                    // Preencher Indicadores
+                    totalGastoElem.textContent = data.totalGasto || 'N/A';
+                    totalPedidosElem.textContent = data.totalPedidos || 'N/A';
+                    ticketMedioElem.textContent = data.ticketMedio || 'N/A';
+
+                    // Atualizar Gráfico de Pedidos e Gastos por Mês
+                    if (monthlyChart) monthlyChart.destroy();
+                    const monthlyCtx = document.getElementById('monthlyAnalysisChart').getContext('2d');
+                    monthlyChart = new Chart(monthlyCtx, {
+                        type: 'line',
+                        data: {
+                            labels: data.monthlyLabels || [],
+                            datasets: [
+                                { label: 'Nº de Pedidos', data: data.monthlyPedidosData || [], borderColor: '#3b82f6', yAxisID: 'y' },
+                                { label: 'Gasto Mensal (R$)', data: data.monthlyGastosData || [], borderColor: '#f97316', yAxisID: 'y1' }
+                            ]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
+                            scales: {
+                                y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Nº de Pedidos' } },
+                                y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Gasto (R$)' }, grid: { drawOnChartArea: false } }
+                            }
+                        }
+                    });
+
+                    // Atualizar Gráfico de Top Fornecedores
+                    if (suppliersChart) suppliersChart.destroy();
+                    const suppliersCtx = document.getElementById('topSuppliersChart').getContext('2d');
+                    suppliersChart = new Chart(suppliersCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.topSuppliersLabels || [],
+                            datasets: [{
+                                label: 'Valor Gasto (R$)',
+                                data: data.topSuppliersValues || [],
+                                backgroundColor: ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'],
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true } }
+                        }
+                    });
+
+                    // Preencher Tabela de Pedidos Recentes
+                    recentOrdersTableBody.innerHTML = '';
+                    if (data.recentOrders && data.recentOrders.length > 0) {
+                        data.recentOrders.forEach(order => {
+                            const row = document.createElement('tr');
+                            if (order.status === 'Cancelado') {
+                                row.classList.add('canceled-row');
+                            }
+                            row.innerHTML = `
+                                <td class="px-4 py-3 font-medium">${order.id || ''}</td>
+                                <td class="px-4 py-3">${order.supplier || ''}</td>
+                                <td class="px-4 py-3 text-right">${order.value || ''}</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-1 text-xs font-semibold rounded-full ${order.statusClass || ''}">${order.status || ''}</span></td>
+                            `;
+                            recentOrdersTableBody.appendChild(row);
+                        });
+                    } else {
+                        recentOrdersTableBody.innerHTML = '<tr><td colspan="4" class="px-4 py-3 text-center text-gray-500">Nenhum pedido recente encontrado.</td></tr>';
+                    }
+
+                    // Preencher Análise e Sugestões da IA
+                    iaSuggestionsDiv.innerHTML = '';
+                    if (data.iaSuggestions && data.iaSuggestions.length > 0) {
+                        data.iaSuggestions.forEach(suggestion => {
+                            const div = document.createElement('div');
+                            div.className = `flex items-start space-x-3`;
+                            div.innerHTML = `
+                                <i class="fas ${suggestion.icon || 'fa-info-circle'} mt-1 ${suggestion.color || 'text-gray-500'}"></i>
+                                <p>${suggestion.text || ''}</p>
+                            `;
+                            iaSuggestionsDiv.appendChild(div);
+                        });
+                    } else {
+                        iaSuggestionsDiv.innerHTML = '<div class="text-gray-500">Nenhuma sugestão de IA disponível.</div>';
+                    }
+
+                    showToast('Dados do dashboard carregados', 'success', 'Sucesso!');
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Erro ao carregar dados do dashboard:', error);
+                    showToast('error', 'Erro!', 'Falha ao carregar dados do dashboard. ' + (error.message || error));
+                })
+                .getDashboardData(currentFilters);
+        }
+
+        // Popula o select de fornecedores usando getFornecedoresList()
+        function populateSuppliersFilter() {
+            google.script.run
+                .withSuccessHandler(function(fornecedores) {
+                    supplierSelect.innerHTML = '<option value="">Todos</option>';
+                    fornecedores.forEach(fornecedor => {
+                        const option = document.createElement('option');
+                        // Usamos fornecedor.razao para o texto e valor, pois getFornecedoresList() retorna objetos
+                        option.value = fornecedor.razao; 
+                        option.textContent = fornecedor.razao;
+                        supplierSelect.appendChild(option);
+                    });
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Erro ao carregar fornecedores para o filtro:', error);
+                    showToast('error', 'Erro!', 'Falha ao carregar fornecedores. ' + (error.message || error));
+                })
+                .getFornecedoresList(); // Chama a função CORRETA do Apps Script
+        }
+
+        // Popula o select de estados usando getEstados()
+        function populateStatesFilter() {
+            google.script.run
+                .withSuccessHandler(function(states) {
+                    stateSelect.innerHTML = '<option value="">Todos</option>';
+                    states.forEach(state => {
+                        const option = document.createElement('option');
+                        option.value = state.value;
+                        option.textContent = state.text;
+                        stateSelect.appendChild(option);
+                    });
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Erro ao carregar estados para o filtro:', error);
+                    showToast('error', 'Erro!', 'Falha ao carregar estados. ' + (error.message || error));
+                })
+                .getEstados(); // Chama a função do Apps Script
+        }
+
+
+            // --- Event Listeners para os Filtros e Botões ---
+            applyFiltersButton.addEventListener('click', () => {
+            const startDate = dateStartInput.value;
+            const endDate = dateEndInput.value;
+            const selectedSupplier = supplierSelect.value;
+            const selectedState = stateSelect.value;
+
+            const filters = {
+                startDate: startDate,
+                endDate: endDate,
+                supplier: selectedSupplier,
+                state: selectedState
+            };
             
-            if (backButton) {
-                backButton.addEventListener('click', () => {
-                    loadPageContent('Menu', setupMenuScreen);
-                });
-            }
+            showToast('Aplicando Filtros','info', 'Buscando dados com base nos filtros selecionados...');
+            loadDashboardData(filters);
+        });
 
-            carregarDadosDashboard();
+        clearFiltersButton.addEventListener('click', () => {
+            dateStartInput.value = '';
+            dateEndInput.value = '';
+            supplierSelect.value = '';
+            stateSelect.value = '';
+            showToast('Filtros Limpos', 'info', 'Dashboard atualizado sem filtros.');
+            loadDashboardData();
+        });
+
+        // --- Chamadas Iniciais para popular a tela do Dashboard ---
+        populateSuppliersFilter();
+        populateStatesFilter();
+        loadDashboardData(); // Carrega os dados iniciais do dashboard (sem filtros aplicados inicialmente)
+
+        // Lógica do botão voltar (se sua SPA tiver um)
+        // Certifique-se de que o elemento 'backToMenuFromDashboard' exista no seu HTML
+        // e que 'loadPageContent' e 'setupMenuScreen' estejam definidos em outro lugar.
+        const backButton = document.getElementById('backToMenuFromDashboard');
+        if (backButton) {
+            backButton.addEventListener('click', () => {
+                if (typeof loadPageContent === 'function' && typeof setupMenuScreen === 'function') {
+                    loadPageContent('Menu', setupMenuScreen);
+                } else {
+                    console.warn("Funções 'loadPageContent' ou 'setupMenuScreen' não encontradas. Verifique a ordem dos scripts.");
+                }
+            });
+        }
+    }
+
+    // Chama setupDashboardScreen quando a página estiver pronta.
+    // Se o seu SPA já tem uma lógica para carregar telas,
+    // esta chamada pode ser feita pela sua função de navegação,
+    // garantindo que o dashboard seja configurado quando sua tela for ativada.
+    //document.addEventListener('DOMContentLoaded', setupDashboardScreen);
+
+        // --- Variáveis de referência para elementos do formulário ---
+    let supplierSelect;
+    let startDateInput;
+    let endDateInput;
+    let reportTypeDetailedRadio;
+    let reportTypeFinancialRadio;
+    let reportMessageElem;
+    let reportPreviewAreaElem;
+    let downloadLinkElem;
+    let generatePdfButton;
+    let generateXlsButton;
+    let backToMenuFromReportsButton;
+
+    /**
+     * Função principal para configurar a tela de Relatórios.
+     * Chamada quando a tela de relatórios é carregada/ativada.
+     */
+    function setupRelatoriosScreen() {
+      console.log("--- setupRelatoriosScreen: Iniciando inicialização da tela de relatórios ---");
+        // Obter referências aos elementos HTML
+        supplierSelect = document.getElementById('supplierSelect');
+    console.log("supplierSelect:", supplierSelect); // Adicionado
+    startDateInput = document.getElementById('startDate');
+    console.log("startDateInput:", startDateInput); // Adicionado
+    endDateInput = document.getElementById('endDate');
+    console.log("endDateInput:", endDateInput); // Adicionado
+    reportTypeDetailedRadio = document.getElementById('reportTypeDetailed');
+    console.log("reportTypeDetailedRadio:", reportTypeDetailedRadio); // Adicionado
+    reportTypeFinancialRadio = document.getElementById('reportTypeFinancial');
+    console.log("reportTypeFinancialRadio:", reportTypeFinancialRadio); // Adicionado
+    reportMessageElem = document.getElementById('reportMessage');
+    console.log("reportMessageElem:", reportMessageElem); // Adicionado
+    reportPreviewAreaElem = document.getElementById('reportPreviewArea');
+    console.log("reportPreviewAreaElem:", reportPreviewAreaElem); // Adicionado
+    downloadLinkElem = document.getElementById('downloadLink');
+    console.log("downloadLinkElem:", downloadLinkElem); // Adicionado
+
+    generatePdfButton = document.getElementById('generatePdfButton');
+    console.log("generatePdfButton:", generatePdfButton); // Adicionado
+    generateXlsButton = document.getElementById('generateXlsButton');
+    console.log("generateXlsButton:", generateXlsButton); // Adicionado
+
+    backToMenuFromReportsButton = document.getElementById('backToMenuFromReportsButton');
+    console.log("backToMenuFromReportsButton:", backToMenuFromReportsButton); // Adicionado
+
+        // Adicionar Event Listeners
+        if (backToMenuFromReportsButton) {
+        backToMenuFromReportsButton.addEventListener('click', () => {
+            console.log("Botão Voltar Clicado!"); // Adicionado para teste
+            if (typeof loadPageContent === 'function' && typeof setupMenuScreen === 'function') {
+                loadPageContent('Menu', setupMenuScreen);
+            } else {
+                console.warn("Funções de navegação SPA não encontradas para voltar ao menu.");
+            }
+        });
+    } else {
+        console.warn("backToMenuFromReportsButton é NULL!"); // Adicionado
+    }
+
+    if (generatePdfButton) {
+        generatePdfButton.addEventListener('click', () => {
+            console.log("Botão Gerar PDF Clicado!"); // Adicionado
+            gerarRelatorio('pdf');
+        });
+    } else {
+        console.warn("generatePdfButton é NULL!"); // Adicionado
+    }
+
+    if (generateXlsButton) {
+        generateXlsButton.addEventListener('click', () => {
+            console.log("Botão Gerar XLSX Clicado!"); // Adicionado
+            gerarRelatorio('xlsx');
+        });
+    } else {
+        console.warn("generateXlsButton é NULL!"); // Adicionado
+    }
+
+
+        // Chamar função para popular o select de fornecedores
+        populateSupplierSelectForReports();
+
+        // Esconder a área de preview no carregamento inicial
+        reportPreviewAreaElem.classList.add('hidden');
+        reportMessageElem.textContent = ''; // Limpa qualquer mensagem anterior
+    }
+
+    /**
+     * Popula o select de fornecedores no formulário de relatórios.
+     */
+    function populateSupplierSelectForReports() {
+        // Mostra um toast de carregamento
+        showToast('Carregando...', 'info', 'Buscando lista de fornecedores...');
+
+        google.script.run
+            .withSuccessHandler(function(fornecedores) {
+                supplierSelect.innerHTML = '<option value="todos">Todos os Fornecedores</option>'; // Opção padrão
+                if (fornecedores && fornecedores.length > 0) {
+                    fornecedores.forEach(fornecedor => {
+                        const option = document.createElement('option');
+                        // Use a propriedade 'razao' do objeto fornecedor para valor e texto
+                        option.value = fornecedor.razao; 
+                        option.textContent = fornecedor.razao;
+                        supplierSelect.appendChild(option);
+                    });
+                    showToast('Sucesso!', 'success', 'Lista de fornecedores carregada.');
+                } else {
+                    showToast('Aviso', 'warning', 'Nenhum fornecedor encontrado.');
+                }
+            })
+            .withFailureHandler(function(error) {
+                console.error('Erro ao carregar fornecedores para o relatório:', error);
+                showToast('Erro!', 'error', `Falha ao carregar fornecedores: ${error.message || error}`);
+            })
+            .getFornecedoresList(); // Chame a função que retorna a lista DETALHADA de fornecedores
+    }
+
+
+    /**
+     * Coleta os parâmetros do formulário e chama a função de geração de relatório no Apps Script.
+     * @param {string} tipo - 'pdf' ou 'xlsx'.
+     */
+    function gerarRelatorio(tipo) {
+      console.log(`--- gerarRelatorio: Botão ${tipo} clicado! ---`);
+        reportMessageElem.textContent = ''; // Limpa mensagens
+        reportPreviewAreaElem.classList.add('hidden'); // Esconde link de download anterior
+
+        // 1. Coletar os filtros
+        const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
+        const supplier = supplierSelect.value !== 'todos' ? supplierSelect.value : null;
+        const reportType = reportTypeDetailedRadio.checked ? 'detailed' : 'financial';
+
+        // Obter dados da empresa logada (do localStorage)
+        const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
+        if (!empresaAtual || !empresaAtual.id) {
+            showToast('Erro!', 'error', 'Dados da empresa logada não encontrados. Faça login novamente.');
+            return;
         }
 
-        function setupRelatoriosScreen() {
-            const backButton = document.getElementById('backToMenuFromReportsButton');
-            const generatePdfButton = document.getElementById('generatePdfButton');
-            const generateXlsButton = document.getElementById('generateXlsButton');
+        const reportParams = {
+            startDate: startDate,
+            endDate: endDate,
+            supplier: supplier,
+            reportType: reportType,
+            companyId: empresaAtual.id, // O ID da empresa para filtrar pedidos
+            companyName: empresaAtual.empresa, // Nome para cabeçalho do relatório (se 'empresa' for a propriedade)
+            companyAddress: empresaAtual.endereO, // Endereço para cabeçalho
+            empresaCnpj: empresaAtual.cnpj // CNPJ para cabeçalho
+        };
 
-            if (backButton) {
-                backButton.addEventListener('click', () => {
-                    loadPageContent('Menu', setupMenuScreen);
-                });
-            }
-
-            if (generatePdfButton) {
-                generatePdfButton.addEventListener('click', () => gerarRelatorio('pdf'));
-            }
-
-            if (generateXlsButton) {
-                generateXlsButton.addEventListener('click', () => gerarRelatorio('xlsx'));
-            }
-
-            carregarFornecedoresRelatorio();
+        // Validação básica (pode ser mais robusta)
+        if (!startDate || !endDate) {
+            reportMessageElem.textContent = 'Por favor, selecione as datas inicial e final.';
+            showToast('Aviso', 'warning', 'Selecione o período completo para o relatório.');
+            return;
         }
+        if (new Date(startDate) > new Date(endDate)) {
+            reportMessageElem.textContent = 'A data inicial não pode ser posterior à data final.';
+            showToast('Aviso', 'warning', 'Data inicial não pode ser posterior à data final.');
+            return;
+        }
+
+        showToast('Gerando Relatório...', 'info',  `Gerando relatório ${reportType === 'detailed' ? 'Detalhado' : 'Financeiro'} em ${tipo.toUpperCase()}... Isso pode levar alguns segundos.`);
+        
+        // Desabilita botões para evitar cliques múltiplos
+        generatePdfButton.disabled = true;
+        generateXlsButton.disabled = true;
+
+        // Chamar a função correta no Apps Script baseado no tipo
+        let googleScriptRunFunction;
+        if (tipo === 'pdf') {
+            googleScriptRunFunction = google.script.run.generatePdfReport;
+        } else if (tipo === 'xlsx') {
+            googleScriptRunFunction = google.script.run.generateXlsReport;
+        } else {
+            showToast('Erro!', 'error', 'Tipo de relatório inválido.');
+            generatePdfButton.disabled = false;
+            generateXlsButton.disabled = false;
+            return;
+        }
+
+        googleScriptRunFunction
+            .withSuccessHandler(function(url) {
+                if (url) {
+                    downloadLinkElem.href = url;
+                    downloadLinkElem.textContent = `Baixar Relatório ${tipo.toUpperCase()}`;
+                    reportPreviewAreaElem.classList.remove('hidden');
+                    reportMessageElem.textContent = 'Relatório gerado com sucesso!';
+                    showToast('Sucesso!', 'success', 'Relatório gerado e pronto para download!');
+                } else {
+                    reportMessageElem.textContent = 'Nenhum URL de relatório retornado.';
+                    showToast('Erro!', 'error', 'URL do relatório não recebida.');
+                }
+                generatePdfButton.disabled = false;
+                generateXlsButton.disabled = false;
+            })
+            .withFailureHandler(function(error) {
+                console.error(`Erro ao gerar relatório ${tipo}:`, error);
+                reportMessageElem.textContent = `Erro ao gerar relatório: ${error.message || error}`;
+                showToast('Erro!', 'error', `Falha ao gerar relatório: ${error.message || error}`);
+                generatePdfButton.disabled = false;
+                generateXlsButton.disabled = false;
+            })
+            .withUserObject(this) // Mantém o contexto para o spinner se você o usar
+            (reportParams); // Passa os parâmetros coletados
+    }
+
 
         function setupGerenciarRascunhosScreen() {
             console.log('🔧 Inicializando tela de gerenciamento de rascunhos...');
@@ -5584,6 +6117,15 @@ function preencherItensContainer(itens) {
             google.script.run
                 .withSuccessHandler(response => {
                     console.log('✅ Resposta da busca recebida:', response);
+
+                    if (!response) {
+                        console.error('🔍 Erro crítico: A resposta do backend foi nula. Verifique os logs do servidor para a função "buscarPedidos".');
+                        if (resultsBody) {
+                            resultsBody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 py-8">Ocorreu um erro inesperado no servidor. A busca não pôde ser concluída.</td></tr>';
+                        }
+                        showToast('Erro inesperado no servidor. Verifique os logs.', 'error');
+                        return; // Interrompe a execução para evitar o erro
+                    }
                     if (response.status === 'success' && response.data && response.data.length > 0) {
                         // Filtrar os resultados no frontend com base nos filtros avançados
                         const resultadosFiltrados = filtrarPedidosAvancado(response.data, filtros);
@@ -5903,113 +6445,136 @@ function preencherItensContainer(itens) {
 
           // Função para verificar se um pedido pode ser editado (1 hora após criação)
         function verificarSePermiteEdicao(pedido) {
-            try {
-                console.log('🔍 Verificando permissão de edição para pedido:', pedido);
-                console.log('📋 Campos de data disponíveis:', {
-                    dataHoraCriacao: pedido.dataHoraCriacao,
-                    dataUltimaEdicao: pedido.dataUltimaEdicao,
-                    data: pedido.data,
-                    dataCriacao: pedido.dataCriacao,
-                    timestamp: pedido.timestamp
-                });
-                
-                // Log detalhado de TODOS os campos do pedido para identificar onde está a data/hora real
-                console.log('🔍 TODOS os campos do pedido para análise:');
-                for (const [campo, valor] of Object.entries(pedido)) {
-                    if (typeof valor === 'string' && (valor.includes('2025') || valor.includes('11:59') || valor.includes(':'))) {
-                        console.log(`📍 Campo "${campo}":`, valor);
-                    }
-                }
-                
-                const agora = new Date();
-                let dataCriacao;
-                
-                // PRIORIZAR o campo correto: 'Data Hora Criacao' (com espaços)
-                if (pedido['Data Hora Criacao']) {
-                    let dataString = pedido['Data Hora Criacao'];
-                    console.log('🎯 CAMPO CORRETO encontrado - "Data Hora Criacao":', dataString);
-                    
-                    // Se está no formato "YYYY-MM-DD HH:mm:ss", converter para ISO sem UTC
-                    if (dataString.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
-                        dataString = dataString.replace(' ', 'T'); // SEM adicionar .000Z
-                        console.log('🔧 Convertendo Data Hora Criacao (horário local):', pedido['Data Hora Criacao'], '→', dataString);
-                    }
-                    
-                    dataCriacao = new Date(dataString);
-                    console.log('📅 Data de criação processada (Data Hora Criacao):', dataCriacao.toLocaleString('pt-BR'));
-                }
-                // Tentar usar dataHoraCriacao primeiro
-                else if (pedido.dataHoraCriacao) {
-                    // Corrigir formato de data para preservar horário local brasileiro
-                    let dataString = pedido.dataHoraCriacao;
-                    
-                    // Se está no formato "YYYY-MM-DD HH:mm:ss", converter para ISO sem UTC
-                    if (dataString.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
-                        dataString = dataString.replace(' ', 'T'); // SEM adicionar .000Z
-                        console.log('🔧 Convertendo formato de data (horário local):', pedido.dataHoraCriacao, '→', dataString);
-                    }
-                    
-                    dataCriacao = new Date(dataString);
-                    console.log('📅 Data de criação processada:', dataCriacao.toLocaleString('pt-BR'));
-                }
-                // Tentar usar "Data Criacao" (com espaço)
-                else if (pedido['Data Criacao']) {
-                    let dataString = pedido['Data Criacao'];
-                    console.log('🔧 Encontrado campo "Data Criacao":', dataString);
-                    
-                    // Se está no formato "YYYY-MM-DD HH:mm:ss", converter para ISO sem UTC
-                    if (dataString.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
-                        dataString = dataString.replace(' ', 'T'); // SEM adicionar .000Z
-                        console.log('🔧 Convertendo Data Criacao (horário local):', pedido['Data Criacao'], '→', dataString);
-                    }
-                    
-                    dataCriacao = new Date(dataString);
-                    console.log('📅 Data de criação processada (Data Criacao):', dataCriacao.toLocaleString('pt-BR'));
-                }
-                // Tentar usar dataCriacao (sem espaço)
-                else if (pedido.dataCriacao) {
-                    let dataString = pedido.dataCriacao;
-                    console.log('🔧 Encontrado campo "dataCriacao":', dataString);
-                    
-                    // Se está no formato "YYYY-MM-DD HH:mm:ss", converter para ISO sem UTC
-                    if (dataString.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
-                        dataString = dataString.replace(' ', 'T'); // SEM adicionar .000Z
-                        console.log('🔧 Convertendo dataCriacao (horário local):', pedido.dataCriacao, '→', dataString);
-                    }
-                    
-                    dataCriacao = new Date(dataString);
-                    console.log('📅 Data de criação processada (dataCriacao):', dataCriacao.toLocaleString('pt-BR'));
-                }
-                // Tentar usar o campo "data" se contém data/hora completa
-            try {
-                console.log('🔍 Verificando permissão de edição para pedido:', pedido);
-                // Usar sempre o campo 'data' (coluna C) para a data de criação
-                const agora = new Date();
-                let dataCriacao = null;
-                if (pedido.data) {
-                    dataCriacao = normalizarDataPedido(pedido.data);
-                }
-                if (!dataCriacao || isNaN(dataCriacao.getTime())) {
-                    console.warn('⚠️ Data de criação inválida para pedido:', pedido);
-                    return false;
-                }
-                // Calcular diferença em minutos
-                const diffMs = agora.getTime() - dataCriacao.getTime();
-                const diffMin = diffMs / (1000 * 60);
-                // Só libera edição se for até 60 minutos
-                const podeEditar = diffMin >= 0 && diffMin <= 60;
-                console.log(`⏱️ Pedido criado há ${diffMin.toFixed(2)} minutos. Pode editar?`, podeEditar);
-                return podeEditar;
-            } catch (e) {
-                console.error('Erro ao verificar permissão de edição:', e);
-                return false;
-            }
+    
+    console.log("DEBUG: Verificando permissão para o pedido:", JSON.stringify(pedido, null, 2));
+
+    // 1. Validação do Objeto: Garante que o pedido não é nulo.
+    if (!pedido) {
+        console.warn('verificarSePermiteEdicao: o objeto do pedido é nulo.');
+        return false;
+    }
+
+    // 2. Verificação do Status: Garante que o status seja 'Em Aberto'.
+    const statusValue = pedido.status || pedido.statusDoPedido;
+    if (!statusValue || String(statusValue).trim().toUpperCase() !== 'EM ABERTO') {
+        // Se não tiver status ou o status não for 'Em Aberto', bloqueia a edição.
+        return false;
+    }
+
+    // 3. Verificação da Data de Criação (Ponto Crítico)
+    // A função precisa do campo 'dataCriacao' com a data E a hora para funcionar.
+    const dataCriacaoStr = pedido.dataCriacao;
+
+    if (!dataCriacaoStr) {
+        console.error(`EDIÇÃO BLOQUEADA: O campo 'dataCriacao' (com a hora) não foi encontrado nos dados do pedido ${pedido.numeroDoPedido || 'N/A'}.`);
+        return false;
+    }
+
+    // 4. Cálculo do Limite de Tempo
+    try {
+        // =================================================================================
+        // CORREÇÃO DE FUSO HORÁRIO APLICADA AQUI
+        // =================================================================================
+        let dataCriacao;
+        const dataString = String(dataCriacaoStr);
+
+        // Se a string da data NÃO CONTÉM hora (ex: "2025-07-15"),
+        // adicionamos a hora local para que seja interpretada como meia-noite
+        // no fuso horário do usuário, e não em UTC.
+        if (!dataString.includes(' ') && !dataString.includes('T')) {
+            dataCriacao = new Date(dataString + 'T00:00:00');
+        } else {
+            // Se a string JÁ TEM a hora, apenas a usamos.
+            // O replace(' ', 'T') garante compatibilidade.
+            dataCriacao = new Date(dataString.replace(' ', 'T'));
         }
-                    return false;
+        // =================================================================================
+
+        if (isNaN(dataCriacao.getTime())) {
+            throw new Error("Formato de data recebido é inválido: " + dataCriacaoStr);
+        }
+
+        const agora = new Date();
+        const umaHoraEmMs = 60 * 60 * 1000;
+        const tempoDecorrido = agora.getTime() - dataCriacao.getTime();
+
+        if (tempoDecorrido > umaHoraEmMs) {
+            console.log(`Edição bloqueada: Pedido ${pedido.numeroDoPedido || 'N/A'} foi criado em ${dataCriacao.toLocaleString()} (há mais de 1 hora).`);
+            return false;
+        }
+    } catch (e) {
+        console.error("Erro fatal ao processar a data de criação. Edição bloqueada por segurança.", e);
+        return false;
+    }
+
+    // 5. Permissão Concedida
+    // Se passou por todas as verificações, a edição é permitida.
+    console.log(`EDIÇÃO PERMITIDA para o pedido ${pedido.numeroDoPedido || 'N/A'}.`);
+    return true;
+}
+
+// ================================================================
+// MÓDULO DE GERENCIAMENTO DE EDIÇÃO DE PEDIDO
+// ================================================================
+const EdicaoPedido = (function() {
+    let dadosAtuais = null;
+
+    return {
+        /**
+         * Armazena os dados do pedido que está sendo editado.
+         * ESTA VERSÃO GARANTE QUE O CAMPO 'itens' SEJA SEMPRE UM ARRAY.
+         * @param {object} pedido - O objeto completo do pedido.
+         */
+        setDados: function(pedido) {
+            // Faz uma cópia para não modificar o objeto original que veio do backend
+            const dadosParaArmazenar = { ...pedido };
+
+            // Garante que 'itens' seja sempre um array de objetos
+            if (typeof dadosParaArmazenar.itens === 'string' && dadosParaArmazenar.itens) {
+                try {
+                    // Tenta converter a string JSON para um array
+                    dadosParaArmazenar.itens = JSON.parse(dadosParaArmazenar.itens);
+                    console.log("EdicaoPedido: String de itens foi convertida para um array de objetos.");
+                } catch (e) {
+                    console.error("EdicaoPedido: Erro ao converter string de itens. Itens foram definidos como um array vazio.", e);
+                    dadosParaArmazenar.itens = []; // Define como array vazio em caso de erro
                 }
-                return verificarSePermiteEdicao(this.dados);
+            } else if (!Array.isArray(dadosParaArmazenar.itens)) {
+                // Se não for um array nem uma string (ex: null, undefined), inicializa como array vazio por segurança
+                console.warn("EdicaoPedido: O campo 'itens' não era um array. Foi inicializado como um array vazio.");
+                dadosParaArmazenar.itens = [];
             }
-        };
+            
+            console.log("EdicaoPedido: Dados do pedido armazenados para edição.", dadosParaArmazenar);
+            dadosAtuais = dadosParaArmazenar;
+        },
+
+        /**
+         * Retorna os dados do pedido que está em edição.
+         * @returns {object|null} - Os dados do pedido ou null se não houver edição em andamento.
+         */
+        getDados: function() {
+            return dadosAtuais;
+        },
+
+        /**
+         * Limpa os dados após a edição ser concluída ou cancelada.
+         */
+        limpar: function() {
+            console.log("EdicaoPedido: Limpando dados de edição.");
+            dadosAtuais = null;
+        },
+
+        /**
+         * Verifica se há um pedido em modo de edição.
+         * @returns {boolean}
+         */
+        emEdicao: function() {
+            return dadosAtuais !== null;
+        }
+    };
+})();
+
 
         // Função para editar pedido - MELHORADA
         function editarPedido(numeroPedido) {
