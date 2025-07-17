@@ -1877,7 +1877,7 @@
                         ultimosPedidos.forEach((pedido, index) => {
                             console.log(`🔍 DEBUG - Pedido ${index + 1}:`, pedido);
                             console.log(`🔍 DEBUG - Estado do pedido ${index + 1}:`, pedido.estadoFornecedor);
-                            
+                            const numeroPedido = pedido.numeroDoPedido || 'N/D';
                             const valorTotal = `R$ ${parseFloat(pedido.totalGeral || 0).toFixed(2).replace('.', ',')}`;
                             const dataFormatada = new Date((pedido.dataCriacao || pedido.data).replace(' ', 'T'))
                             .toLocaleString('pt-BR', { 
@@ -1905,7 +1905,7 @@
                                 </div>
                                 
                                 <div class="space-y-2 text-sm mb-3">
-                                    <p class="text-gray-700"><span class="font-semibold">Pedido:</span> #${pedido.numeroDoPedido}</p>
+                                    <p class="text-gray-700"><span class="font-semibold">Pedido:</span> ${pedido.numeroDoPedido}</p>
                                     <p class="text-gray-700"><span class="font-semibold">Data:</span> ${dataFormatada}</p>
                                     <p class="text-gray-700"><span class="font-semibold">Fornecedor:</span> ${pedido.fornecedor}</p>
                                     <p class="text-gray-700"><span class="font-semibold">Estado:</span> ${pedido.estadoFornecedor || 'N/A'}</p>
@@ -3080,110 +3080,139 @@ function preencherItensContainer(itens) {
             }
         }
 
-        // ===============================================
-        // FUNÇÃO PARA GERENCIAR USUÁRIOS
-        // ===============================================
+    // ===============================================
+    // FUNÇÃO PARA GERENCIAR USUÁRIOS
+    // ===============================================
         
-        function setupGerenciarUsuariosScreen() {
-            // Dados que serão carregados do backend
-            let allUsers = [];
-            let empresasDisponiveis = [];
-            let auditDataCache = {};
+    function setupGerenciarUsuariosScreen() {
+    console.log("--- setupGerenciarUsuariosScreen: Iniciando inicialização da tela de gerenciamento de usuários ---");
+    
+    // Dados que serão carregados do backend
+    let allUsers = [];
+    let empresasDisponiveis = [];
+    let auditDataCache = {};
 
-            // ===============================================
-            // FUNÇÕES DE CARREGAMENTO DE DADOS
-            // ===============================================
+    // ===============================================
+    // FUNÇÕES DE CARREGAMENTO DE DADOS
+    // ===============================================
 
-            function loadUsersFromBackend() {
-                showToast('Carregando usuários...', 'info');
+    function loadUsersFromBackend() {
+        showToast('Carregando usuários...', 'info');
+        
+        google.script.run
+            .withSuccessHandler(users => {
+                // --- LOG DE DIAGNÓSTICO ---
+                console.log("✅ [Frontend] SUCESSO! Dados recebidos do backend:", users);
                 
-                google.script.run
-                    .withSuccessHandler(users => {
-                        allUsers = users || [];
-                        renderUsersTable();
-                        showToast('Usuários carregados com sucesso!', 'success');
-                    })
-                    .withFailureHandler(error => {
-                        console.error('Erro ao carregar usuários:', error);
-                        showToast('Erro ao carregar usuários: ' + error.message, 'error');
-                    })
-                    .listarUsuariosCompleto();
-            }
-
-            function loadEmpresasFromBackend() {
-                google.script.run
-                    .withSuccessHandler(empresas => {
-                        empresasDisponiveis = empresas.map(emp => emp.nome) || [];
-                    })
-                    .withFailureHandler(error => {
-                        console.error('Erro ao carregar empresas:', error);
-                        empresasDisponiveis = ['Matriz', 'Filial SP', 'Filial RJ']; // Fallback
-                    })
-                    .listarEmpresas();
-            }
-
-            function loadAuditData(userId, callback) {
-                if (auditDataCache[userId]) {
-                    callback(auditDataCache[userId]);
-                    return;
+                allUsers = users || [];
+                
+                if (allUsers.length > 0) {
+                    console.log(`[Frontend] A variável 'allUsers' foi populada com ${allUsers.length} usuários.`);
+                } else {
+                    console.warn("[Frontend] A variável 'allUsers' está vazia após o retorno do backend.");
                 }
 
-                google.script.run
-                    .withSuccessHandler(auditData => {
-                        auditDataCache[userId] = auditData;
-                        callback(auditData);
-                    })
-                    .withFailureHandler(error => {
-                        console.error('Erro ao carregar dados de auditoria:', error);
-                        callback({ lastLogin: null, lastOrder: null, lastPrint: null });
-                    })
-                    .obterDadosAuditoria(userId);
-            }
-            // ===============================================
-            // ELEMENTOS DO DOM
-            // ===============================================
-            const tableBody = document.getElementById('usersTableBody');
-            const messageElement = document.getElementById('userManagementMessage');
-            // Modais
-            const modals = {
-                empresas: document.getElementById('modal-empresas-container'),
-                audit: document.getElementById('modal-audit-container')
-            };
+                renderUsersTable();
+                showToast('Usuários carregados com sucesso!', 'success');
+            })
+            .withFailureHandler(error => {
+                console.error('❌ [Frontend] ERRO ao carregar usuários:', error);
+                showToast('Erro ao carregar usuários: ' + error.message, 'error');
+            })
+            .listarUsuariosCompleto();
+    }
 
-            // ===============================================
-            // FUNÇÕES DE RENDERIZAÇÃO E UI
-            // ===============================================
+    function loadEmpresasFromBackend() {
+        google.script.run
+            .withSuccessHandler(empresas => {
+                empresasDisponiveis = empresas || [];
+            })
+            .withFailureHandler(error => {
+                console.error('Erro ao carregar empresas:', error);
+            })
+            .listarEmpresas();
+    }
 
-            function renderUsersTable() {
-                if (!tableBody) return;
-                tableBody.innerHTML = '';
+    function loadAuditData(userId, callback) {
+        if (auditDataCache[userId]) {
+            callback(auditDataCache[userId]);
+            return;
+        }
 
-                allUsers.forEach(user => {
-                    const empresasArray = user.empresas ? user.empresas.split(',').filter(e => e.trim()) : [];
-                    const empresasHtml = empresasArray.map(empresa => {
-                        const isDefault = empresa.trim() === user.empresaPadrao;
-                        return `<span class="inline-flex items-center ${isDefault ? 'tag-padrao' : 'bg-gray-100 text-gray-600'} text-xs font-medium mr-2 px-2.5 py-1 rounded-full border border-transparent">${isDefault ? '<i class="fas fa-star fa-xs mr-1.5 text-yellow-500"></i>' : ''}${empresa.trim()}</span>`;
-                    }).join('') || `<span class="text-xs text-gray-400 italic">Nenhuma</span>`;
+        google.script.run
+            .withSuccessHandler(auditData => {
+                auditDataCache[userId] = auditData;
+                callback(auditData);
+            })
+            .withFailureHandler(error => {
+                console.error('Erro ao carregar dados de auditoria:', error);
+                callback({ lastLogin: null, lastOrder: null, lastPrint: null });
+            })
+            .obterDadosAuditoria(userId);
+    }
+    
+    // ===============================================
+    // ELEMENTOS DO DOM
+    // ===============================================
+    const tableBody = document.getElementById('usersTableBody');
+    const messageElement = document.getElementById('userManagementMessage');
+    const modals = {
+        empresas: document.getElementById('modal-empresas-container'),
+        audit: document.getElementById('modal-audit-container')
+    };
 
-                    const statusClass = user.status === 'Ativo' ? 'status-ativo' : 'status-inativo';
-                    const toggleIcon = user.status === 'Ativo' ? 'fa-toggle-on text-green-500' : 'fa-toggle-off text-gray-400';
+    // ===============================================
+    // FUNÇÕES DE RENDERIZAÇÃO E UI
+    // ===============================================
 
-                    const row = document.createElement('tr');
-                    row.className = 'hover:bg-gray-50';
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-medium text-gray-900">${user.nome}</div><div class="text-sm text-gray-500">${user.usuario}</div></td>
-                        <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">${user.status}</span></td>
-                        <td class="px-6 py-4 text-sm text-gray-500"><div class="flex flex-wrap gap-2">${empresasHtml}</div></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center text-xl font-medium space-x-5">
-                            <button data-userid="${user.id}" class="action-toggle-status text-gray-400 hover:text-gray-600" title="${user.status === 'Ativo' ? 'Desativar' : 'Ativar'}"><i class="fas ${toggleIcon}"></i></button>
-                            <button data-userid="${user.id}" class="action-manage-empresas text-gray-400 hover:text-blue-600" title="Gerenciar Empresas"><i class="fas fa-building"></i></button>
-                            <button data-userid="${user.id}" class="action-audit text-gray-400 hover:text-blue-600" title="Auditoria"><i class="fas fa-shield-halved"></i></button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-                addTableEventListeners();
-            }
+    function renderUsersTable() {
+        const tableBody = document.getElementById('usersTableBody');
+        if (!tableBody) {
+            console.error("Elemento 'usersTableBody' não encontrado no DOM.");
+            return;
+        }
+        tableBody.innerHTML = '';
+
+        if (!allUsers || allUsers.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-500 py-10">Nenhum usuário encontrado.</td></tr>';
+            return;
+        }
+
+        allUsers.forEach(user => {
+            const empresasIdsArray = user.empresasIds || [];
+            const empresasNomesArray = user.empresas ? user.empresas.split(',').map(e => e.trim()) : []; 
+            const empresasHtml = empresasIdsArray.map((id, idx) => {
+            const nomeEmpresa = empresasNomesArray[idx] || `Empresa ${id}`;
+            const isDefault = id === user.empresaPadrao;
+            console.log('Frontend recebeu e normalizou as empresa');
+                // Usando classes padrão do Tailwind para garantir a visibilidade
+                const tagClass = isDefault ? 'bg-yellow-100 text-yellow-800 border-yellow-300' : 'bg-gray-100 text-gray-600 border-transparent';
+                return `<span class="inline-flex items-center ${tagClass} text-xs font-medium mr-2 px-2.5 py-1 rounded-full border">
+                    ${isDefault ? '<i class="fas fa-star fa-xs mr-1.5 text-yellow-500"></i>' : ''}
+                    ${nomeEmpresa}
+                </span>`;
+            }).join('') || `<span class="text-xs text-gray-400 italic">Nenhuma</span>`;
+
+            // Usando classes padrão do Tailwind para o status
+            const statusClass = user.status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+            const toggleIcon = user.status === 'Ativo' ? 'fa-toggle-on text-green-500' : 'fa-toggle-off text-gray-400';
+
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50';
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-medium text-gray-900">${user.nome}</div><div class="text-sm text-gray-500">${user.usuario}</div></td>
+                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">${user.status}</span></td>
+                <td class="px-6 py-4 text-sm text-gray-500"><div class="flex flex-wrap gap-2">${empresasHtml}</div></td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-xl font-medium space-x-5">
+                    <button data-userid="${user.id}" class="action-toggle-status text-gray-400 hover:text-gray-600" title="${user.status === 'Ativo' ? 'Desativar' : 'Ativar'}"><i class="fas ${toggleIcon}"></i></button>
+                    <button data-userid="${user.id}" class="action-manage-empresas text-gray-400 hover:text-blue-600" title="Gerenciar Empresas"><i class="fas fa-building"></i></button>
+                    <button data-userid="${user.id}" class="action-audit text-gray-400 hover:text-blue-600" title="Auditoria"><i class="fas fa-shield-halved"></i></button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+        addTableEventListeners();
+    }
 
             function showMessage(text, type = 'success') {
                 messageElement.textContent = text;
@@ -3196,35 +3225,34 @@ function preencherItensContainer(itens) {
             // ===============================================
 
             function openModal(modalName, userId) {
-                const user = allUsers.find(u => u.id == userId);
-                if (!user) return;
-                
-                const modalContainer = modals[modalName];
-                if (!modalContainer) return;
+              const user = allUsers.find(u => u.id == userId);
+              if (!user) return;
+              
+              const modalContainer = modals[modalName];
+              if (!modalContainer) return;
 
-                if (modalName === 'empresas') {
-                    modalContainer.querySelector('#modal-empresas-title').textContent = `Empresas de: ${user.nome}`;
-                    const listBody = modalContainer.querySelector('#empresas-list-body');
-                    
-                    // Carregamos empresas disponíveis e as permissões do usuário
-                    google.script.run
-                        .withSuccessHandler(empresas => {
-                            const userEmpresasIds = user.empresasIds || [];
-                            listBody.innerHTML = empresas.map(empresa => `
-                                <tr class="hover:bg-gray-50 border-b border-gray-100">
-                                    <td class="px-4 py-3 text-center"><input type="checkbox" value="${empresa.codigo}" name="empresa_access" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" ${userEmpresasIds.includes(String(empresa.codigo)) ? 'checked' : ''}></td>
-                                    <td class="px-4 py-3 text-sm text-gray-800">${empresa.nome}</td>
-                                    <td class="px-4 py-3 text-center"><input type="radio" value="${empresa.codigo}" name="empresa_default" class="h-5 w-5 text-blue-600 focus:ring-blue-500" ${user.empresaPadraoId === String(empresa.codigo) ? 'checked' : ''}></td>
-                                </tr>`).join('');
-                        })
-                        .withFailureHandler(error => {
-                            console.error('Erro ao carregar empresas:', error);
-                            listBody.innerHTML = '<tr><td colspan="3" class="text-center text-red-500">Erro ao carregar empresas</td></tr>';
-                        })
-                        .listarEmpresas();
-                    
-                    modalContainer.querySelector('#modal-empresas-save-btn').dataset.userid = userId;
-                }
+              if (modalName === 'empresas') {
+                  modalContainer.querySelector('#modal-empresas-title').textContent = `Empresas de: ${user.nome}`;
+                  const listBody = modalContainer.querySelector('#empresas-list-body');
+                  
+                  listBody.innerHTML = '<tr><td colspan="3" class="text-center">Carregando...</td></tr>';
+                  google.script.run
+                      .withSuccessHandler(empresas => {
+                          const userEmpresasIds = user.empresasIds || [];
+                          listBody.innerHTML = empresas.map(empresa => `
+                              <tr class="hover:bg-gray-50 border-b border-gray-100">
+                                  <td class="px-4 py-3 text-center"><input type="checkbox" value="${empresa.codigo}" name="empresa_access" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" ${userEmpresasIds.includes(String(empresa.codigo)) ? 'checked' : ''}></td>
+                                  <td class="px-4 py-3 text-sm text-gray-800">${empresa.nome}</td>
+                                  <td class="px-4 py-3 text-center"><input type="radio" value="${empresa.codigo}" name="empresa_default" class="h-5 w-5 text-blue-600 focus:ring-blue-500" ${user.empresaPadraoId === String(empresa.codigo) ? 'checked' : ''}></td>
+                              </tr>`).join('');
+                      })
+                      .withFailureHandler(error => {
+                          listBody.innerHTML = '<tr><td colspan="3" class="text-center text-red-500">Erro ao carregar empresas</td></tr>';
+                      })
+                      .listarEmpresas();
+                  
+                  modalContainer.querySelector('#modal-empresas-save-btn').dataset.userid = userId;
+              }
 
                 if (modalName === 'audit') {
                     modalContainer.querySelector('#modal-audit-title').textContent = `Auditoria de: ${user.nome}`;
@@ -3315,7 +3343,9 @@ function preencherItensContainer(itens) {
 
             function addTableEventListeners() {
                 document.querySelectorAll('.action-toggle-status, .action-manage-empresas, .action-audit').forEach(button => {
-                    button.addEventListener('click', (e) => {
+                    const newButton = button.cloneNode(true);
+                    button.parentNode.replaceChild(newButton, button);
+                    newButton.addEventListener('click', (e) => {
                         const target = e.currentTarget;
                         const userId = target.dataset.userid;
                         if (target.classList.contains('action-toggle-status')) toggleUserStatus(userId);
@@ -3338,22 +3368,19 @@ function preencherItensContainer(itens) {
             
             if (modals.empresas) {
                 const saveBtn = modals.empresas.querySelector('#modal-empresas-save-btn');
-                if (saveBtn) saveBtn.addEventListener('click', (e) => saveEmpresasChanges(e.currentTarget));
-                
-                modals.empresas.addEventListener('change', (e) => {
-                    if (e.target.matches('input[name="empresa_access"]')) {
-                        const row = e.target.closest('tr');
-                        const radio = row.querySelector('input[type="radio"]');
-                        radio.disabled = !e.target.checked;
-                        if (radio.disabled && radio.checked) radio.checked = false;
-                    }
-                });
+                if (saveBtn) {
+                    const newSaveBtn = saveBtn.cloneNode(true);
+                    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+                    newSaveBtn.addEventListener('click', (e) => saveEmpresasChanges(e.currentTarget));
+                }
             }
 
             // Botão voltar ao menu
             const backButton = document.getElementById('backToMenuFromUsersButton');
             if (backButton) {
-                backButton.addEventListener('click', () => {
+                const newBackButton = backButton.cloneNode(true);
+                backButton.parentNode.replaceChild(newBackButton, backButton);
+                newBackButton.addEventListener('click', () => {
                     loadPageContent('Menu', setupMenuScreen);
                 });
             }
@@ -5481,18 +5508,115 @@ function preencherItensContainer(itens) {
     let generateXlsButton;
     let backToMenuFromReportsButton;
 
-    /**
+/**
+ * Coleta os parâmetros do formulário e chama a função de geração de relatório no Apps Script.
+ * @param {string} tipo - 'pdf' ou 'xlsx'.
+ */
+function gerarRelatorio(tipo) {
+  console.log(`--- gerarRelatorio: Função chamada para o tipo ${tipo}. ---`);
+    try {
+        const startDateElem = document.getElementById('startDate');
+        const endDateElem = document.getElementById('endDate');
+        const supplierSelectElem = document.getElementById('supplierSelect');
+        const reportTypeRadio = document.querySelector('input[name="reportType"]:checked');
+        const generatePdfButton = document.getElementById('generatePdfButton');
+        const generateXlsButton = document.getElementById('generateXlsButton');
+
+        if (!startDateElem || !endDateElem || !supplierSelectElem || !reportTypeRadio) {
+            showToast("Erro: Um ou mais campos do formulário de relatório não foram encontrados.", 'error');
+            console.error("Erro: Elementos do formulário de relatório ausentes. Verifique os IDs no HTML.", {
+                startDate: !!startDateElem,
+                endDate: !!endDateElem,
+                supplierSelect: !!supplierSelectElem,
+                reportType: !!reportTypeRadio
+            });
+            return;
+        }
+
+        const startDate = startDateElem.value;
+        const endDate = endDateElem.value;
+        const reportType = reportTypeRadio.value;
+
+        if (!startDate || !endDate) {
+            showToast('Selecione o período completo para o relatório.', 'warning');
+            return;
+        }
+
+        const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
+        if (!empresaAtual || !empresaAtual.id) {
+            showToast('Dados da empresa logada não encontrados.', 'error');
+            return;
+        }
+
+        const reportParams = {
+            startDate: startDate,
+            endDate: endDate,
+            supplier: supplierSelectElem.value !== 'todos' ? supplierSelect.value : null,
+            reportType: reportType,
+            companyId: empresaAtual.id ?? '',
+            companyName: empresaAtual.nome ?? 'Nome não encontrado',
+            companyAddress: empresaAtual.endereco ?? '',
+            empresaCnpj: empresaAtual.cnpj ?? ''
+        };
+        
+        console.log("📤 Enviando os seguintes parâmetros para o backend:", reportParams);
+
+        showToast(`Gerando relatório em ${tipo.toUpperCase()}...`, 'info');
+        generatePdfButton.disabled = true;
+        generateXlsButton.disabled = true;
+
+        const runner = google.script.run
+            .withSuccessHandler(function(response) {
+                generatePdfButton.disabled = false;
+                generateXlsButton.disabled = false;
+
+                if (response && response.status === 'success' && response.url) {
+                    const downloadLinkElem = document.getElementById('downloadLink');
+                    const reportPreviewAreaElem = document.getElementById('reportPreviewArea');
+                    downloadLinkElem.href = response.url;
+                    downloadLinkElem.textContent = `Baixar Relatório ${tipo.toUpperCase()}`;
+                    if(reportPreviewAreaElem) reportPreviewAreaElem.classList.remove('hidden');
+                    showToast('Relatório pronto para download!', 'success');
+                } else {
+                    const errorMessage = response ? response.message : 'Resposta inválida do servidor.';
+                    showToast(`Erro ao gerar relatório: ${errorMessage}`, 'error');
+                }
+            })
+            .withFailureHandler(function(error) {
+                console.error(`Erro de comunicação ao gerar relatório ${tipo}:`, error);
+                showToast(`Falha na comunicação com o servidor: ${error.message || error}`, 'error');
+                generatePdfButton.disabled = false;
+                generateXlsButton.disabled = false;
+            });
+
+        if (tipo === 'pdf') {
+            runner.generatePdfReport(reportParams);
+          } else if (tipo === 'xlsx') {
+            runner.generateXlsReport(reportParams);
+        }
+
+    } catch (e) {
+        console.error("Erro no cliente a  o tentar gerar relatório:", e);
+        showToast(`Erro inesperado: ${e.message}`, 'error');
+        //const pdfBtn = document.getElementById('generatePdfButton');
+        //const xlsBtn = document.getElementById('generateXlsButton');
+        //if(pdfBtn) pdfBtn.disabled = false;
+        //if(xlsBtn) xlsBtn.disabled = false;
+    }
+}
+
+/**
  * Função principal para configurar a tela de Relatórios.
  * Ela é chamada como um callback pela função loadPageContent.
  */
 function setupRelatoriosScreen() {
     console.log("--- setupRelatoriosScreen: Iniciando inicialização da tela de relatórios ---");
-
+    
     // Obter referências aos elementos HTML
     const generatePdfButton = document.getElementById('generatePdfButton');
     const generateXlsButton = document.getElementById('generateXlsButton');
     const backToMenuFromReportsButton = document.getElementById('backToMenuFromReportsButton');
-
+    
     // --- LIMPEZA E CONFIGURAÇÃO DOS BOTÕES ---
     // A técnica de clone/replace limpa listeners antigos e garante que a ação seja adicionada.
     if (generatePdfButton) {
@@ -5500,7 +5624,7 @@ function setupRelatoriosScreen() {
         generatePdfButton.parentNode.replaceChild(newBtn, generatePdfButton);
         
        newBtn.addEventListener('click', () => {
-            //console.log("--- CLIQUE no botão PDF detectado! ---");
+            console.log("--- CLIQUE no botão PDF detectado! ---");
             //const message = "SUCESSO! O clique no botão PDF está funcionando e executando o código.";
             //console.log(message);
             //showToast(message, 'success');
@@ -5516,11 +5640,11 @@ function setupRelatoriosScreen() {
         generateXlsButton.parentNode.replaceChild(newBtn, generateXlsButton);
         
         newBtn.addEventListener('click', () => {
-            console.log("--- CLIQUE no botão XLSX detectado! ---");
-            const message = "SUCESSO! O clique no botão XLSX está funcionando e executando o código.";
-            console.log(message);
-            showToast(message, 'success');
-            // gerarRelatorio('xlsx');
+           console.log("--- CLIQUE no botão XLSX detectado! ---");
+            //const message = "SUCESSO! O clique no botão XLSX está funcionando e executando o código.";
+            //console.log(message);
+            //showToast(message, 'success');
+            gerarRelatorio('xlsx');
         });
         console.log("✅ Event listener para Gerar XLSX foi adicionado.");
     }
@@ -5534,23 +5658,25 @@ function setupRelatoriosScreen() {
         console.log("✅ Event listener adicionado ao botão Voltar.");
     }
 
-    // --- LÓGICA DO BOTÃO DE TESTE ---
-    if (testBackendButton) {
-        testBackendButton.addEventListener('click', () => {
-            console.log("🟡 Tentando chamar a função de teste do backend...");
-            showToast("Testando conexão...", "info");
-            google.script.run
-                .withSuccessHandler(response => {
-                    console.log("🟢 SUCESSO! Resposta do backend:", response);
-                    showToast(`Backend respondeu: ${response.message}`, 'success');
-                })
-                .withFailureHandler(error => {
-                    console.error("🔴 FALHA! Erro na comunicação com o backend:", error);
-                    showToast(`Erro no teste: ${error.message}`, 'error');
-                })
-                .testBackendConnection(); // Chama a nova função de teste
-        });
-        console.log("✅ Event listener adicionado ao botão de Teste.");
+    const startDateElem = document.getElementById('startDate');
+    const endDateElem = document.getElementById('endDate');
+
+    if (startDateElem && endDateElem) {
+        const hoje = new Date();
+        const dataAnterior = new Date();
+        dataAnterior.setDate(hoje.getDate() - 30);
+
+        // Função auxiliar para formatar a data no padrão YYYY-MM-DD
+        const formatarData = (data) => {
+            const ano = data.getFullYear();
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const dia = String(data.getDate()).padStart(2, '0');
+            return `${ano}-${mes}-${dia}`;
+        };
+
+        endDateElem.value = formatarData(hoje);
+        startDateElem.value = formatarData(dataAnterior);
+        console.log(`📅 Datas padrão definidas: Início em ${startDateElem.value}, Fim em ${endDateElem.value}`);
     }
 
     // Chamar função para popular o select de fornecedores
@@ -5595,88 +5721,6 @@ function populateSupplierSelectForReports() {
         .getFornecedoresList();
 }
 
-
-/**
- * Coleta os parâmetros do formulário e chama a função de geração de relatório no Apps Script.
- * @param {string} tipo - 'pdf' ou 'xlsx'.
- */
-function gerarRelatorio(tipo) {
-  try {
-        console.log(`--- gerarRelatorio: Função chamada para o tipo ${tipo}. ---`);
-        const startDate = document.getElementById('startDate').value;
-        const endDate = document.getElementById('endDate').value;
-        const supplierSelect = document.getElementById('supplierSelect');
-        const reportType = document.querySelector('input[name="reportType"]:checked').value;
-        const generatePdfButton = document.getElementById('generatePdfButton');
-        const generateXlsButton = document.getElementById('generateXlsButton');
-
-        if (!startDate || !endDate) {
-            showToast('Selecione o período completo para o relatório.', 'warning');
-            return;
-        }
-
-        const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
-        if (!empresaAtual || !empresaAtual.id) {
-            showToast('Dados da empresa logada não encontrados.', 'error');
-            return;
-        }
-
-        const reportParams = {
-            startDate: startDate,
-            endDate: endDate,
-            supplier: supplierSelect.value !== 'todos' ? supplierSelect.value : null,
-            reportType: reportType,
-            companyId: empresaAtual.id ?? '',
-            companyName: empresaAtual.empresa ?? 'Nome não encontrado',
-            companyAddress: empresaAtual.endereco ?? '',
-            empresaCnpj: empresaAtual.cnpj ?? ''
-        };
-        
-        console.log("📤 Enviando os seguintes parâmetros para o backend:", reportParams);
-
-        showToast(`Gerando relatório em ${tipo.toUpperCase()}...`, 'info');
-        generatePdfButton.disabled = true;
-        generateXlsButton.disabled = true;
-
-        const runner = google.script.run
-            .withSuccessHandler(function(response) {
-                generatePdfButton.disabled = false;
-                generateXlsButton.disabled = false;
-
-                if (response && response.status === 'success' && response.url) {
-                    const downloadLinkElem = document.getElementById('downloadLink');
-                    const reportPreviewAreaElem = document.getElementById('reportPreviewArea');
-                    downloadLinkElem.href = response.url;
-                    downloadLinkElem.textContent = `Baixar Relatório ${tipo.toUpperCase()}`;
-                    if(reportPreviewAreaElem) reportPreviewAreaElem.classList.remove('hidden');
-                    showToast('Relatório pronto para download!', 'success');
-                } else {
-                    const errorMessage = response ? response.message : 'Resposta inválida do servidor.';
-                    showToast(`Erro ao gerar relatório: ${errorMessage}`, 'error');
-                }
-            })
-            .withFailureHandler(function(error) {
-                console.error(`Erro de comunicação ao gerar relatório ${tipo}:`, error);
-                showToast(`Falha na comunicação com o servidor: ${error.message || error}`, 'error');
-                generatePdfButton.disabled = false;
-                generateXlsButton.disabled = false;
-            });
-
-        if (tipo === 'pdf') {
-            runner.generatePdfReport(reportParams);
-        } else if (tipo === 'xlsx') {
-            runner.generateXlsReport(reportParams);
-        }
-
-    } catch (e) {
-        console.error("Erro no cliente ao tentar gerar relatório:", e);
-        showToast(`Erro inesperado: ${e.message}`, 'error');
-        const pdfBtn = document.getElementById('generatePdfButton');
-        const xlsBtn = document.getElementById('generateXlsButton');
-        if(pdfBtn) pdfBtn.disabled = false;
-        if(xlsBtn) xlsBtn.disabled = false;
-    }
-}
 
         function setupGerenciarRascunhosScreen() {
             console.log('🔧 Inicializando tela de gerenciamento de rascunhos...');
@@ -6298,13 +6342,13 @@ function gerarRelatorio(tipo) {
 
         function preencherTabelaBusca(pedidos, tbody) {
             console.log('📊 Preenchendo tabela com', pedidos.length, 'pedidos');
-            if (!tbody) return;
-            
+            if (!tbody) return;           
             tbody.innerHTML = '';
             
             pedidos.forEach(pedido => {
+              const numeroPedido = pedido.numeroDoPedido || pedido.numeroPedido || pedido.numero || 'N/A';
                 console.log('📊 Processando pedido:', pedido);
-                
+                             
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50';
                 
@@ -6335,7 +6379,7 @@ function gerarRelatorio(tipo) {
                 }
 
                 // Normalizar campo do número do pedido - aceitar vários formatos possíveis do backend
-                const numeroPedido = pedido.numeroDoPedido || pedido.numeroPedido || pedido.numero || 'N/A';
+                //const numeroPedido = pedido.numeroDoPedido || pedido.numeroPedido || pedido.numero || 'N/A';
 
                 // Verificar se pedido tem dados válidos (evitar mostrar pedidos vazios)
                 if (!numeroPedido || numeroPedido === 'N/A' || !pedido.fornecedor) {
@@ -6949,14 +6993,7 @@ const EdicaoPedido = (function() {
             handleConsultarCnpj();
         }
 
-        function gerarRelatorio(tipo) {
-            showToast(`Gerando relatório ${tipo.toUpperCase()}...`, 'info', 'reportMessage');
-        }
-
-        function carregarFornecedoresRelatorio() {
-            // Implementar carregamento para relatórios
-        }
-
+       
         function carregarListaFornecedores() {
             showToast('Carregando fornecedores...', 'info', 'fornecedorListMessage');
         }
