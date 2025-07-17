@@ -420,7 +420,7 @@
             }
         }
 
-        function loadPageContent(pageName, callback, ...args) {
+       function loadPageContent(pageName, callback, ...args) {
             mainContentArea.innerHTML = `<div class="flex justify-center items-center p-10"><div class="spinner"></div></div>`;
             const pageHtml = getPageTemplate(pageName, ...args);
 
@@ -433,7 +433,8 @@
                  mainContentArea.innerHTML = `<div class="text-center text-red-500 font-bold p-10">Erro: Conteúdo para a página "${pageName}" não encontrado.</div>`;
             }
         }
-        
+
+
         function getPageTemplate(pageName, ...args) {
             const templates = {
                 Menu: `
@@ -1099,6 +1100,9 @@
                                 <button type="button" id="backToMenuFromReportsButton" class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-700">Voltar</button>
                                 <button type="button" id="generatePdfButton" class="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700"><i class="fas fa-file-pdf mr-2"></i>Gerar PDF</button>
                                 <button type="button" id="generateXlsButton" class="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700"><i class="fas fa-file-excel mr-2"></i>Gerar XLSX</button>
+                                <button type="button" id="testBackendButton" class="px-6 py-2 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-600">
+                                    <i class="fas fa-plug mr-2"></i>Testar Backend
+                                </button>
                             </div>
                         </form>
                     </div>`,
@@ -5478,199 +5482,201 @@ function preencherItensContainer(itens) {
     let backToMenuFromReportsButton;
 
     /**
-     * Função principal para configurar a tela de Relatórios.
-     * Chamada quando a tela de relatórios é carregada/ativada.
-     */
-    function setupRelatoriosScreen() {
-      console.log("--- setupRelatoriosScreen: Iniciando inicialização da tela de relatórios ---");
-        // Obter referências aos elementos HTML
-        supplierSelect = document.getElementById('supplierSelect');
-    console.log("supplierSelect:", supplierSelect); // Adicionado
-    startDateInput = document.getElementById('startDate');
-    console.log("startDateInput:", startDateInput); // Adicionado
-    endDateInput = document.getElementById('endDate');
-    console.log("endDateInput:", endDateInput); // Adicionado
-    reportTypeDetailedRadio = document.getElementById('reportTypeDetailed');
-    console.log("reportTypeDetailedRadio:", reportTypeDetailedRadio); // Adicionado
-    reportTypeFinancialRadio = document.getElementById('reportTypeFinancial');
-    console.log("reportTypeFinancialRadio:", reportTypeFinancialRadio); // Adicionado
-    reportMessageElem = document.getElementById('reportMessage');
-    console.log("reportMessageElem:", reportMessageElem); // Adicionado
-    reportPreviewAreaElem = document.getElementById('reportPreviewArea');
-    console.log("reportPreviewAreaElem:", reportPreviewAreaElem); // Adicionado
-    downloadLinkElem = document.getElementById('downloadLink');
-    console.log("downloadLinkElem:", downloadLinkElem); // Adicionado
+ * Função principal para configurar a tela de Relatórios.
+ * Ela é chamada como um callback pela função loadPageContent.
+ */
+function setupRelatoriosScreen() {
+    console.log("--- setupRelatoriosScreen: Iniciando inicialização da tela de relatórios ---");
 
-    generatePdfButton = document.getElementById('generatePdfButton');
-    console.log("generatePdfButton:", generatePdfButton); // Adicionado
-    generateXlsButton = document.getElementById('generateXlsButton');
-    console.log("generateXlsButton:", generateXlsButton); // Adicionado
+    // Obter referências aos elementos HTML
+    const generatePdfButton = document.getElementById('generatePdfButton');
+    const generateXlsButton = document.getElementById('generateXlsButton');
+    const backToMenuFromReportsButton = document.getElementById('backToMenuFromReportsButton');
 
-    backToMenuFromReportsButton = document.getElementById('backToMenuFromReportsButton');
-    console.log("backToMenuFromReportsButton:", backToMenuFromReportsButton); // Adicionado
-
-        // Adicionar Event Listeners
-        if (backToMenuFromReportsButton) {
-        backToMenuFromReportsButton.addEventListener('click', () => {
-            console.log("Botão Voltar Clicado!"); // Adicionado para teste
-            if (typeof loadPageContent === 'function' && typeof setupMenuScreen === 'function') {
-                loadPageContent('Menu', setupMenuScreen);
-            } else {
-                console.warn("Funções de navegação SPA não encontradas para voltar ao menu.");
-            }
-        });
-    } else {
-        console.warn("backToMenuFromReportsButton é NULL!"); // Adicionado
-    }
-
+    // --- LIMPEZA E CONFIGURAÇÃO DOS BOTÕES ---
+    // A técnica de clone/replace limpa listeners antigos e garante que a ação seja adicionada.
     if (generatePdfButton) {
-        generatePdfButton.addEventListener('click', () => {
-            console.log("Botão Gerar PDF Clicado!"); // Adicionado
-            gerarRelatorio('pdf');
+        const newBtn = generatePdfButton.cloneNode(true);
+        generatePdfButton.parentNode.replaceChild(newBtn, generatePdfButton);
+        
+       newBtn.addEventListener('click', () => {
+            //console.log("--- CLIQUE no botão PDF detectado! ---");
+            //const message = "SUCESSO! O clique no botão PDF está funcionando e executando o código.";
+            //console.log(message);
+            //showToast(message, 'success');
+            // Se esta notificação aparecer, o próximo passo é descomentar a linha abaixo
+            // e comentar as 3 linhas acima.
+             gerarRelatorio('pdf'); 
         });
-    } else {
-        console.warn("generatePdfButton é NULL!"); // Adicionado
+        console.log("✅ Event listener para Gerar PDF foi adicionado.");
     }
 
     if (generateXlsButton) {
-        generateXlsButton.addEventListener('click', () => {
-            console.log("Botão Gerar XLSX Clicado!"); // Adicionado
-            gerarRelatorio('xlsx');
+        const newBtn = generateXlsButton.cloneNode(true);
+        generateXlsButton.parentNode.replaceChild(newBtn, generateXlsButton);
+        
+        newBtn.addEventListener('click', () => {
+            console.log("--- CLIQUE no botão XLSX detectado! ---");
+            const message = "SUCESSO! O clique no botão XLSX está funcionando e executando o código.";
+            console.log(message);
+            showToast(message, 'success');
+            // gerarRelatorio('xlsx');
         });
-    } else {
-        console.warn("generateXlsButton é NULL!"); // Adicionado
+        console.log("✅ Event listener para Gerar XLSX foi adicionado.");
     }
 
-
-        // Chamar função para popular o select de fornecedores
-        populateSupplierSelectForReports();
-
-        // Esconder a área de preview no carregamento inicial
-        reportPreviewAreaElem.classList.add('hidden');
-        reportMessageElem.textContent = ''; // Limpa qualquer mensagem anterior
+    if (backToMenuFromReportsButton) {
+        const newBackButton = backToMenuFromReportsButton.cloneNode(true);
+        backToMenuFromReportsButton.parentNode.replaceChild(newBackButton, backToMenuFromReportsButton);
+        newBackButton.addEventListener('click', () => {
+            loadPageContent('Menu', setupMenuScreen);
+        });
+        console.log("✅ Event listener adicionado ao botão Voltar.");
     }
 
-    /**
-     * Popula o select de fornecedores no formulário de relatórios.
-     */
-    function populateSupplierSelectForReports() {
-        // Mostra um toast de carregamento
-        showToast('Carregando...', 'info', 'Buscando lista de fornecedores...');
-
-        google.script.run
-            .withSuccessHandler(function(fornecedores) {
-                supplierSelect.innerHTML = '<option value="todos">Todos os Fornecedores</option>'; // Opção padrão
-                if (fornecedores && fornecedores.length > 0) {
-                    fornecedores.forEach(fornecedor => {
-                        const option = document.createElement('option');
-                        // Use a propriedade 'razao' do objeto fornecedor para valor e texto
-                        option.value = fornecedor.razao; 
-                        option.textContent = fornecedor.razao;
-                        supplierSelect.appendChild(option);
-                    });
-                    showToast('Sucesso!', 'success', 'Lista de fornecedores carregada.');
-                } else {
-                    showToast('Aviso', 'warning', 'Nenhum fornecedor encontrado.');
-                }
-            })
-            .withFailureHandler(function(error) {
-                console.error('Erro ao carregar fornecedores para o relatório:', error);
-                showToast('Erro!', 'error', `Falha ao carregar fornecedores: ${error.message || error}`);
-            })
-            .getFornecedoresList(); // Chame a função que retorna a lista DETALHADA de fornecedores
+    // --- LÓGICA DO BOTÃO DE TESTE ---
+    if (testBackendButton) {
+        testBackendButton.addEventListener('click', () => {
+            console.log("🟡 Tentando chamar a função de teste do backend...");
+            showToast("Testando conexão...", "info");
+            google.script.run
+                .withSuccessHandler(response => {
+                    console.log("🟢 SUCESSO! Resposta do backend:", response);
+                    showToast(`Backend respondeu: ${response.message}`, 'success');
+                })
+                .withFailureHandler(error => {
+                    console.error("🔴 FALHA! Erro na comunicação com o backend:", error);
+                    showToast(`Erro no teste: ${error.message}`, 'error');
+                })
+                .testBackendConnection(); // Chama a nova função de teste
+        });
+        console.log("✅ Event listener adicionado ao botão de Teste.");
     }
 
+    // Chamar função para popular o select de fornecedores
+    populateSupplierSelectForReports();
 
-    /**
-     * Coleta os parâmetros do formulário e chama a função de geração de relatório no Apps Script.
-     * @param {string} tipo - 'pdf' ou 'xlsx'.
-     */
-    function gerarRelatorio(tipo) {
-      console.log(`--- gerarRelatorio: Botão ${tipo} clicado! ---`);
-        reportMessageElem.textContent = ''; // Limpa mensagens
-        reportPreviewAreaElem.classList.add('hidden'); // Esconde link de download anterior
+    // Esconder a área de preview no carregamento inicial
+    const reportPreviewAreaElem = document.getElementById('reportPreviewArea');
+    const reportMessageElem = document.getElementById('reportMessage');
+    if(reportPreviewAreaElem) reportPreviewAreaElem.classList.add('hidden');
+    if(reportMessageElem) reportMessageElem.textContent = '';
+}
 
-        // 1. Coletar os filtros
-        const startDate = startDateInput.value;
-        const endDate = endDateInput.value;
-        const supplier = supplierSelect.value !== 'todos' ? supplierSelect.value : null;
-        const reportType = reportTypeDetailedRadio.checked ? 'detailed' : 'financial';
 
-        // Obter dados da empresa logada (do localStorage)
+/**
+ * Popula o select de fornecedores no formulário de relatórios.
+ */
+function populateSupplierSelectForReports() {
+    showToast('Carregando lista de fornecedores...', 'info');
+    
+    const supplierSelect = document.getElementById('supplierSelect');
+    if (!supplierSelect) return;
+
+    google.script.run
+        .withSuccessHandler(function(fornecedores) {
+            supplierSelect.innerHTML = '<option value="todos">Todos os Fornecedores</option>';
+            if (fornecedores && fornecedores.length > 0) {
+                fornecedores.forEach(fornecedor => {
+                    const option = document.createElement('option');
+                    option.value = fornecedor.razao; 
+                    option.textContent = fornecedor.razao;
+                    supplierSelect.appendChild(option);
+                });
+                showToast('Lista de fornecedores carregada.', 'success');
+            } else {
+                showToast('Nenhum fornecedor encontrado.', 'warning');
+            }
+        })
+        .withFailureHandler(function(error) {
+            console.error('Erro ao carregar fornecedores para o relatório:', error);
+            showToast(`Falha ao carregar fornecedores: ${error.message || error}`, 'error');
+        })
+        .getFornecedoresList();
+}
+
+
+/**
+ * Coleta os parâmetros do formulário e chama a função de geração de relatório no Apps Script.
+ * @param {string} tipo - 'pdf' ou 'xlsx'.
+ */
+function gerarRelatorio(tipo) {
+  try {
+        console.log(`--- gerarRelatorio: Função chamada para o tipo ${tipo}. ---`);
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const supplierSelect = document.getElementById('supplierSelect');
+        const reportType = document.querySelector('input[name="reportType"]:checked').value;
+        const generatePdfButton = document.getElementById('generatePdfButton');
+        const generateXlsButton = document.getElementById('generateXlsButton');
+
+        if (!startDate || !endDate) {
+            showToast('Selecione o período completo para o relatório.', 'warning');
+            return;
+        }
+
         const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
         if (!empresaAtual || !empresaAtual.id) {
-            showToast('Erro!', 'error', 'Dados da empresa logada não encontrados. Faça login novamente.');
+            showToast('Dados da empresa logada não encontrados.', 'error');
             return;
         }
 
         const reportParams = {
             startDate: startDate,
             endDate: endDate,
-            supplier: supplier,
+            supplier: supplierSelect.value !== 'todos' ? supplierSelect.value : null,
             reportType: reportType,
-            companyId: empresaAtual.id, // O ID da empresa para filtrar pedidos
-            companyName: empresaAtual.empresa, // Nome para cabeçalho do relatório (se 'empresa' for a propriedade)
-            companyAddress: empresaAtual.endereO, // Endereço para cabeçalho
-            empresaCnpj: empresaAtual.cnpj // CNPJ para cabeçalho
+            companyId: empresaAtual.id ?? '',
+            companyName: empresaAtual.empresa ?? 'Nome não encontrado',
+            companyAddress: empresaAtual.endereco ?? '',
+            empresaCnpj: empresaAtual.cnpj ?? ''
         };
-
-        // Validação básica (pode ser mais robusta)
-        if (!startDate || !endDate) {
-            reportMessageElem.textContent = 'Por favor, selecione as datas inicial e final.';
-            showToast('Aviso', 'warning', 'Selecione o período completo para o relatório.');
-            return;
-        }
-        if (new Date(startDate) > new Date(endDate)) {
-            reportMessageElem.textContent = 'A data inicial não pode ser posterior à data final.';
-            showToast('Aviso', 'warning', 'Data inicial não pode ser posterior à data final.');
-            return;
-        }
-
-        showToast('Gerando Relatório...', 'info',  `Gerando relatório ${reportType === 'detailed' ? 'Detalhado' : 'Financeiro'} em ${tipo.toUpperCase()}... Isso pode levar alguns segundos.`);
         
-        // Desabilita botões para evitar cliques múltiplos
+        console.log("📤 Enviando os seguintes parâmetros para o backend:", reportParams);
+
+        showToast(`Gerando relatório em ${tipo.toUpperCase()}...`, 'info');
         generatePdfButton.disabled = true;
         generateXlsButton.disabled = true;
 
-        // Chamar a função correta no Apps Script baseado no tipo
-        let googleScriptRunFunction;
-        if (tipo === 'pdf') {
-            googleScriptRunFunction = google.script.run.generatePdfReport;
-        } else if (tipo === 'xlsx') {
-            googleScriptRunFunction = google.script.run.generateXlsReport;
-        } else {
-            showToast('Erro!', 'error', 'Tipo de relatório inválido.');
-            generatePdfButton.disabled = false;
-            generateXlsButton.disabled = false;
-            return;
-        }
-
-        googleScriptRunFunction
-            .withSuccessHandler(function(url) {
-                if (url) {
-                    downloadLinkElem.href = url;
-                    downloadLinkElem.textContent = `Baixar Relatório ${tipo.toUpperCase()}`;
-                    reportPreviewAreaElem.classList.remove('hidden');
-                    reportMessageElem.textContent = 'Relatório gerado com sucesso!';
-                    showToast('Sucesso!', 'success', 'Relatório gerado e pronto para download!');
-                } else {
-                    reportMessageElem.textContent = 'Nenhum URL de relatório retornado.';
-                    showToast('Erro!', 'error', 'URL do relatório não recebida.');
-                }
+        const runner = google.script.run
+            .withSuccessHandler(function(response) {
                 generatePdfButton.disabled = false;
                 generateXlsButton.disabled = false;
+
+                if (response && response.status === 'success' && response.url) {
+                    const downloadLinkElem = document.getElementById('downloadLink');
+                    const reportPreviewAreaElem = document.getElementById('reportPreviewArea');
+                    downloadLinkElem.href = response.url;
+                    downloadLinkElem.textContent = `Baixar Relatório ${tipo.toUpperCase()}`;
+                    if(reportPreviewAreaElem) reportPreviewAreaElem.classList.remove('hidden');
+                    showToast('Relatório pronto para download!', 'success');
+                } else {
+                    const errorMessage = response ? response.message : 'Resposta inválida do servidor.';
+                    showToast(`Erro ao gerar relatório: ${errorMessage}`, 'error');
+                }
             })
             .withFailureHandler(function(error) {
-                console.error(`Erro ao gerar relatório ${tipo}:`, error);
-                reportMessageElem.textContent = `Erro ao gerar relatório: ${error.message || error}`;
-                showToast('Erro!', 'error', `Falha ao gerar relatório: ${error.message || error}`);
+                console.error(`Erro de comunicação ao gerar relatório ${tipo}:`, error);
+                showToast(`Falha na comunicação com o servidor: ${error.message || error}`, 'error');
                 generatePdfButton.disabled = false;
                 generateXlsButton.disabled = false;
-            })
-            .withUserObject(this) // Mantém o contexto para o spinner se você o usar
-            (reportParams); // Passa os parâmetros coletados
-    }
+            });
 
+        if (tipo === 'pdf') {
+            runner.generatePdfReport(reportParams);
+        } else if (tipo === 'xlsx') {
+            runner.generateXlsReport(reportParams);
+        }
+
+    } catch (e) {
+        console.error("Erro no cliente ao tentar gerar relatório:", e);
+        showToast(`Erro inesperado: ${e.message}`, 'error');
+        const pdfBtn = document.getElementById('generatePdfButton');
+        const xlsBtn = document.getElementById('generateXlsButton');
+        if(pdfBtn) pdfBtn.disabled = false;
+        if(xlsBtn) xlsBtn.disabled = false;
+    }
+}
 
         function setupGerenciarRascunhosScreen() {
             console.log('🔧 Inicializando tela de gerenciamento de rascunhos...');
