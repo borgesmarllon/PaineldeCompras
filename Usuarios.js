@@ -96,6 +96,62 @@
       return finalUsername;
     }
 
+function validarLogin(usuario, senha, empresaSelecionada) {
+    try {
+        Logger.log(`[validarLogin] Tentativa de login para usuário: ${usuario}, Empresa: ${empresaSelecionada}`);
+        
+        const userSheet = SpreadsheetApp.getActive().getSheetByName('Usuarios');
+        if (!userSheet || userSheet.getLastRow() < 2) {
+            return { status: 'erro', message: 'Nenhum usuário cadastrado.' };
+        }
+
+        const dadosUsuarios = userSheet.getRange(2, 1, userSheet.getLastRow() - 1, 7).getValues();
+        const senhaDigitadaHash = gerarHash(String(senha));
+
+        for (let i = 0; i < dadosUsuarios.length; i++) {
+            const [id, nome, user, passHashDaPlanilha, perfil, status, empresasStr] = dadosUsuarios[i];
+
+            // 1. Compara o nome de usuário E o HASH da senha.
+            if (String(user).toLowerCase() === String(usuario).toLowerCase() && senhaDigitadaHash === passHashDaPlanilha) {
+                
+                // 2. Verifica se o usuário está ativo.
+                if (String(status).toUpperCase() !== 'ATIVO') {
+                    return { status: 'inativo', message: 'Usuário inativo ou aguardando aprovação.' };
+                }
+
+                // 3. Verifica se o usuário tem permissão para a empresa selecionada.
+                const empresasPermitidas = String(empresasStr || '').split(',').map(e => e.trim());
+                if (!empresasPermitidas.includes(String(empresaSelecionada))) {
+                    return { status: 'erro', message: 'Você não tem permissão para acessar esta empresa.' };
+                }
+
+                // 4. Busca os dados COMPLETOS da empresa, incluindo o endereço.
+                const empresaObjetoCompleto = _getEmpresaDataById(empresaSelecionada);
+                if (!empresaObjetoCompleto) {
+                    return { status: 'erro', message: `Os dados para a empresa ID ${empresaSelecionada} não foram encontrados.` };
+                }
+                
+                // 5. Retorna o objeto de sucesso com todos os dados.
+                Logger.log(`[validarLogin] Login bem-sucedido para ${usuario}.`);
+                return {
+                    status: 'ok',
+                    idUsuario: id,
+                    nomeUsuario: user, // Mantém o nome de usuário original
+                    nome: nome,      // Nome de exibição do usuário
+                    perfil: perfil,
+                    empresa: empresaObjetoCompleto // Objeto completo com id, nome, cnpj e endereco
+                };
+            }
+        }
+
+        // Se o loop terminar sem encontrar uma correspondência
+        return { status: 'erro', message: 'Usuário ou senha inválidos!' };
+
+    } catch (e) {
+        Logger.log(`[validarLogin] ERRO FATAL: ${e.message}`);
+        return { status: 'error', message: `Erro no servidor: ${e.message}` };
+    }
+}
     /**
      * Lista todos os usuários da planilha 'Usuarios'.
      * @returns {Array<Object>} Uma lista de objetos de usuário.
@@ -827,3 +883,141 @@ function gerarHash(senha) {
         return { status: 'error', message: 'Erro interno: ' + error.message };
       }
     }
+
+    /**
+ * Lista todos os usuários com dados formatados para a tela de gerenciamento.
+ * Esta função busca os nomes das empresas para uma exibição mais amigável.
+ * @returns {Array<Object>} Lista de usuários com os dados das empresas processados.
+ */
+function listarUsuariosCompleto() {
+    try {
+        Logger.log("[listarUsuariosCompleto] Iniciando a busca completa de usuários...");
+        const sheet = SpreadsheetApp.getActive().getSheetByName('Usuarios');
+        if (!sheet || sheet.getLastRow() < 2) {
+            Logger.log("[listarUsuariosCompleto] Planilha 'Usuarios' não encontrada ou vazia.");
+            return [];
+        }
+
+        const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 8).getValues();
+        Logger.log(`[listarUsuariosCompleto] Encontrados ${data.length} registros de usuários.`);
+        
+        const empresasMap = _getEmpresasMap();
+
+        const usuariosProcessados = data.map(([id, nome, usuario, senha, perfil, status, empresasStr, empresaPadrao]) => {
+            const empresasIds = empresasStr ? String(empresasStr).split(',').map(e => e.trim()) : [];
+            const empresasNomes = empresasIds.map(id => empresasMap[String(id).trim()] || `Empresa ${id}`);
+            const empresaPadraoId = empresaPadrao ? String(empresaPadrao).trim() : '';
+            const empresaPadraoNome = empresasMap[empresaPadraoId] || '';
+
+            return {
+                id: String(id),
+                nome: String(nome),
+                usuario: String(usuario),
+                perfil: String(perfil),
+                status: String(status),
+                empresas: empresasNomes.join(', '),
+                empresaPadrao: empresaPadraoNome,
+                empresasIds: empresasIds,
+                empresaPadraoId: empresaPadraoId
+            };
+        });
+        
+        if (usuariosProcessados.length > 0) {
+            Logger.log(`[listarUsuariosCompleto] Processamento concluído. Exemplo do primeiro usuário: ${JSON.stringify(usuariosProcessados[0])}`);
+        } else {
+            Logger.log("[listarUsuariosCompleto] Nenhum usuário foi processado.");
+        }
+        
+        return usuariosProcessados;
+
+    } catch (error) {
+        Logger.log(`[listarUsuariosCompleto] ERRO FATAL: ${error.message}. Stack: ${error.stack}`);
+        return []; // Retorna um array vazio em caso de erro.
+    }
+}
+
+
+/**
+ * Função auxiliar para criar um mapa de ID -> Nome da Empresa.
+ * Isso evita ter que ler a planilha de empresas múltiplas vezes.
+ * @returns {Object} Um objeto onde a chave é o ID da empresa e o valor é o nome.
+ */
+function _getEmpresasMap() {
+    const empresasMap = {};
+    try {
+        Logger.log("[_getEmpresasMap] Iniciando a criação do mapa de empresas...");
+        const sheetEmpresas = SpreadsheetApp.getActive().getSheetByName('Empresas');
+        if (sheetEmpresas && sheetEmpresas.getLastRow() >= 2) {
+            const empresasData = sheetEmpresas.getRange(2, 1, sheetEmpresas.getLastRow() - 1, 2).getValues();
+            Logger.log(`[_getEmpresasMap] Encontradas ${empresasData.length} empresas na planilha.`);
+            empresasData.forEach(([id, nome]) => {
+                if (id && nome) {
+                    const cleanId = String(id).trim();
+                    empresasMap[cleanId] = String(nome).trim();
+                }
+            });
+            Logger.log(`[_getEmpresasMap] Mapa de empresas criado com sucesso com ${Object.keys(empresasMap).length} entradas.`);
+        } else {
+            Logger.log("[_getEmpresasMap] Planilha 'Empresas' não encontrada ou vazia.");
+        }
+    } catch(e) {
+        Logger.log(`[_getEmpresasMap] ERRO ao criar mapa de empresas: ${e.message}`);
+    }
+    return empresasMap;
+}
+    function _getEmpresaDataById(empresaId) {
+    try {
+        const companySheet = SpreadsheetApp.getActive().getSheetByName('Empresas');
+        if (!companySheet || companySheet.getLastRow() < 2) {
+            Logger.log("[_getEmpresaDataById] Planilha 'Empresas' não encontrada ou vazia.");
+            return null;
+        }
+
+        const companiesData = companySheet.getDataRange().getValues();
+        const companyHeaders = companiesData[0].map(h => String(h).toUpperCase().trim());
+
+        const idxCompanyId = companyHeaders.indexOf('ID');
+        const idxCompanyName = companyHeaders.indexOf('EMPRESA');
+        const idxCompanyCnpj = companyHeaders.indexOf('CNPJ');
+        const idxCompanyEndereco = companyHeaders.indexOf('ENDEREÇO');
+
+        if (idxCompanyId === -1 || idxCompanyName === -1 || idxCompanyCnpj === -1 || idxCompanyEndereco === -1) {
+            Logger.log("[_getEmpresaDataById] ERRO: Cabeçalhos essenciais (ID, NOME, CNPJ, ENDERECO) não encontrados.");
+            return null;
+        }
+
+        const idProcurado = String(empresaId).trim();
+        Logger.log(`[_getEmpresaDataById] Procurando por Empresa ID: "${idProcurado}"`);
+
+        // Procura pela empresa com o ID correspondente, comparando como texto.
+        const empresaInfo = companiesData.find((row, index) => {
+            if (index === 0) return false; // Pula a linha do cabeçalho
+            
+            const idNaPlanilha = String(row[idxCompanyId]).trim();
+            
+            // LOG DE DIAGNÓSTICO: Mostra o que está sendo comparado.
+            Logger.log(`  -> Linha ${index + 1}: Comparando "${idNaPlanilha}" (planilha) com "${idProcurado}" (login).`);
+
+            // CORREÇÃO: Compara os valores numéricos, o que faz com que 1 seja igual a "001".
+            return parseInt(idNaPlanilha, 10) === parseInt(idProcurado, 10);
+        });
+
+        if (empresaInfo) {
+            const empresa = {
+                id: String(empresaInfo[idxCompanyId]).trim(),
+                nome: empresaInfo[idxCompanyName],
+                cnpj: empresaInfo[idxCompanyCnpj],
+                endereco: empresaInfo[idxCompanyEndereco]
+            };
+            Logger.log(`[_getEmpresaDataById] ✅ Empresa encontrada: ${JSON.stringify(empresa)}`);
+            return empresa;
+        }
+
+        Logger.log(`[_getEmpresaDataById] ❌ Empresa com ID "${idProcurado}" não foi encontrada após varrer a planilha.`);
+        return null;
+
+    } catch (e) {
+        Logger.log(`[getEmpresaDataById] ERRO FATAL: ${e.message}`);
+        return null;
+    }
+}
