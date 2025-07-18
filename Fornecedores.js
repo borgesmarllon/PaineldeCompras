@@ -44,7 +44,7 @@
       return dados.flat().filter(e => e !== '');
     }
 
-    function salvarFornecedor(fornecedor) {
+    /** function salvarFornecedor(fornecedor) {
       try {
         // 1. Limpa o CNPJ, deixando apenas os números
         const cnpjLimpo = String(fornecedor.cnpj).replace(/\D/g, '');
@@ -86,7 +86,8 @@
         "",
         "",
         'INATIVO',
-        fornecedor.estado
+        fornecedor.estado,
+        fornecedor.cidade
       ]);
       return { status: 'INATIVO', message: "Fornecedor salvo com sucesso, solicite a ativação ao administrador!" };
     } catch (e) {
@@ -131,95 +132,117 @@
      * Cria um novo fornecedor ou atualiza um existente de forma segura.
      * VERSÃO CORRIGIDA que não apaga o código ao editar.
      */
-    function adicionarOuAtualizarFornecedor(fornecedorObject) {
-      Logger.log("--- [DIAGNÓSTICO SALVAR] ---");
-      Logger.log("1. Objeto recebido do frontend: " + JSON.stringify(fornecedorObject));
-      
-      try {
+    /**
+ * Adiciona um novo fornecedor ou atualiza um existente com base na presença do 'codigo'.
+ * Esta função é a única porta de entrada para salvar dados do fornecedor.
+ * @param {object} fornecedorObject O objeto de dados enviado pelo frontend.
+ * @returns {object} Um objeto com o status e a mensagem da operação.
+ */
+function adicionarOuAtualizarFornecedor(fornecedorObject) {
+    Logger.log("Iniciando 'adicionarOuAtualizarFornecedor' com dados: " + JSON.stringify(fornecedorObject));
+    
+    try {
         const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Fornecedores");
         if (!sheet) {
-          throw new Error("A planilha 'Fornecedores' não foi encontrada.");
+            throw new Error("A planilha 'Fornecedores' não foi encontrada.");
         }
         
         const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
-                            .map(h => String(h).toUpperCase().trim());
-        Logger.log("2. Cabeçalhos encontrados na planilha: [" + headers.join(', ') + "]");
+        .map(h => String(h).toUpperCase().trim());
 
-        // Função auxiliar para encontrar o índice de uma coluna ou retornar um erro claro
-        const findHeaderIndex = (possibleNames) => {
-          for (const name of possibleNames) {
+        // Função auxiliar para encontrar o índice de uma coluna (mais robusta)
+        const findHeaderIndex = (name) => {
             const index = headers.indexOf(name);
-            if (index !== -1) {
-              return index;
-            }
-            return -1;
-          }
-          throw new Error(`Nenhuma das colunas esperadas (${possibleNames.join(', ')}) foi encontrada. Verifique os cabeçalhos da planilha "Fornecedores".`);
+            if (index === -1) throw new Error(`Coluna essencial '${name}' não encontrada. Verifique o cabeçalho da planilha.`);
+            return index;
         };
 
-        // Adapte os nomes dos cabeçalhos abaixo para corresponderem à sua planilha
-        const indexCodigo = headers.indexOf('ID');
-        const indexRazao = headers.indexOf('RAZAO SOCIAL');
-        const indexFantasia = headers.indexOf('NOME FANTASIA');
-        const indexCnpj = headers.indexOf('CNPJ');
-        const indexEndereco = headers.indexOf('ENDERECO');
-        const indexCondicao = headers.indexOf('CONDICAO DE PAGAMENTO');
-        const indexForma = headers.indexOf('FORMA DE PAGAMENTO');
-        const indexGrupo = headers.indexOf('GRUPO');
-        const indexStatus = headers.indexOf('STATUS');
-        Logger.log(`3. Índices encontrados -> Código: ${indexCodigo}, Razão: ${indexRazao}, Condição: ${indexCondicao}, Forma: ${indexForma}`);
+        // Mapeamento dos índices das colunas pelos nomes exatos nos cabeçalhos
+        const indexCodigo = findHeaderIndex('CÓDIGO'); // Ajuste se o nome for 'ID' ou outro
+        const indexRazao = findHeaderIndex('RAZAO SOCIAL');
+        const indexFantasia = findHeaderIndex('NOME FANTASIA');
+        const indexCnpj = findHeaderIndex('CNPJ');
+        const indexEndereco = findHeaderIndex('ENDERECO');
+        const indexCidade = findHeaderIndex('CIDADE'); // Adicionado
+        const indexEstado = findHeaderIndex('ESTADO'); // Adicionado
+        const indexCondicao = findHeaderIndex('CONDICAO DE PAGAMENTO');
+        const indexForma = findHeaderIndex('FORMA DE PAGAMENTO');
+        const indexGrupo = findHeaderIndex('GRUPO');
+        const indexStatus = findHeaderIndex('STATUS');
 
-        // Validação para garantir que as colunas essenciais foram encontradas
-        if ([indexCodigo, indexRazao, indexFantasia, indexCnpj, indexEndereco, indexCondicao, indexForma, indexGrupo, indexStatus].includes(-1)) {
-            throw new Error("Uma ou mais colunas essenciais não foram encontradas. Verifique os nomes no log acima.");
+        const cnpjLimpo = String(fornecedorObject.cnpj).replace(/\D/g, '');
+        if (cnpjLimpo.length !== 14) {
+            throw new Error("O CNPJ deve conter 14 dígitos.");
         }
-        // Verifica se é uma atualização (se um código foi enviado)
+
+        const allData = sheet.getDataRange().getValues();
+        const cnpjsDaPlanilha = allData.slice(1).map(row => String(row[indexCnpj] || '').replace(/\D/g, ''));
+
+        // --- LÓGICA DE ATUALIZAÇÃO ---
         if (fornecedorObject.codigo) {
-          Logger.log("4. Modo ATUALIZAÇÃO detectado.");
-          // --- LÓGICA DE ATUALIZAÇÃO SEGURA ---
-          const codigos = sheet.getRange(2, indexCodigo + 1, sheet.getLastRow() - 1, 1).getValues().flat();
-          const rowIndexToUpdate = codigos.findIndex(codigo => String(codigo) == String(fornecedorObject.codigo)) + 2;
-          Logger.log(`5. Procurando pelo código "${fornecedorObject.codigo}". Linha encontrada: ${rowIndexToUpdate > 1 ? rowIndexToUpdate : 'NENHUMA'}`);
-
-          if (rowIndexToUpdate > 1) {
-            // Atualiza apenas as células necessárias, preservando o resto da linha
-            sheet.getRange(rowIndexToUpdate, indexRazao + 1).setValue(fornecedorObject.razaoSocial);
-            sheet.getRange(rowIndexToUpdate, indexFantasia + 1).setValue(fornecedorObject.nomeFantasia);
-            sheet.getRange(rowIndexToUpdate, indexCnpj + 1).setValue(fornecedorObject.cnpj);
-            sheet.getRange(rowIndexToUpdate, indexEndereco + 1).setValue(fornecedorObject.endereco);
-            sheet.getRange(rowIndexToUpdate, indexCondicao + 1).setValue(fornecedorObject.condicaoPagamento);
-            sheet.getRange(rowIndexToUpdate, indexForma + 1).setValue(fornecedorObject.formaPagamento);
-            sheet.getRange(rowIndexToUpdate, indexGrupo + 1).setValue(fornecedorObject.grupo);
+            Logger.log(`Modo ATUALIZAÇÃO para o código: ${fornecedorObject.codigo}`);
             
-            return { status: 'ok', message: 'Fornecedor atualizado com sucesso!' };
-          } else {
-            return { status: 'error', message: 'Fornecedor para atualização não encontrado.' };
-          }
+            // Verifica se o CNPJ já existe EM OUTRO fornecedor
+            const codigosDaPlanilha = allData.slice(1).map(row => String(row[indexCodigo]));
+            const indexDoCodigoAtual = codigosDaPlanilha.indexOf(String(fornecedorObject.codigo));
 
+            cnpjsDaPlanilha.forEach((cnpj, index) => {
+                if (cnpj === cnpjLimpo && index !== indexDoCodigoAtual) {
+                    throw new Error("Este CNPJ já está cadastrado para outro fornecedor.");
+                }
+            });
+
+            const rowIndexToUpdate = indexDoCodigoAtual + 2; // +1 porque slice(1) e +1 porque planilhas começam em 1
+            if (rowIndexToUpdate > 1) {
+                sheet.getRange(rowIndexToUpdate, indexRazao + 1).setValue(fornecedorObject.razaoSocial);
+                sheet.getRange(rowIndexToUpdate, indexFantasia + 1).setValue(fornecedorObject.nomeFantasia);
+                sheet.getRange(rowIndexToUpdate, indexCnpj + 1).setValue(fornecedorObject.cnpj);
+                sheet.getRange(rowIndexToUpdate, indexEndereco + 1).setValue(fornecedorObject.endereco);
+                sheet.getRange(rowIndexToUpdate, indexCidade + 1).setValue(fornecedorObject.cidade);
+                sheet.getRange(rowIndexToUpdate, indexEstado + 1).setValue(fornecedorObject.estado);
+                sheet.getRange(rowIndexToUpdate, indexCondicao + 1).setValue(fornecedorObject.condicaoPagamento);
+                sheet.getRange(rowIndexToUpdate, indexForma + 1).setValue(fornecedorObject.formaPagamento);
+                sheet.getRange(rowIndexToUpdate, indexGrupo + 1).setValue(fornecedorObject.grupo);
+                
+                return { status: 'ok', message: 'Fornecedor atualizado com sucesso!' };
+            } else {
+                throw new Error('Fornecedor para atualização não encontrado com o código fornecido.');
+            }
+
+        // --- LÓGICA DE CRIAÇÃO ---
         } else {
-          // --- LÓGICA DE CRIAÇÃO ---
-          const ids = sheet.getRange(2, indexCodigo + 1, sheet.getLastRow() - 1, 1).getValues().flat().map(id => parseInt(id)).filter(n => !isNaN(n));
-          const novoId = ids.length ? Math.max(...ids) + 1 : 1;
-          
-          const newRowData = [];
-          newRowData[indexCodigo] = "'" + novoId;
-          newRowData[indexRazao] = fornecedorObject.razaoSocial;
-          newRowData[indexFantasia] = fornecedorObject.nomeFantasia;
-          newRowData[indexCnpj] = fornecedorObject.cnpj;
-          newRowData[indexEndereco] = fornecedorObject.endereco;
-          newRowData[indexCondicao] = fornecedorObject.condicaoPagamento;
-          newRowData[indexForma] = fornecedorObject.formaPagamento;
-          newRowData[indexGrupo] = fornecedorObject.grupo;
-          if (indexStatus > -1) newRowData[indexStatus] = 'Ativo';
-
-          sheet.appendRow(newRowData);
-          return { status: 'ok', message: 'Fornecedor adicionado com sucesso!' };
+            Logger.log("Modo CRIAÇÃO de novo fornecedor.");
+            // Verifica se o CNPJ já existe
+            if (cnpjsDaPlanilha.includes(cnpjLimpo)) {
+                throw new Error("Já existe um fornecedor cadastrado com este CNPJ!");
+            }
+            
+            const codigosNumericos = allData.slice(1)
+                                            .map(row => parseInt(row[indexCodigo]))
+                                            .filter(n => !isNaN(n));
+            const novoCodigo = codigosNumericos.length ? Math.max(...codigosNumericos) + 1 : 1;
+            
+            const newRowData = [];
+            newRowData[indexCodigo] = "'" + novoCodigo; // Formata como texto para evitar problemas
+            newRowData[indexRazao] = fornecedorObject.razaoSocial;
+            newRowData[indexFantasia] = fornecedorObject.nomeFantasia;
+            newRowData[indexCnpj] = fornecedorObject.cnpj;
+            newRowData[indexEndereco] = fornecedorObject.endereco;
+            newRowData[indexCidade] = fornecedorObject.cidade;
+            newRowData[indexEstado] = fornecedorObject.estado;
+            newRowData[indexCondicao] = fornecedorObject.condicaoPagamento;
+            newRowData[indexForma] = fornecedorObject.formaPagamento;
+            newRowData[indexGrupo] = fornecedorObject.grupo || ''; // Garante que não seja undefined
+            newRowData[indexStatus] = 'ATIVO'; // Ou 'INATIVO' se preferir um fluxo de aprovação
+            
+            sheet.appendRow(newRowData);
+            return { status: 'ok', message: 'Fornecedor adicionado com sucesso!' };
         }
-      } catch (e) {
-        Logger.log("Erro em adicionarOuAtualizarFornecedor: " + e.message);
-        return { status: 'error', message: 'Erro ao salvar o fornecedor.' };
-      }
+    } catch (e) {
+        Logger.log("ERRO em 'adicionarOuAtualizarFornecedor': " + e.message);
+        return { status: 'error', message: e.message }; // Retorna a mensagem de erro específica para o usuário
     }
+}
 
     /**
      * Exclui um fornecedor da planilha.
@@ -243,52 +266,59 @@
     }
 
     /**
-     * Altera o status de um fornecedor para 'Inativo' na planilha.
-     * @param {string} codigoFornecedor - O código do fornecedor a ser inativado.
-     * @returns {object} Um objeto com o status da operação.
-     */
-    function alternarStatusFornecedor(codigoFornecedor) {
-      Logger.log("alternarStatusFornecedor - codigoFornecedor recebido: " + codigoFornecedor)
-      if (!codigoFornecedor) {
-        return { status: 'error', message: 'Código do fornecedor não fornecido.' };
-      }
-
-      try {
-        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Fornecedores");
-        if (!sheet) {
-          throw new Error('Planilha "Fornecedores" não encontrada.');
-        }
-
-        const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-        
-        const indexCodigo = headers.findIndex(h => ['CODIGO', 'ID'].includes(h.toUpperCase()));
-        const indexStatus = headers.findIndex(h => h.toUpperCase() === 'STATUS');
-
-        if (indexCodigo === -1 || indexStatus === -1) {
-          throw new Error('Coluna "Codigo" ou "Status" não encontrada na planilha "Fornecedores".');
-        }
-
-        const codigos = sheet.getRange(2, indexCodigo + 1, sheet.getLastRow() - 1, 1).getValues().flat();
-        const rowIndexToUpdate = codigos.findIndex(codigo => parseInt(codigo) === parseInt(codigoFornecedor)) + 2;
-
-        if (rowIndexToUpdate > 1) {
-          const statusCell = sheet.getRange(rowIndexToUpdate, indexStatus + 1);
-          const statusAtual = statusCell.getValue().toString().trim().toUpperCase();
-          
-          // Lógica do "interruptor"
-          const novoStatus = (statusAtual === 'ATIVO') ? 'Inativo' : 'Ativo';
-          
-          statusCell.setValue(novoStatus);
-          
-          return { status: 'ok', message: `Fornecedor definido como '${novoStatus}' com sucesso!` };
-        } else {
-          return { status: 'error', message: 'Fornecedor não encontrado para alterar o status.' };
-        }
-      } catch (e) {
-        Logger.log("Erro em alternarStatusFornecedor: " + e.message);
-        return { status: 'error', message: 'Erro ao alterar o status do fornecedor.' };
-      }
+ * Altera o status de um fornecedor entre 'ATIVO' e 'INATIVO'.
+ * Esta versão é robusta e contém tratamento de erro para nunca retornar 'null'.
+ * @param {string} codigoFornecedor - O código do fornecedor a ser alterado.
+ * @returns {object} Um objeto com o status da operação e o novo status do fornecedor.
+ */
+function alternarStatusFornecedor(codigoFornecedor) {
+  // Bloco try...catch para garantir que um objeto sempre seja retornado.
+  try {
+    if (!codigoFornecedor) {
+      throw new Error('Código do fornecedor não foi fornecido.');
     }
+
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Fornecedores");
+    if (!sheet) {
+      throw new Error('Planilha "Fornecedores" não encontrada.');
+    }
+
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).toUpperCase().trim());
+    
+    // Usando 'ID' como você confirmou
+    const indexCodigo = headers.indexOf('ID');
+    const indexStatus = headers.indexOf('STATUS');
+
+    if (indexCodigo === -1 || indexStatus === -1) {
+      throw new Error('Coluna "ID" ou "STATUS" não encontrada.');
+    }
+
+    const codigos = sheet.getRange(2, indexCodigo + 1, sheet.getLastRow() - 1, 1).getValues().flat();
+    const rowIndexToUpdate = codigos.findIndex(codigo => String(codigo) == String(codigoFornecedor)) + 2;
+
+    if (rowIndexToUpdate > 1) {
+      const statusCell = sheet.getRange(rowIndexToUpdate, indexStatus + 1);
+      const statusAtual = statusCell.getValue().toString().trim().toUpperCase();
+      
+      const novoStatus = (statusAtual === 'ATIVO') ? 'INATIVO' : 'ATIVO';
+      statusCell.setValue(novoStatus);
+      
+      // Retorno de sucesso
+      return { 
+        status: 'ok', 
+        message: `Fornecedor definido como '${novoStatus}'.`,
+        novoStatus: novoStatus 
+      };
+    } else {
+      // Retorno de erro controlado
+      return { status: 'error', message: 'Fornecedor não encontrado.' };
+    }
+  } catch (e) {
+    Logger.log("ERRO em alternarStatusFornecedor: " + e.message);
+    // Retorno de erro de exceção
+    return { status: 'error', message: 'Erro no servidor: ' + e.message };
+  }
+}
 
     /**
      * Consulta um CNPJ em uma API externa e retorna os dados da empresa.
@@ -315,14 +345,25 @@
           // 4. Se a resposta for bem-sucedida, analisa os dados
           const dadosApi = JSON.parse(responseText);
           
+          const partesEndereco = [
+                dadosApi.logradouro,
+                dadosApi.numero,
+                dadosApi.bairro,
+                dadosApi.complemento
+            ].filter(Boolean); // O .filter(Boolean) remove itens nulos, vazios ou undefined da lista
+
+            // Junta as partes existentes com uma formatação limpa
+            const enderecoFormatado = partesEndereco.join(', ');
+
           // 5. Retorna um objeto limpo e padronizado
           return {
             status: 'ok',
             data: {
               razaoSocial: dadosApi.razao_social,
               nomeFantasia: dadosApi.nome_fantasia,
-              endereco: `${dadosApi.logradouro}, ${dadosApi.numero}. ${dadosApi.bairro}`,
-              uf: dadosApi.uf
+              endereco: enderecoFormatado,
+              uf: dadosApi.uf,
+              cidade: dadosApi.municipio
               // Adicione outros campos que desejar
             }
           };
@@ -336,6 +377,7 @@
         return { status: 'error', message: 'Erro ao consultar o CNPJ. Verifique o console do servidor.' };
       }
     }
+
 
     function getEstados() {
       const sheet = SpreadsheetApp.getActive().getSheetByName('Config');
@@ -359,3 +401,148 @@
           text: String(nome).trim()
         }));
     }
+
+    /**
+     * Retorna uma lista de fornecedores (razão social) para preencher o dropdown de pedidos.
+     * @returns {Array<Object>} Uma lista de objetos { codigo: string, razao: string, cnpj: string, endereco: string, condicao: string, forma: string }.
+     */
+    function getFornecedoresList() {
+      const sheet = SpreadsheetApp.getActive().getSheetByName('Fornecedores');
+
+      if (!sheet || sheet.getLastRow() < 2) return [];
+      const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues();
+
+      // Encontra o índice da coluna "Status"
+      const indexStatus = headers.findIndex(h => h.toUpperCase() === 'STATUS');
+
+      const fornecedores = data
+        // FILTRA para incluir apenas os que têm status "Ativo"
+        .filter(row => indexStatus === -1 || String(row[indexStatus]).trim().toUpperCase() === 'ATIVO')
+        .map(row => {
+
+      const [codigo, razao, fantasia, cnpj, endereco, condicao, forma, idEmpresa, grupo, status, estado, cidade] = row;
+      return {
+        codigo: String(codigo),
+        razao: String(razao),
+        fantasia: String(fantasia),
+        cnpj: String(cnpj),
+        endereco: String(endereco),
+        condicao: String(condicao),
+        forma: String(forma),
+        grupo: String(grupo || '').trim().toUpperCase(),
+        estado: String(estado || ''),
+        cidade: String(cidade || '')
+        };
+      });
+
+      return fornecedores;
+    } 
+
+    /**
+ * Retorna uma lista otimizada de fornecedores para a tela de Gerenciamento,
+ * contendo apenas os campos necessários (código, nomes, cnpj, grupo, status).
+ * @returns {Array<Object>} Uma lista de objetos de fornecedor.
+ */
+function getFornecedoresParaGerenciamento() {
+  try {
+    const sheet = SpreadsheetApp.getActive().getSheetByName('Fornecedores');
+    if (!sheet || sheet.getLastRow() < 2) {
+      return [];
+    }
+
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).toUpperCase().trim());
+    
+    const indexCodigo = headers.indexOf('ID');
+    const indexRazao = headers.indexOf('RAZAO SOCIAL');
+    const indexFantasia = headers.indexOf('NOME FANTASIA');
+    const indexCnpj = headers.indexOf('CNPJ');
+    const indexGrupo = headers.indexOf('GRUPO');
+    const indexStatus = headers.indexOf('STATUS');
+
+    if (indexCodigo === -1 || indexStatus === -1) {
+      throw new Error("Coluna 'CÓDIGO' ou 'STATUS' não encontrada para a tela de gerenciamento.");
+    }
+
+    const allData = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues();
+
+    // Nota: Removi o filtro de 'ATIVO' daqui para que a tela de gerenciamento
+    // possa mostrar TODOS os fornecedores e permitir ativar/desativar.
+    const fornecedores = allData.map(row => {
+      return {
+        codigo: row[indexCodigo],
+        razaoSocial: row[indexRazao],
+        nomeFantasia: row[indexFantasia],
+        cnpj: row[indexCnpj],
+        grupo: row[indexGrupo],
+        status: row[indexStatus]
+      };
+    });
+
+    return fornecedores;
+
+  } catch (e) {
+    Logger.log("ERRO em getFornecedoresParaGerenciamento: " + e.message);
+    return []; 
+  }
+}
+
+/**
+ * Busca um fornecedor específico pelo seu código e retorna todos os seus dados.
+ * @param {string} codigo - O código/ID do fornecedor a ser buscado.
+ * @returns {object | null} Um objeto com os dados do fornecedor ou null se não for encontrado.
+ */
+function obterFornecedorPorCodigo(codigo) {
+  try {
+    // Validação inicial
+    if (!codigo) {
+      throw new Error("O código do fornecedor não foi fornecido para a busca.");
+    }
+
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Fornecedores");
+    if (!sheet) {
+      throw new Error("Planilha 'Fornecedores' não encontrada.");
+    }
+
+    // Pega todos os cabeçalhos e dados da planilha
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues();
+    
+    // Encontra o índice da coluna de código (usando 'ID' como confirmado)
+    const indexCodigo = headers.map(h => String(h).toUpperCase().trim()).indexOf('ID');
+    if (indexCodigo === -1) {
+      throw new Error("A coluna de cabeçalho 'ID' não foi encontrada na planilha.");
+    }
+
+    // Procura pela linha que corresponde ao código fornecido
+    const rowEncontrada = data.find(row => String(row[indexCodigo]) == String(codigo));
+
+    // Se encontrou a linha, monta o objeto de resposta
+    if (rowEncontrada) {
+      const fornecedor = {};
+      
+      // Mapeia dinamicamente os cabeçalhos para as propriedades do objeto
+      // Isso torna a função flexível a novas colunas no futuro
+      headers.forEach((header, index) => {
+        // Converte nomes como 'RAZAO SOCIAL' para 'razaoSocial' (camelCase)
+        const key = String(header).trim().toLowerCase()
+                                .replace(/ \(\w+\)/g, '') // remove (ex)
+                                .replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
+        
+        fornecedor[key] = rowEncontrada[index];
+      });
+      
+      Logger.log("Fornecedor encontrado para edição: " + JSON.stringify(fornecedor));
+      return fornecedor; // Retorna o objeto completo com os dados do fornecedor
+
+    } else {
+      // Se não encontrou o fornecedor, retorna null
+      Logger.log("Nenhum fornecedor encontrado com o código: " + codigo);
+      return null;
+    }
+
+  } catch (e) {
+    Logger.log("Erro em obterFornecedorPorCodigo: " + e.message);
+    return null; // Retorna null também em caso de qualquer erro
+  }
+}
