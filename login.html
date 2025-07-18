@@ -279,7 +279,7 @@
         <!-- =============================================== -->
         <!-- TELA DE CADASTRO DE USUÁRIO                     -->
         <!-- =============================================== -->
-        <div id="screen-cadastro" class="screen">
+  <!--->      <div id="screen-cadastro" class="screen">
              <div class="max-w-7xl mx-auto">
                   <div class="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
                       <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">Gerenciar Usuários</h2>
@@ -303,7 +303,7 @@
           </div>
 
           <!-- Modal de Empresas -->
-          <div id="modal-empresas-container" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-hidden modal-container">
+  <!--->        <div id="modal-empresas-container" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-hidden modal-container">
               <div class="absolute inset-0 bg-black/60 modal-overlay"></div>
               <div class="relative w-full max-w-lg bg-white rounded-2xl shadow-xl modal-panel">
                   <div class="p-6">
@@ -323,7 +323,7 @@
           </div>
           
           <!-- Modal de Auditoria -->
-          <div id="modal-audit-container" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-hidden modal-container">
+  <!--->        <div id="modal-audit-container" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-hidden modal-container">
               <div class="absolute inset-0 bg-black/60 modal-overlay"></div>
               <div class="relative w-full max-w-lg bg-white rounded-2xl shadow-xl modal-panel">
                   <div class="p-6">
@@ -336,6 +336,7 @@
                   <div class="flex justify-end gap-4 p-4 bg-gray-50 rounded-b-2xl"><button class="modal-cancel-btn px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100">Fechar</button></div>
               </div>
           </div>
+         
 
         <!-- =============================================== -->
         <!-- TELA PRINCIPAL (após o login)                   -->
@@ -419,7 +420,7 @@
                 console.error(`Tela com ID "${screenId}" não encontrada.`);
             }
         }
-
+        
        function loadPageContent(pageName, callback, ...args) {
             mainContentArea.innerHTML = `<div class="flex justify-center items-center p-10"><div class="spinner"></div></div>`;
             const pageHtml = getPageTemplate(pageName, ...args);
@@ -467,8 +468,8 @@
                              </div>
                         </div>
                     </div>`,
-                GerenciarUsuarios: `
-                    <div class="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+                GerenciarUsuarios: `                    
+                     <div class="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
                         <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">Gerenciar Usuários</h2>
                         <p class="text-center text-gray-500 mb-6">Controle de acesso, status e auditoria dos usuários.</p>
                         <p id="userManagementMessage" class="text-center text-sm font-medium min-h-[20px] mb-4 transition-opacity duration-300"></p>
@@ -572,6 +573,10 @@
                                     <option value="">Carregando estados...</option>
                                 </select>
                             </div>
+                            <div>
+                                <label for="cidade" class="block text-sm font-medium text-gray-700">Cidade</label>
+                                <input type="text" id="cidade" name="cidade" required placeholder="Cidade do fornecedor" class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm">
+                            </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label for="condicao" class="block text-sm font-medium text-gray-700">Condição de Pagamento</label>
@@ -580,7 +585,16 @@
                                 <div>
                                     <label for="forma" class="block text-sm font-medium text-gray-700">Forma de Pagamento</label>
                                     <select id="forma" name="forma" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md"></select>
-                                </div>
+                                </div>                              
+                            </div>
+                            <div>
+                            <div id="grupo-container" class="hidden">
+                                <label for="grupo" class="block text-sm font-medium text-gray-700">Grupo do Fornecedor</label>
+                                <select id="grupo" name="grupo" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md">
+                                          <option value="OBRIGATORIO">OBRIGATORIO</option>
+                                          <option value="LIVRE">LIVRE</option>
+                                </select>
+                            </div>
                             </div>
                             <p id="msgFornecedor" class="text-center text-sm font-medium min-h-[20px]"></p>
                             <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
@@ -695,6 +709,10 @@
                                                 <label for="itemDescricao" class="block text-sm font-medium text-gray-700">Descrição do Item</label>
                                                 <input type="text" id="itemDescricao" name="itemDescricao" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="Ex: Óleo Motor 15W40">
                                             </div>
+                                            <div class="md:col-span-2">
+                                                <label for="CodigoFornecedor" class="block text-sm font-medium text-gray-700">Código Produto Fornecedor</label>
+                                                <input type="text" id="produtoFornecedor" name="produtoFornecedor" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="Ex: S100037">
+                                            </div>
                                             <div>
                                                 <label for="itemQuantidade" class="block text-sm font-medium text-gray-700">Qtd.</label>
                                                 <input type="number" id="itemQuantidade" name="itemQuantidade" value="1" min="0.01" step="0.01" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
@@ -731,6 +749,7 @@
                                             <thead class="bg-gray-50">
                                                 <tr>
                                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cod. Forn.</th>
                                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Qtd.</th>
                                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Unid.</th>
                                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Vl. Unit.</th>
@@ -3087,12 +3106,15 @@ function preencherItensContainer(itens) {
     function setupGerenciarUsuariosScreen() {
     console.log("--- setupGerenciarUsuariosScreen: Iniciando inicialização da tela de gerenciamento de usuários ---");
     
-    // Dados que serão carregados do backend
-    let allUsers = [];
+     //Dados que serão carregados do backend
+    let allUsers = [{ nome: "João", status: "Ativo", empresas: "Empresa X" },
+      { nome: "Maria", status: "Inativo", empresas: "Empresa Y" }];
     let empresasDisponiveis = [];
     let auditDataCache = {};
+    const usersTableBody = document.getElementById('usersTableBody');
+    if (!usersTableBody) return;
 
-    // ===============================================
+        // ===============================================
     // FUNÇÕES DE CARREGAMENTO DE DADOS
     // ===============================================
 
@@ -3150,7 +3172,7 @@ function preencherItensContainer(itens) {
             })
             .obterDadosAuditoria(userId);
     }
-    
+
     // ===============================================
     // ELEMENTOS DO DOM
     // ===============================================
@@ -3160,12 +3182,12 @@ function preencherItensContainer(itens) {
         empresas: document.getElementById('modal-empresas-container'),
         audit: document.getElementById('modal-audit-container')
     };
-
+  
     // ===============================================
     // FUNÇÕES DE RENDERIZAÇÃO E UI
     // ===============================================
 
-    function renderUsersTable() {
+     function renderUsersTable() {
         const tableBody = document.getElementById('usersTableBody');
         if (!tableBody) {
             console.error("Elemento 'usersTableBody' não encontrado no DOM.");
@@ -3392,7 +3414,9 @@ function preencherItensContainer(itens) {
             // Carrega dados reais do backend na inicialização
             loadUsersFromBackend();
             loadEmpresasFromBackend();
-        }
+         
+            
+       }
 
         // ===============================================
         // LÓGICA DA PÁGINA DE NOVO PEDIDO
@@ -4731,7 +4755,8 @@ function preencherItensContainer(itens) {
                         quantidade: item.quantidade,
                         unidade: item.unidade,
                         precoUnitario: item.precoUnitario,
-                        totalItem: item.subtotal
+                        totalItem: item.subtotal,
+                        produtoFornecedor: item.produtoFornecedor
                     });
                 });
             }
@@ -4843,7 +4868,8 @@ function preencherItensContainer(itens) {
                         observacoes: document.getElementById('observacoesPedido')?.value || '',
                         empresaId: idDaEmpresa,
                         totalGeral: totalGeral, // Incluir o total geral calculado
-                        itens: itens
+                        itens: itens,
+                        produtoFornecedor: produtoFornecedor
                     };
                     
                     // Forçar atribuição se por algum motivo não funcionou
@@ -4966,7 +4992,8 @@ function preencherItensContainer(itens) {
                 quantidade: item.quantidade,
                 unidade: item.unidade,
                 precoUnitario: item.precoUnitario,
-                totalItem: item.subtotal
+                totalItem: item.subtotal,
+                produtoFornecedor: item.produtoFornecedor
             }));
 
             const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
@@ -5009,7 +5036,8 @@ function preencherItensContainer(itens) {
                 itens: itens,
                 totalGeral : totalGeral,
                 status: 'RASCUNHO',
-                dataUltimaEdicao: obterDataHoraLocal()
+                dataUltimaEdicao: obterDataHoraLocal(),
+                produtoFornecedor: produtoFornecedor
             };
             
             // Se estiver editando, incluir o ID do rascunho
@@ -5085,14 +5113,14 @@ function preencherItensContainer(itens) {
         // ===============================================
         // LÓGICA DA PÁGINA DE CADASTRO DE FORNECEDOR
         // ===============================================
-        function setupCadastroFornecedorScreen() {
-            // Guarda de proteção (garanta que o ID corresponde ao seu container principal)
+        function setupCadastroFornecedorScreen(codigoFornecedor) {
+            // Guarda de proteção
             if (!document.getElementById('form-fornecedor')) {
                 console.warn('Formulário de fornecedor não encontrado');
                 return;
             }
-            
-            console.log("Inicializando a página de Cadastro de Fornecedor...");
+            const grupoContainer = document.getElementById('grupo-container');
+            console.log("Inicializando a página de Cadastro/Edição de Fornecedor...");
 
             // --- CONFIGURAÇÃO DOS BOTÕES PRINCIPAIS ---
             const saveButton = document.getElementById('saveButton');
@@ -5100,40 +5128,38 @@ function preencherItensContainer(itens) {
             const consultarCnpjBtn = document.getElementById('consultarCnpjBtn');
 
             if (saveButton) {
-                saveButton.addEventListener('click', salvarFornecedor);
+                saveButton.onclick = function(e) {
+                    e.preventDefault();
+                    salvarFornecedor(codigoFornecedor);
+                };
             }
-            
+
             if (cancelButton) {
-                cancelButton.addEventListener('click', () => {
-                    loadPageContent('Menu', setupMenuScreen);
-                });
+                cancelButton.onclick = function() {
+                    loadPageContent('GerenciarFornecedores', setupGerenciarFornecedoresScreen);
+                };
             }
 
             if (consultarCnpjBtn) {
                 consultarCnpjBtn.addEventListener('click', handleConsultarCnpj);
             }
 
-            // Carregar dados iniciais
+            // Carregar combos e estados
             preencherCombosFornecedor();
             carregarEstados();
 
-            // --- LÓGICA PARA FORÇAR MAIÚSCULAS ---
-            // Aplica a regra para todos os inputs de texto e textareas
+            const form = document.getElementById('form-fornecedor');
+            // --- Força maiúsculas nos campos texto ---
             document.querySelectorAll('#form-fornecedor input[type="text"], #form-fornecedor textarea').forEach(input => {
-                // Adiciona o "ouvinte" para o evento 'blur' (quando o usuário sai do campo)
                 input.addEventListener('blur', forceUppercase);
             });
 
-            // --- LÓGICA UNIFICADA PARA O CAMPO CNPJ ---
+            // --- Máscara e validação do CNPJ ---
             const cnpjInput = document.getElementById('cnpj');
-
             if (cnpjInput) {
-                // Listener 1: Máscara automática enquanto o usuário digita
                 cnpjInput.addEventListener('input', (e) => {
                     e.target.value = formatarCpfCnpj(e.target.value);
                 });
-
-                // Listener 2: Validação visual quando o usuário sai do campo
                 cnpjInput.addEventListener('blur', (e) => {
                     const cnpjDigitado = e.target.value;
                     if (cnpjDigitado) {
@@ -5141,10 +5167,78 @@ function preencherItensContainer(itens) {
                         e.target.classList.toggle('valid', isValid);
                         e.target.classList.toggle('invalid', !isValid);
                     } else {
-                        // Limpa as classes se o campo estiver vazio
                         e.target.classList.remove('valid', 'invalid');
                     }
                 });
+            }
+
+            // --- Limpa campos ou carrega dados para edição ---
+            if (codigoFornecedor) {
+              console.log("Modo Edição: Mostrando campo 'Grupo'");
+                //if (grupoContainer) grupoContainer.classList.remove('hidden'); // MOSTRA O CAMPO
+                showToast('Carregando dados do fornecedor...', 'info');
+                google.script.run
+                    .withSuccessHandler(fornecedor => {
+                        if (fornecedor) {
+                            console.log("DADOS DO FORNECEDOR RECEBIDOS:", fornecedor); 
+                            document.getElementById('codigo').value   = fornecedor.id   || '';
+                            console.log("Codigo preenchido com:", fornecedor.id);
+                            document.getElementById('razao').value    = fornecedor.razaoSocial  || '';
+                            console.log("Razap Social preenchido com:", fornecedor.razaoSocial);
+                            document.getElementById('fantasia').value = fornecedor.nomeFantasia || '';
+                            console.log("fantasia preenchido com:", fornecedor.nomeFantasia);
+                            document.getElementById('cnpj').value     = fornecedor.cnpj     || '';
+                            console.log("CNPJ preenchido com:", fornecedor.cnpj);
+                            document.getElementById('endereco').value = fornecedor.endereco || '';
+                            console.log("Endereço preenchido com:", fornecedor.endereco);
+                            document.getElementById('estado').value   = fornecedor.estado   || '';
+                            console.log("estado preenchido com:", fornecedor.estado);
+                            document.getElementById('cidade').value = fornecedor.cidade     || '';
+                            console.log("cidade preenchido com:", fornecedor.cidade);
+                            document.getElementById('condicao').value = fornecedor.condicaoDePagamento || '';
+                            console.log("condicao preenchido com:", fornecedor.condicaoDePagamento);
+                            document.getElementById('forma').value    = fornecedor.formaDePagamento || '';
+                            console.log("forma preenchido com:", fornecedor.formaDePagamento);
+                            document.getElementById('grupo').value    = fornecedor.grupo || '';
+                            console.log("grupo preenchido com:", fornecedor.grupo);
+
+                            const grupoContainer = document.getElementById('grupo-container');
+                            if (grupoContainer) {
+                                grupoContainer.classList.remove('hidden');
+                            }
+
+                        } else {
+                            showToast('Fornecedor não encontrado!', 'error');
+                        }
+                    })
+                    .withFailureHandler(err => {
+                        showToast('Erro ao carregar fornecedor', 'error');
+                    })
+                    .obterFornecedorPorCodigo(codigoFornecedor);
+            } else {
+                 // ***** MODO NOVO CADASTRO *****
+                // Se nenhum código foi passado, estamos criando um novo.
+
+                // 1. Limpa todos os campos do formulário
+                if (form) form.reset();
+                
+                // 2. Garante que o campo 'grupo' esteja escondido
+                const grupoContainer = document.getElementById('grupo-container');
+                if (grupoContainer) grupoContainer.classList.add('hidden');
+
+                // 3. AGORA SIM: Chama a função para buscar o próximo código disponível
+                showToast('Gerando novo código...', 'info');
+                google.script.run
+                    .withSuccessHandler(novoCodigo => {
+                        if (novoCodigo) {
+                            document.getElementById('codigo').value = novoCodigo;
+                        }
+                    })
+                    .withFailureHandler(err => {
+                        console.error("Erro ao buscar próximo código:", err);
+                        showToast("Erro ao gerar novo código.", "error");
+                    })
+                    .getProximoCodigoFornecedor(); // <-- CHAMADA NO LUGAR CERTO
             }
         }
 
@@ -5984,6 +6078,61 @@ function populateSupplierSelectForReports() {
                 });
             }
 
+            const tbody = document.getElementById('fornecedoresTableBody');
+            if (tbody) {
+                tbody.addEventListener('click', function(e) {
+                    // Procura o botão mais próximo do elemento que foi clicado
+                    const editButton = e.target.closest('.btn-editar-fornecedor');
+                    
+                    if (editButton) {
+                        const codigo = editButton.dataset.codigo;
+                        console.log("Editar fornecedor via delegação:", codigo);
+                        loadPageContent('CadastroFornecedor', () => setupCadastroFornecedorScreen(codigo));
+                    }
+                });
+            
+                tbody.addEventListener('change', function(e) {
+              // Verifica se o elemento que mudou foi o nosso interruptor
+              if (e.target.classList.contains('toggle-status-switch')) {
+                  const checkbox = e.target;
+                  const codigo = checkbox.dataset.codigo;
+                  const row = checkbox.closest('tr');
+                  
+                  showToast('Alterando status...', 'info');
+
+                  // A chamada ao backend continua exatamente a mesma!
+                  google.script.run
+                      .withSuccessHandler(response => {
+                          if (response.status === 'ok') {
+                              showToast(response.message, 'success');
+                              
+                              // A atualização visual agora é ainda mais simples!
+                              const isAgoraAtivo = response.novoStatus === 'ATIVO';
+                              row.classList.toggle('bg-gray-100', !isAgoraAtivo);
+                              row.classList.toggle('opacity-70', !isAgoraAtivo);
+
+                              // Apenas garantimos que o checkbox tenha o estado final correto.
+                              // O CSS (com peer-checked) cuida da mágica de mover o interruptor.
+                              checkbox.checked = isAgoraAtivo;
+
+                          } else {
+                              showToast(response.message, 'error');
+                              // Se deu erro, desfaz a troca visual do interruptor
+                              checkbox.checked = !checkbox.checked;
+                          }
+                      })
+                      .withFailureHandler(err => {
+                          showToast('Erro de comunicação.', 'error');
+                          // Se deu erro, desfaz a troca visual do interruptor
+                          checkbox.checked = !checkbox.checked;
+                          console.error(err);
+                      })
+                      .alternarStatusFornecedor(codigo);
+              }
+          });
+      }
+            
+            
             carregarListaFornecedores();
         }
 
@@ -6709,7 +6858,7 @@ const EdicaoPedido = (function() {
             showToast('Carregando dados do fornecedor...', 'info', 'Carregando');
             console.log("[preencherCombosFornecedor] Iniciando busca de dados...");
 
-            google.script.run
+            /**google.script.run
                 .withSuccessHandler(codigo => {
                     const codigoInput = document.getElementById('codigo');
                     if (codigoInput) codigoInput.value = codigo;
@@ -6720,7 +6869,7 @@ const EdicaoPedido = (function() {
                     console.error('[preencherCombosFornecedor] Erro ao buscar próximo código:', error);
                     showToast('Erro ao carregar código do fornecedor.', 'error', 'Erro');
                 })
-                .getProximoCodigoFornecedor();
+                .getProximoCodigoFornecedor();**/
 
             google.script.run
                 .withSuccessHandler(condicoes => {
@@ -6746,66 +6895,65 @@ const EdicaoPedido = (function() {
         }
 
         function salvarFornecedor() {
-            const form = document.getElementById('form-fornecedor');
-            const saveButton = document.getElementById('saveButton');
+        const form = document.getElementById('form-fornecedor');
+        const saveButton = document.getElementById('saveButton');
 
-            if (!form || !saveButton) {
-                console.error("Elementos do formulário de fornecedor não encontrados para salvar.");
-                showToast("Erro interno: Elementos do formulário ausentes.", "error", "Erro Interno");
-                return;
-            }
-
-            if (!form.checkValidity()) {
-                showToast('Por favor, preencha todos os campos obrigatórios!', 'error', 'Campos Obrigatórios');
-                form.reportValidity();
-                return;
-            }
-
-            const fornecedor = {
-                codigo: document.getElementById('codigo').value.trim(),
-                razao: document.getElementById('razao').value.trim(),
-                fantasia: document.getElementById('fantasia').value.trim(),
-                cnpj: document.getElementById('cnpj').value.trim(),
-                endereco: document.getElementById('endereco').value.trim(),
-                estado: document.getElementById('estado').value.trim(),
-                condicao: document.getElementById('condicao').value.trim(),
-                forma: document.getElementById('forma').value.trim()
-            };
-
-            saveButton.disabled = true;
-            saveButton.innerText = 'Salvando...';
-            showToast('Salvando fornecedor...', 'info', 'Processando');
-
-            google.script.run
-                .withSuccessHandler(res => {
-                    saveButton.disabled = false;
-                    saveButton.innerText = 'Salvar';
-
-                    if (res.status === 'ok') {
-                        showToast(res.message || 'Fornecedor salvo com sucesso!', 'success', 'Sucesso');
-                        form.reset();
-                        // Buscar novo código após salvar
-                        google.script.run
-                            .withSuccessHandler(newCodigo => {
-                                const codigoInput = document.getElementById('codigo');
-                                if (codigoInput) codigoInput.value = newCodigo;
-                            })
-                            .withFailureHandler(error => {
-                                console.error('Erro ao buscar novo código após salvamento:', error);
-                            })
-                            .getProximoCodigoFornecedor();
-                    } else {
-                        showToast(res.message || 'Erro ao salvar fornecedor. Tente novamente.', 'error', 'Erro no Salvamento');
-                    }
-                })
-                .withFailureHandler(error => {
-                    saveButton.disabled = false;
-                    saveButton.innerText = 'Salvar';
-                    console.error('Erro na comunicação com o servidor (salvarFornecedor):', error);
-                    showToast('Ocorreu um erro inesperado ao salvar. Tente novamente.', 'error', 'Erro de Comunicação');
-                })
-                .salvarFornecedor(fornecedor);
+        if (!form || !saveButton) {
+            console.error("Elementos do formulário de fornecedor não encontrados para salvar.");
+            showToast("Erro interno: Elementos do formulário ausentes.", "error", "Erro Interno");
+            return;
         }
+
+        if (!form.checkValidity()) {
+            showToast('Por favor, preencha todos os campos obrigatórios!', 'error', 'Campos Obrigatórios');
+            form.reportValidity();
+            return;
+        }
+
+        // --- CORREÇÃO PRINCIPAL ---
+        // Mapeamos os campos do formulário para os nomes exatos que a função do backend espera.
+        const fornecedorParaBackend = {
+            codigo: document.getElementById('codigo').value.trim(),
+            razaoSocial: document.getElementById('razao').value.trim(),
+            nomeFantasia: document.getElementById('fantasia').value.trim(),
+            cnpj: document.getElementById('cnpj').value.trim(),
+            endereco: document.getElementById('endereco').value.trim(),
+            cidade: document.getElementById('cidade').value.trim(),
+            estado: document.getElementById('estado').value.trim(),
+            condicaoPagamento: document.getElementById('condicao').value.trim(),
+            formaPagamento: document.getElementById('forma').value.trim(),
+            grupo: document.getElementById('grupo').value.trim()
+        };
+
+        saveButton.disabled = true;
+        saveButton.innerText = 'Salvando...';
+        showToast('Salvando fornecedor...', 'info', 'Processando');
+
+        // --- SIMPLIFICAÇÃO ---
+        // Chamamos sempre a mesma função no backend. Ela é inteligente o suficiente para saber se deve criar ou atualizar.
+        google.script.run
+            .withSuccessHandler(res => {
+                saveButton.disabled = false;
+                saveButton.innerText = 'Salvar';
+
+                if (res.status === 'ok') {
+                    showToast(res.message || 'Fornecedor salvo com sucesso!', 'success', 'Sucesso');
+                    
+                    // Após salvar (seja criando ou editando), sempre voltamos para a lista.
+                    loadPageContent('GerenciarFornecedores', setupGerenciarFornecedoresScreen);
+                } else {
+                    // Mostra a mensagem de erro que veio diretamente do backend (ex: "CNPJ já existe")
+                    showToast(res.message || 'Erro ao salvar fornecedor.', 'error', 'Erro no Salvamento');
+                }
+            })
+            .withFailureHandler(error => {
+                saveButton.disabled = false;
+                saveButton.innerText = 'Salvar';
+                console.error('Erro na comunicação com o servidor (salvarFornecedor):', error);
+                showToast('Ocorreu um erro inesperado ao salvar. Tente novamente.', 'error', 'Erro de Comunicação');
+            })
+            .adicionarOuAtualizarFornecedor(fornecedorParaBackend); // Chamada única e correta
+    }
                 
         /**
          * Formata um valor para o padrão de CPF (se tiver até 11 dígitos) 
@@ -6905,6 +7053,11 @@ const EdicaoPedido = (function() {
                         if (estadoSelect && response.data.uf) {
                             estadoSelect.value = response.data.uf;
                         }
+                        // Preencher a cidade
+                        const cidadeInput = document.getElementById('cidade');
+                        if (cidadeInput && (response.data.municipio || response.data.cidade)) {
+                           cidadeInput.value = response.data.municipio || response.data.cidade || '';
+                        }
                         showToast('Dados preenchidos com sucesso!', 'success', 'CNPJ Consultado');
                     } else {
                         showToast(response.message, 'error', 'Erro na Consulta');
@@ -6988,15 +7141,78 @@ const EdicaoPedido = (function() {
                 })
                 .getFormasPagamento();
         }
-
-        function consultarCNPJ() {
-            handleConsultarCnpj();
-        }
-
        
         function carregarListaFornecedores() {
-            showToast('Carregando fornecedores...', 'info', 'fornecedorListMessage');
-        }
+          const tbody = document.getElementById('fornecedoresTableBody');
+          const msg = document.getElementById('fornecedorListMessage');
+          showToast('Carregando fornecedores...', 'info', 'fornecedorListMessage');
+
+          google.script.run
+              .withSuccessHandler(fornecedores => {
+                  if (msg) msg.textContent = '';
+                  tbody.innerHTML = '';
+
+            if (!fornecedores || fornecedores.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 py-10">Nenhum fornecedor encontrado.</td></tr>';
+                return;
+            }
+
+            fornecedores.forEach(fornecedor => {
+                const row = document.createElement('tr');
+                // Estilo para a linha inativa (continua igual)
+                const rowClass = fornecedor.status === 'INATIVO' ? 'bg-gray-100 opacity-70' : '';
+                row.className = `border-b ${rowClass}`;
+                
+                // Determina se o interruptor deve estar 'ligado' (checked)
+                const isChecked = fornecedor.status === 'ATIVO' ? 'checked' : '';
+                row.innerHTML = `
+                    <td class="px-6 py-4">${fornecedor.codigo}</td>
+                    <td class="px-6 py-4">${fornecedor.razaoSocial || ''}</td>
+                    <td class="px-6 py-4">${fornecedor.nomeFantasia || ''}</td>
+                    <td class="px-6 py-4">${fornecedor.cnpj || ''}</td>
+                    <td class="px-6 py-4">${fornecedor.grupo || ''}</td>
+                    <td class="px-6 py-4 text-center">
+                        <button class="btn-editar-fornecedor px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded hover:bg-blue-200 transition"
+                            data-codigo="${fornecedor.codigo}">
+                      <i class="fas fa-edit mr-1"></i> Editar
+                    </button>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" 
+                                          class="sr-only peer toggle-status-switch" 
+                                          data-codigo="${fornecedor.codigo}" 
+                                          ${isChecked}>
+                                    <div class="w-11 h-6 bg-gray-300 rounded-full peer 
+                                                peer-focus:ring-2 peer-focus:ring-blue-300 
+                                                peer-checked:bg-blue-600"></div>
+                                    <span class="absolute left-[2px] top-[2px] h-5 w-5 bg-white rounded-full 
+                                                  transition-transform peer-checked:translate-x-full"></span>
+                                </label>
+
+                            </td>
+                        `;
+                tbody.appendChild(row);
+            });
+
+            addEditFornecedorListeners();
+        })
+        .withFailureHandler(error => {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 py-10">Erro ao carregar fornecedores.</td></tr>';
+            if (msg) msg.textContent = 'Erro ao carregar fornecedores.';
+            console.error(error);
+        })
+        .getFornecedoresParaGerenciamento();
+        
+}
+
+      /**function addEditFornecedorListeners() {
+         document.querySelectorAll('.btn-editar-fornecedor').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const codigo = btn.dataset.codigo;
+            console.log("Editar fornecedor:", codigo);
+            loadPageContent('CadastroFornecedor', () => setupCadastroFornecedorScreen(codigo));
+          });
+        });
+      }**/
 
         // ===============================================
         // FUNÇÕES DE RETRY PARA CARREGAMENTO DOS SELECTS
