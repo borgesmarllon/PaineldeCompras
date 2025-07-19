@@ -271,52 +271,52 @@ function adicionarOuAtualizarFornecedor(fornecedorObject) {
  * @param {string} codigoFornecedor - O código do fornecedor a ser alterado.
  * @returns {object} Um objeto com o status da operação e o novo status do fornecedor.
  */
-function alternarStatusFornecedor(codigoFornecedor) {
-  // Bloco try...catch para garantir que um objeto sempre seja retornado.
-  try {
-    if (!codigoFornecedor) {
-      throw new Error('Código do fornecedor não foi fornecido.');
-    }
+function alternarStatusFornecedorv2(codigoFornecedor) {
+  Logger.log("Iniciando alternância de status para código: " + codigoFornecedor);
 
+  try {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Fornecedores");
     if (!sheet) {
-      throw new Error('Planilha "Fornecedores" não encontrada.');
+      Logger.log("Planilha 'Fornecedores' não encontrada.");
+      return { status: 'error', message: 'Planilha não encontrada.' };
     }
 
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).toUpperCase().trim());
-    
-    // Usando 'ID' como você confirmou
-    const indexCodigo = headers.indexOf('ID');
-    const indexStatus = headers.indexOf('STATUS');
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    Logger.log("Cabeçalhos: " + JSON.stringify(headers));
+
+    const indexCodigo = headers.indexOf("ID");
+    const indexStatus = headers.indexOf("STATUS");
+    Logger.log("Index ID: " + indexCodigo + " | Index STATUS: " + indexStatus);
 
     if (indexCodigo === -1 || indexStatus === -1) {
-      throw new Error('Coluna "ID" ou "STATUS" não encontrada.');
+      Logger.log("Colunas 'ID' ou 'STATUS' não encontradas!");
+      return { status: 'error', message: 'Colunas não encontradas.' };
     }
 
     const codigos = sheet.getRange(2, indexCodigo + 1, sheet.getLastRow() - 1, 1).getValues().flat();
-    const rowIndexToUpdate = codigos.findIndex(codigo => String(codigo) == String(codigoFornecedor)) + 2;
+    Logger.log("Códigos lidos: " + JSON.stringify(codigos));
+
+    // Normaliza ambos para string para evitar problemas de tipo
+    const rowIndexToUpdate = codigos.findIndex(codigo => String(codigo) === String(codigoFornecedor)) + 2;
+    Logger.log("Linha do código para alterar: " + rowIndexToUpdate);
 
     if (rowIndexToUpdate > 1) {
       const statusCell = sheet.getRange(rowIndexToUpdate, indexStatus + 1);
       const statusAtual = statusCell.getValue().toString().trim().toUpperCase();
-      
-      const novoStatus = (statusAtual === 'ATIVO') ? 'INATIVO' : 'ATIVO';
+      Logger.log("Status atual: " + statusAtual);
+
+      const novoStatus = (statusAtual === "ATIVO") ? "INATIVO" : "ATIVO";
       statusCell.setValue(novoStatus);
-      
-      // Retorno de sucesso
-      return { 
-        status: 'ok', 
-        message: `Fornecedor definido como '${novoStatus}'.`,
-        novoStatus: novoStatus 
-      };
+      Logger.log("Novo status definido: " + novoStatus);
+
+      return { status: 'ok', message: `Status alterado para '${novoStatus}'.`, novoStatus: novoStatus };
     } else {
-      // Retorno de erro controlado
+      Logger.log("Código não encontrado na coluna ID.");
       return { status: 'error', message: 'Fornecedor não encontrado.' };
     }
   } catch (e) {
-    Logger.log("ERRO em alternarStatusFornecedor: " + e.message);
-    // Retorno de erro de exceção
-    return { status: 'error', message: 'Erro no servidor: ' + e.message };
+    Logger.log("Erro capturado: " + e.message);
+    return { status: 'error', message: 'Erro inesperado: ' + e.message };
   }
 }
 
@@ -325,7 +325,7 @@ function alternarStatusFornecedor(codigoFornecedor) {
      * @param {string} cnpj - O CNPJ a ser consultado.
      * @returns {object} Um objeto com o status da operação e os dados da empresa.
      */
-    function consultarCnpj(cnpj) {
+    function consultarCnpj_V2(cnpj) {
       try {
         // 1. Limpa o CNPJ, deixando apenas os números
         const cnpjLimpo = String(cnpj).replace(/\D/g, '');
@@ -342,43 +342,49 @@ function alternarStatusFornecedor(codigoFornecedor) {
         const responseText = response.getContentText();
         
         if (responseCode === 200) {
-          // 4. Se a resposta for bem-sucedida, analisa os dados
-          const dadosApi = JSON.parse(responseText);
-          
-          const partesEndereco = [
-                dadosApi.logradouro,
-                dadosApi.numero,
-                dadosApi.bairro,
-                dadosApi.complemento
-            ].filter(Boolean); // O .filter(Boolean) remove itens nulos, vazios ou undefined da lista
+      const dadosApi = JSON.parse(responseText);
+      const partesEndereco = [
+          dadosApi.logradouro, dadosApi.numero, dadosApi.bairro, dadosApi.complemento
+      ].filter(Boolean);
+      const enderecoFormatado = partesEndereco.join(', ');
 
-            // Junta as partes existentes com uma formatação limpa
-            const enderecoFormatado = partesEndereco.join(', ');
-
-          // 5. Retorna um objeto limpo e padronizado
-          return {
-            status: 'ok',
-            data: {
-              razaoSocial: dadosApi.razao_social,
-              nomeFantasia: dadosApi.nome_fantasia,
-              endereco: enderecoFormatado,
-              uf: dadosApi.uf,
-              cidade: dadosApi.municipio
-              // Adicione outros campos que desejar
-            }
-          };
-        } else {
-          // Se a API retornar um erro (ex: CNPJ não encontrado)
-          const erroApi = JSON.parse(responseText);
-          return { status: 'error', message: erroApi.message || 'CNPJ não encontrado ou inválido.' };
+      return {
+        status: 'ok',
+        data: {
+          razaoSocial: dadosApi.razao_social,
+          nomeFantasia: dadosApi.nome_fantasia,
+          endereco: enderecoFormatado,
+          uf: dadosApi.uf,
+          cidade: dadosApi.municipio
         }
-      } catch (e) {
-        Logger.log("Erro em consultarCnpj: " + e.message);
-        return { status: 'error', message: 'Erro ao consultar o CNPJ. Verifique o console do servidor.' };
-      }
+      };
+    } else {
+      const erroApi = JSON.parse(responseText);
+      return { status: 'error', message: erroApi.message || 'CNPJ não encontrado na API.' };
     }
+  } catch (e) {
+    Logger.log("ERRO em consultarCnpj: " + e.message);
+    return { status: 'error', message: 'Erro interno do servidor: ' + e.message };
+  }
+}
 
-
+/**
+ * Função criada apenas para testar a 'consultarCnpj' diretamente no editor do Apps Script.
+ 
+function testarConsultaCnpj() {
+  // Vamos usar um CNPJ válido e conhecido para o teste.
+  const cnpjDeTeste = "06.990.590/0001-23"; // CNPJ da Google Brasil
+  
+  console.log(`Iniciando teste com o CNPJ: ${cnpjDeTeste}`);
+  
+  // Chama a sua função real que queremos testar
+  const resultado = consultarCnpj(cnpjDeTeste);
+  
+  // Imprime o resultado formatado no log para fácil visualização
+  console.log("Resultado da consulta:");
+  console.log(JSON.stringify(resultado, null, 2));
+}
+*/
     function getEstados() {
       const sheet = SpreadsheetApp.getActive().getSheetByName('Config');
       if (!sheet) {
@@ -545,4 +551,124 @@ function obterFornecedorPorCodigo(codigo) {
     Logger.log("Erro em obterFornecedorPorCodigo: " + e.message);
     return null; // Retorna null também em caso de qualquer erro
   }
+}
+
+function testeForcado_AlternarStatus(codigo) {
+  Logger.log("--- INICIANDO TESTE FORÇADO para o código: " + codigo + " ---");
+  
+  let resultado;
+  try {
+    // Chama a sua função real que queremos inspecionar
+    resultado = alternarStatusFornecedor(codigo);
+    
+    // Loga o que quer que a função tenha retornado
+    Logger.log("A função 'alternarStatusFornecedor' retornou um valor.");
+    Logger.log("Tipo do resultado: " + typeof resultado);
+    Logger.log("Conteúdo do resultado: " + JSON.stringify(resultado, null, 2));
+
+  } catch (e) {
+    Logger.log("UM ERRO OCORREU AO TENTAR CHAMAR 'alternarStatusFornecedor'. Erro: " + e.message);
+    resultado = { status: 'error', message: "Falha catastrófica ao chamar a função: " + e.message };
+  }
+
+  // Verificação final para a causa do 'null' no frontend
+  if (resultado === undefined) {
+      Logger.log("ALERTA: O resultado da função foi 'undefined'. Esta é a causa do 'null' no frontend.");
+      // Se for undefined, nós forçamos um objeto de erro para o frontend não quebrar.
+      return { status: 'error', message: "Resultado foi 'undefined' no backend." };
+  }
+  
+  Logger.log("--- TESTE FORÇADO CONCLUÍDO ---");
+  return resultado; // Retorna o resultado para o frontend
+}
+
+function runTesteAlternarStatusFornecedor() {
+  var resultado = alternarStatusFornecedorv2(3); // Troque para o código desejado
+  Logger.log("Resultado do teste: " + JSON.stringify(resultado, null, 2));
+  return resultado; // <-- Isso só tem efeito se for chamado por outra função
+}
+
+/**
+ * Lê os cabeçalhos e os dados da planilha "Fornecedores" exatamente como estão,
+ * sem normalização ou conversão.
+ * @returns {object} Um objeto com os campos 'headers' e 'data'.
+ */
+function lerCabecalhosEDadosFornecedores() {
+  Logger.log("Iniciando leitura da planilha 'Fornecedores'...");
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Fornecedores");
+  if (!sheet) {
+    Logger.log("ERRO: Planilha 'Fornecedores' não encontrada.");
+    return { headers: [], data: [] };
+  }
+  var lastRow = sheet.getLastRow();
+  var lastCol = sheet.getLastColumn();
+  Logger.log("lastRow: " + lastRow + ", lastCol: " + lastCol);
+  if (lastRow < 1 || lastCol < 1) {
+    Logger.log("Planilha sem dados.");
+    return { headers: [], data: [] };
+  }
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  Logger.log("Cabeçalhos encontrados: " + JSON.stringify(headers));
+  var data = [];
+  if (lastRow > 1) {
+    data = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+    Logger.log("Total de linhas de dados: " + data.length);
+  } else {
+    Logger.log("Não há dados além dos cabeçalhos.");
+  }
+  return {
+    headers: headers,
+    data: data
+  };
+}
+function lerCabecalhoEDadosOriginaisFornecedores() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Fornecedores");
+  if (!sheet) {
+    Logger.log("Planilha 'Fornecedores' não encontrada.");
+    return { headers: [], rows: [] };
+  }
+  var lastRow = sheet.getLastRow();
+  var lastCol = sheet.getLastColumn();
+  if (lastRow < 1 || lastCol < 1) {
+    Logger.log("Planilha sem dados.");
+    return { headers: [], rows: [] };
+  }
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0]; // Cabeçalhos como estão na planilha
+  var rows = [];
+  if (lastRow > 1) {
+    rows = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues(); // Dados das linhas como estão
+  }
+  return {
+    headers: headers,
+    rows: rows
+  };
+}
+
+function lerCabecalhoEDadosComLogFornecedores() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Fornecedores");
+  if (!sheet) {
+    Logger.log("Planilha 'Fornecedores' não encontrada.");
+    return { headers: [], rows: [] };
+  }
+  var lastRow = sheet.getLastRow();
+  var lastCol = sheet.getLastColumn();
+  Logger.log("lastRow: " + lastRow + ", lastCol: " + lastCol);
+
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  Logger.log("Cabeçalhos: " + JSON.stringify(headers));
+
+  var rows = [];
+  if (lastRow > 1) {
+    rows = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+    Logger.log("Total de linhas lidas: " + rows.length);
+    for (var i = 0; i < rows.length; i++) {
+      Logger.log("Linha " + (i+2) + ": " + JSON.stringify(rows[i]));
+    }
+  } else {
+    Logger.log("Não há dados além do cabeçalho.");
+  }
+  return {
+    headers: headers,
+    rows: rows
+  };
 }
