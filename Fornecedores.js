@@ -119,7 +119,7 @@
           });
           fornecedores.push(fornecedor);
         }
-
+        Logger.log("DADOS FINAIS ENVIADOS PARA O FRONTEND: %s", JSON.stringify(fornecedores, null, 2));
         return fornecedores;
 
       } catch (e) {
@@ -138,7 +138,7 @@
  * @param {object} fornecedorObject O objeto de dados enviado pelo frontend.
  * @returns {object} Um objeto com o status e a mensagem da operação.
  */
-function adicionarOuAtualizarFornecedor(fornecedorObject) {
+function adicionarOuAtualizarFornecedorv2(fornecedorObject) {
     Logger.log("Iniciando 'adicionarOuAtualizarFornecedor' com dados: " + JSON.stringify(fornecedorObject));
     
     try {
@@ -158,7 +158,7 @@ function adicionarOuAtualizarFornecedor(fornecedorObject) {
         };
 
         // Mapeamento dos índices das colunas pelos nomes exatos nos cabeçalhos
-        const indexCodigo = findHeaderIndex('CÓDIGO'); // Ajuste se o nome for 'ID' ou outro
+        const indexCodigo = findHeaderIndex('ID'); // Ajuste se o nome for 'ID' ou outro
         const indexRazao = findHeaderIndex('RAZAO SOCIAL');
         const indexFantasia = findHeaderIndex('NOME FANTASIA');
         const indexCnpj = findHeaderIndex('CNPJ');
@@ -169,6 +169,7 @@ function adicionarOuAtualizarFornecedor(fornecedorObject) {
         const indexForma = findHeaderIndex('FORMA DE PAGAMENTO');
         const indexGrupo = findHeaderIndex('GRUPO');
         const indexStatus = findHeaderIndex('STATUS');
+        const indexRegime = findHeaderIndex('REGIME TRIBUTARIO');
 
         const cnpjLimpo = String(fornecedorObject.cnpj).replace(/\D/g, '');
         if (cnpjLimpo.length !== 14) {
@@ -184,7 +185,10 @@ function adicionarOuAtualizarFornecedor(fornecedorObject) {
             
             // Verifica se o CNPJ já existe EM OUTRO fornecedor
             const codigosDaPlanilha = allData.slice(1).map(row => String(row[indexCodigo]));
-            const indexDoCodigoAtual = codigosDaPlanilha.indexOf(String(fornecedorObject.codigo));
+            const codigoNumericoParaBuscar = parseInt(fornecedorObject.codigo, 10);
+            const indexDoCodigoAtual = codigosDaPlanilha
+                .map(c => parseInt(c, 10))
+                .indexOf(codigoNumericoParaBuscar);
 
             cnpjsDaPlanilha.forEach((cnpj, index) => {
                 if (cnpj === cnpjLimpo && index !== indexDoCodigoAtual) {
@@ -203,6 +207,7 @@ function adicionarOuAtualizarFornecedor(fornecedorObject) {
                 sheet.getRange(rowIndexToUpdate, indexCondicao + 1).setValue(fornecedorObject.condicaoPagamento);
                 sheet.getRange(rowIndexToUpdate, indexForma + 1).setValue(fornecedorObject.formaPagamento);
                 sheet.getRange(rowIndexToUpdate, indexGrupo + 1).setValue(fornecedorObject.grupo);
+                sheet.getRange(rowIndexToUpdate, indexRegime + 1).setValue(fornecedorObject.regimeTributario);
                 
                 return { status: 'ok', message: 'Fornecedor atualizado com sucesso!' };
             } else {
@@ -233,13 +238,14 @@ function adicionarOuAtualizarFornecedor(fornecedorObject) {
             newRowData[indexCondicao] = fornecedorObject.condicaoPagamento;
             newRowData[indexForma] = fornecedorObject.formaPagamento;
             newRowData[indexGrupo] = fornecedorObject.grupo || ''; // Garante que não seja undefined
-            newRowData[indexStatus] = 'ATIVO'; // Ou 'INATIVO' se preferir um fluxo de aprovação
-            
+            newRowData[indexStatus] = 'INATIVO'; // Ou 'INATIVO' se preferir um fluxo de aprovação
+            newRowData[indexRegime] = fornecedorObject.regimeTributario;
+
             sheet.appendRow(newRowData);
             return { status: 'ok', message: 'Fornecedor adicionado com sucesso!' };
         }
     } catch (e) {
-        Logger.log("ERRO em 'adicionarOuAtualizarFornecedor': " + e.message);
+        Logger.log("ERRO em suaFuncaoDeBackend: " + e.message);
         return { status: 'error', message: e.message }; // Retorna a mensagem de erro específica para o usuário
     }
 }
@@ -342,7 +348,14 @@ function alternarStatusFornecedorv2(codigoFornecedor) {
         const responseText = response.getContentText();
         
         if (responseCode === 200) {
+        
       const dadosApi = JSON.parse(responseText);
+      let regimeCodigo = 2; // Padrão para 'Outro' (Lucro Presumido/Real)
+      
+      // Se for optante pelo MEI ou pelo Simples, o código é 1
+      if (dadosApi.opcao_pelo_mei || dadosApi.opcao_pelo_simples) {
+        regimeCodigo = 1;
+      }
       const partesEndereco = [
           dadosApi.logradouro, dadosApi.numero, dadosApi.bairro, dadosApi.complemento
       ].filter(Boolean);
@@ -355,7 +368,8 @@ function alternarStatusFornecedorv2(codigoFornecedor) {
           nomeFantasia: dadosApi.nome_fantasia,
           endereco: enderecoFormatado,
           uf: dadosApi.uf,
-          cidade: dadosApi.municipio
+          cidade: dadosApi.municipio,
+          regimeTributario: regimeCodigo
         }
       };
     } else {
@@ -385,65 +399,95 @@ function testarConsultaCnpj() {
   console.log(JSON.stringify(resultado, null, 2));
 }
 */
-    function getEstados() {
-      const sheet = SpreadsheetApp.getActive().getSheetByName('Config');
-      if (!sheet) {
-        Logger.log('ERRO: Planilha "Config" não encontrada! Verifique o nome da aba.');
+function getEstados() {
+  try {
+  const sheet = SpreadsheetApp.getActive().getSheetByName('Config');
+  if (!sheet) {
+    Logger.log('ERRO: Planilha "Config" não encontrada! Verifique o nome da aba.');
+    return [];
+  }
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 3) return [];
+
+  // Colunas D (4), E (5), F (6) - linha 3 até a última
+  const dados = sheet.getRange(3, 4, lastRow - 2, 3).getValues();
+
+  return dados
+            .filter(([uf, nome, aliquota]) => uf && nome && typeof aliquota === 'number') // Garante que a alíquota é um número
+            .map(([uf, nome, aliquota]) => ({
+                value: String(uf).trim(),
+                text: String(nome).trim(),
+                // INCLUI A ALÍQUOTA NO RETORNO
+                aliquota: aliquota
+            }));
+    } catch (e) {
+        Logger.log('ERRO em getEstados: ' + e.message);
         return [];
-      }
-      const lastRow = sheet.getLastRow();
-      if (lastRow < 2) {
-        return [];
-      }
-      
-      // Busca os dados das colunas D (UF) e E (Nome do Estado)
-      const dados = sheet.getRange(3, 4, lastRow - 1, 2).getValues();
-      
-      // Filtra e formata os dados para o padrão esperado pelo frontend
-      return dados
-        .filter(([uf, nome]) => uf && nome) // Remove linhas vazias
-        .map(([uf, nome]) => ({
-          value: String(uf).trim(),
-          text: String(nome).trim()
-        }));
     }
+}
 
     /**
      * Retorna uma lista de fornecedores (razão social) para preencher o dropdown de pedidos.
      * @returns {Array<Object>} Uma lista de objetos { codigo: string, razao: string, cnpj: string, endereco: string, condicao: string, forma: string }.
      */
-    function getFornecedoresList() {
-      const sheet = SpreadsheetApp.getActive().getSheetByName('Fornecedores');
+    function getFornecedoresListv2() {
+  try {
+    const sheet = SpreadsheetApp.getActive().getSheetByName('Fornecedores');
+    if (!sheet || sheet.getLastRow() < 2) {
+      return [];
+    }
 
-      if (!sheet || sheet.getLastRow() < 2) return [];
-      const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-      const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues();
+    // Lê os cabeçalhos da linha 1
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+    .map(h => String(h).toUpperCase().trim());
+    
+    // Encontra a posição (índice) de cada coluna pelo nome
+    const indexStatus = headers.indexOf('STATUS');
+    const indexCodigo = headers.indexOf('ID'); // Assumindo que a coluna se chama ID
+    const indexRazao = headers.indexOf('RAZAO SOCIAL');
+    const indexFantasia = headers.indexOf('NOME FANTASIA');
+    const indexCnpj = headers.indexOf('CNPJ');
+    const indexGrupo = headers.indexOf('GRUPO');
+    const indexEstado = headers.indexOf('ESTADO');
+    const indexCidade = headers.indexOf('CIDADE');
+    const indexRegime = headers.indexOf('REGIME TRIBUTARIO');
+    const indexCondicao = headers.indexOf('CONDICAO DE PAGAMENTO');
+    const indexForma = headers.indexOf('FORMA DE PAGAMENTO');
 
-      // Encontra o índice da coluna "Status"
-      const indexStatus = headers.findIndex(h => h.toUpperCase() === 'STATUS');
+    // Validação para garantir que a coluna essencial 'Status' existe
+    if (indexStatus === -1) {
+      throw new Error("Coluna 'STATUS' não encontrada na planilha 'Fornecedores'.");
+    }
 
-      const fornecedores = data
-        // FILTRA para incluir apenas os que têm status "Ativo"
-        .filter(row => indexStatus === -1 || String(row[indexStatus]).trim().toUpperCase() === 'ATIVO')
-        .map(row => {
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues();
 
-      const [codigo, razao, fantasia, cnpj, endereco, condicao, forma, idEmpresa, grupo, status, estado, cidade] = row;
-      return {
-        codigo: String(codigo),
-        razao: String(razao),
-        fantasia: String(fantasia),
-        cnpj: String(cnpj),
-        endereco: String(endereco),
-        condicao: String(condicao),
-        forma: String(forma),
-        grupo: String(grupo || '').trim().toUpperCase(),
-        estado: String(estado || ''),
-        cidade: String(cidade || '')
-        };
-      });
-
-      return fornecedores;
-    } 
+    const fornecedores = data
+      // Filtra para incluir apenas os que têm status "ATIVO"
+      .filter(row => String(row[indexStatus]).trim().toUpperCase() === 'ATIVO')
+      // Mapeia para um objeto, pegando os dados da coluna correta pelo índice
+      .map(row => ({
+        codigo: row[indexCodigo],
+        razaoSocial: row[indexRazao], // Usando 'razaoSocial' para manter o padrão
+        nomeFantasia: row[indexFantasia], // Usando 'nomeFantasia' para manter o padrão
+        cnpj: row[indexCnpj],
+        grupo: String(row[indexGrupo] || '').trim().toUpperCase(),
+        estado: String(row[indexEstado] || ''),
+        cidade: String(row[indexCidade] || ''),
+        regime: row[indexRegime] || '2',
+        condicao: row[indexCondicao],
+        forma: row[indexForma]
+      }));
+    Logger.log("DADOS FINAIS SENDO ENVIADOS PARA O FRONTEND (amostra de até 5):");
+    // Mostra uma amostra dos 5 primeiros para não poluir o log
+    Logger.log(JSON.stringify(fornecedores.slice(0, 5), null, 2)); 
+    return fornecedores;
+    
+  } catch (e) {
+    Logger.log("ERRO em getFornecedoresListv2: " + e.message);
+    return []; // Retorna vazio em caso de erro
+  }
+}
 
     /**
  * Retorna uma lista otimizada de fornecedores para a tela de Gerenciamento,
@@ -465,6 +509,7 @@ function getFornecedoresParaGerenciamento() {
     const indexCnpj = headers.indexOf('CNPJ');
     const indexGrupo = headers.indexOf('GRUPO');
     const indexStatus = headers.indexOf('STATUS');
+    const indexRegime = headers.indexOf('REGIME TRIBUTARIO');
 
     if (indexCodigo === -1 || indexStatus === -1) {
       throw new Error("Coluna 'CÓDIGO' ou 'STATUS' não encontrada para a tela de gerenciamento.");
@@ -481,7 +526,8 @@ function getFornecedoresParaGerenciamento() {
         nomeFantasia: row[indexFantasia],
         cnpj: row[indexCnpj],
         grupo: row[indexGrupo],
-        status: row[indexStatus]
+        status: row[indexStatus],
+        regimeTributario: row[indexRegime] || 'Outro'
       };
     });
 
