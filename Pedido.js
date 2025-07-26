@@ -62,11 +62,9 @@
      * @param {Object} pedido - Objeto contendo os detalhes do pedido (numero, data, fornecedor, itens, totalGeral, placaVeiculo, nomeVeiculo, observacoes).
      * @returns {Object} Um objeto com status e mensagem.
      */
-    function salvarPedido(pedido) {
+    function salvarPedido(pedido, usuarioLogado) {
       console.log('📋 === INÍCIO salvarPedido ===');
       console.log('📋 Objeto pedido recebido:', JSON.stringify(pedido, null, 2));
-      
-
       
       const sheet = SpreadsheetApp.getActive().getSheetByName('Pedidos');
       if (!sheet) {
@@ -101,7 +99,7 @@
 
       if (fornecedoresSheet) {
         const fornecedoresData = fornecedoresSheet.getRange(2, 1, fornecedoresSheet.getLastRow() - 1, fornecedoresSheet.getLastColumn()).getValues();
-        const foundFornecedor = fornecedoresData.find(row => String(row[1]) === pedido.fornecedor); 
+        const foundFornecedor = fornecedoresData.find(row => String(row[0]) === pedido.fornecedorId); 
         if (foundFornecedor) {
           fornecedorCnpj = String(foundFornecedor[3] || '');
           fornecedorEndereco = String(foundFornecedor[4] || '');
@@ -113,6 +111,10 @@
       }
 
       const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      const colunaUsuarioCriador = headers.indexOf("Usuario Criador");
+      if (colunaUsuarioCriador === -1) {
+        throw new Error("A coluna 'Usuario Criador' não foi encontrada na planilha de Pedidos.");
+    }
       const rowData = new Array(headers.length).fill('');
 
       const dataToSave = {
@@ -129,10 +131,12 @@
         'Nome Veiculo': pedido.nomeVeiculo,
         'Observacoes': pedido.observacoes,
         'Total Geral': parseFloat(pedido.totalGeral) || 0, // Garantir que é um número
-        'Status': 'Em Aberto',
+        'ICMS ST Total': parseFloat(pedido.valorIcms) || 0,
+        'Status': 'AGUARDANDO APROVACAO',
         'Itens': itensJSON,
         'Data Criacao': formatarDataParaISO(new Date()), // Timestamp de criação padronizado
-        'Produto Fornecedor': pedido.produtoFornecedor
+        'Produto Fornecedor': pedido.produtoFornecedor,
+        'Usuario Criador': pedido.usuarioLogado
       };
 
 
@@ -206,107 +210,177 @@ function getDadosPedidoParaImpressao(numeroPedido) {
 
 
 /**
- * Busca pedidos na planilha 'Pedidos' com base em um termo de busca.
- * O termo de busca pode ser o número do pedido ou o nome do fornecedor.
- * @param {string} termoBusca - O termo a ser buscado.
- * @param {string} empresaCodigo - O código da empresa (ex: "E001").
- * @returns {Object} Um objeto com status e uma lista de pedidos que correspondem ao termo de busca.
+ * Busca pedidos na planilha com base em múltiplos critérios.
+ * @param {object} params Objeto com os parâmetros de busca.
+ * @param {string} [params.mainSearch] Termo para buscar em "Número do Pedido" ou "Fornecedor".
+ * @param {string} [params.dateStart] Data inicial no formato YYYY-MM-DD.
+ * @param {string} [params.dateEnd] Data final no formato YYYY-MM-DD.
+ * @param {string} [params.plateSearch] Placa do veículo a ser buscada.
+ * @param {string} [params.usuarioCriador] O nome do usuário criador para filtrar (apenas admin).
+ * @returns {object} Um objeto com o status da operação e os dados dos pedidos encontrados.
  */
-/**
- * VERSÃO DE DIAGNÓSTICO
- * Busca pedidos com base em um termo e no código da empresa, com logs detalhados.
- */
-function buscarPedidos(termoBusca, empresaCodigo) {
-    let responseObject = { status: "error", data: [], message: "Erro inesperado no início da função." };
-    try {
-        Logger.log(`[buscarPedidos] 1. Iniciando busca. Termo: "${termoBusca}", Empresa: "${empresaCodigo}"`);
-
-        const sheet = SpreadsheetApp.getActive().getSheetByName('Pedidos');
-        if (!sheet) {
-            Logger.log("[buscarPedidos] ERRO: Planilha 'Pedidos' não encontrada.");
-            return { status: "error", data: [], message: "Aba 'Pedidos' não encontrada." };
-        }
-        Logger.log(`[buscarPedidos] 2. Planilha "Pedidos" encontrada.`);
-
-        const range = sheet.getDataRange();
-        const values = range.getValues();
-        const displayValues = range.getDisplayValues();
-        Logger.log(`[buscarPedidos] 3. Dados lidos. Total de ${values.length} linhas.`);
-
-        const originalHeaders = values[0];
-        const resultados = [];
-        const idEmpresaFiltro = String(empresaCodigo).trim();
-        const termoNormalizado = (termoBusca || "").toString().toLowerCase().trim();
-
-        const colEmpresa = originalHeaders.findIndex(h => ['EMPRESA', 'IDEMPRESA', 'IDDAEMPRESA', 'ID DA EMPRESA'].includes(String(h).toUpperCase().trim()));
-        const colNumeroPedido = originalHeaders.findIndex(h => String(h).toUpperCase().trim() === 'NÚMERO DO PEDIDO');
-        const colFornecedor = originalHeaders.findIndex(h => String(h).toUpperCase().trim() === 'FORNECEDOR');
-
-        const indexNumeroPedido = originalHeaders.findIndex(h => ['NÚMERO DO PEDIDO', 'NUMERO DO PEDIDO', 'NUMERO PEDIDO'].includes(String(h).toUpperCase().trim()));
-
-        if (colEmpresa === -1) {
-            Logger.log("[buscarPedidos] ERRO CRÍTICO: Coluna da empresa não foi encontrada.");
-            return { status: "error", data: [], message: "Coluna da empresa não encontrada." };
-        }
-        Logger.log(`[buscarPedidos] 4. Índices das colunas encontrados. Iniciando loop...`);
-
-        for (let i = 1; i < values.length; i++) {
-            const rowValues = values[i];
-            const idEmpresaNaLinha = String(rowValues[colEmpresa]).trim();
-
-            if (parseInt(idEmpresaNaLinha, 10) !== parseInt(idEmpresaFiltro, 10)) {
-                continue;
-            }
-
-            const numeroPedidoNormalizado = String(rowValues[colNumeroPedido] || '').toLowerCase().trim();
-            const fornecedorNormalizado = String(rowValues[colFornecedor] || '').toLowerCase().trim();
-
-            const deveAdicionar = (termoNormalizado === "") ||
-                numeroPedidoNormalizado.includes(termoNormalizado) ||
-                fornecedorNormalizado.includes(termoNormalizado);
-
-            if (deveAdicionar) {
-                const pedidoData = {};
-                originalHeaders.forEach((header, index) => {
-                  if (index === indexNumeroPedido) return;
-                    const headerTrimmed = String(header).trim();
-                    const headerUpper = headerTrimmed.toUpperCase();
-                    let value = rowValues[index]; // Pega o valor bruto
-
-                    // ================================================================
-                    // CORREÇÃO APLICADA AQUI: Garante a conversão de TODAS as datas
-                    // ================================================================
-                    // Se a coluna for de data crítica, usa o texto para manter a hora.
-                    if (headerUpper === 'DATA CRIACAO' || headerUpper === 'DATA ULTIMA EDICAO') {
-                        value = displayValues[i][index];
-                    } 
-                    // Se for qualquer outro tipo de objeto de data, converte para string AAAA-MM-DD.
-                    else if (value instanceof Date) {
-                        value = Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-                    }
-                    // ================================================================
-
-                    pedidoData[toCamelCase(headerTrimmed)] = value;
-                });
-
-                 if (indexNumeroPedido !== -1) {
-                    pedidoData.numeroDoPedido = rowValues[indexNumeroPedido];
-                }
-                resultados.push(pedidoData);
-            }
-        }
-        
-        Logger.log(`[buscarPedidos] 5. Busca finalizada. ${resultados.length} pedidos encontrados.`);
-        responseObject = { status: "success", data: resultados };
-        Logger.log(`[buscarPedidos] RETORNANDO SUCESSO.`);
-        return responseObject;
-
-    } catch (e) {
-        Logger.log(`[buscarPedidos] ERRO FATAL no bloco catch: ${e.message}. Stack: ${e.stack}`);
-        responseObject = { status: "error", data: [], message: `Erro no servidor: ${e.message}` };
-        Logger.log(`[buscarPedidos] RETORNANDO ERRO: ${JSON.stringify(responseObject)}`);
-        return responseObject;
+function buscarPedidosv2(params) {
+  try {
+    Logger.log("Iniciando busca com parâmetros: " + JSON.stringify(params));
+    
+    // --- LÓGICA DE EMPRESA REFORÇADA ---
+    if (!params || !params.empresaId) {
+      Logger.log("Busca interrompida: ID da empresa é obrigatório.");
+      return { status: 'success', data: [] };
     }
+    
+    const sheet = SpreadsheetApp.openById(ID_DA_PLANILHA).getSheetByName('Pedidos');
+    if (!sheet) { throw new Error("Aba 'Pedidos' não encontrada."); }
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data.shift();
+
+    // Lógica robusta para encontrar as colunas, independente de pequenas variações no nome
+    const colunas = {
+      numeroDoPedido: headers.findIndex(h => h.toUpperCase().includes('NÚMERO DO PEDIDO')),
+      empresa: headers.findIndex(h => h.toUpperCase() === 'EMPRESA'),
+      data: headers.findIndex(h => h.toUpperCase() === 'DATA'),
+      fornecedor: headers.findIndex(h => h.toUpperCase() === 'FORNECEDOR'),
+      placaVeiculo: headers.findIndex(h => h.toUpperCase().includes('PLACA')),
+      veiculo: headers.findIndex(h => h.toUpperCase().includes('VEICULO')),
+      observacoes: headers.findIndex(h => h.toUpperCase().includes('OBSERVACOES')),
+      totalGeral: headers.findIndex(h => h.toUpperCase().includes('TOTAL GERAL') || h.toUpperCase() === 'VALOR'),
+      status: headers.findIndex(h => h.toUpperCase() === 'STATUS'),
+      itens: headers.findIndex(h => h.toUpperCase() .includes('ITENS')),
+      estado: headers.findIndex(h => h.toUpperCase().includes('ESTADO FORNECEDOR')),
+      dataCriacao: headers.findIndex(h => h.toUpperCase() === 'DATA CRIACAO'),
+      aliquota: headers.findIndex(h => h.toUpperCase().includes('ALIQUOTA IMPOSTO')),
+      icmsSt: headers.findIndex(h => h.toUpperCase().includes('ICMS ST TOTAL')),
+      usuarioCriador: headers.findIndex(h => h.toUpperCase().includes('USUARIO CRIADOR'))
+    };
+
+    // Validação para garantir que colunas essenciais foram encontradas
+    for (const key in colunas) {
+        if (colunas[key] === -1) {
+            Logger.log(`AVISO: A coluna "${key}" não foi encontrada. O filtro ou o dado retornado para este campo será ignorado.`);
+        }
+    }
+
+    const pedidosEncontrados = data.filter(row => {
+      // O filtro de empresa é o primeiro e obrigatório
+      const statusDoPedido = row[colunas.status];
+      if (!statusDoPedido || String(statusDoPedido).trim() === '') {
+        return false; //
+      }
+
+      const empresaPlanilha = String(row[colunas.empresa]).trim();
+      const empresaFiltro = String(params.empresaId).trim();
+      if (empresaPlanilha !== empresaFiltro) {
+         return false; // Se não for da empresa correta, já descarta a linha
+      }
+      
+      let match = true;
+
+      // --- Filtro por Empresa (SEMPRE APLICADO) ---
+      if (params.empresaId && match) {
+          const empresaPlanilha = String(row[colunas.empresa]).trim();
+          const empresaFiltro = String(params.empresaId).trim();
+          if (empresaPlanilha !== empresaFiltro) {
+              return false;
+         }
+      } else if (params.empresaId) { // Se não houver empresa selecionada, não retorna nada
+          return false;
+      }
+      
+      // Filtro Principal (Nº Pedido ou Fornecedor)
+      if (params.mainSearch && match) {
+        const termo = params.mainSearch.toLowerCase().trim();
+        const numPedido = String(row[colunas.numeroDoPedido]).toLowerCase();
+        const fornecedor = String(row[colunas.fornecedor] ?? '').toLowerCase();
+        if (!numPedido.includes(termo) && !fornecedor.includes(termo)) {
+          return false;
+        }
+      }
+
+      // Filtro por Data
+      if (params.dateStart && params.dateEnd && match) {
+        const dataPedido = new Date(row[colunas.data]);
+        const dataInicio = new Date(params.dateStart + 'T00:00:00');
+        const dataFim = new Date(params.dateEnd + 'T23:59:59');
+        if (dataPedido < dataInicio || dataPedido > dataFim) {
+          return false;
+        }
+      }
+      
+      // Filtro por Placa
+      if (params.plateSearch && match && colunas.placaVeiculo !== -1) {
+          const placaPlanilha = String(row[colunas.placaVeiculo]).toLowerCase().trim();
+          const placaFiltro = params.plateSearch.toLowerCase().trim();
+          Logger.log(`Comparando Placa: Planilha='${placaPlanilha}', Filtro='${placaFiltro}'`);
+          if (placaPlanilha !== placaFiltro) {
+            return false;
+          }
+      }
+
+      // Filtro por Usuário Criador
+      if (params.usuarioCriador && match && colunas.usuarioCriador !== -1) {
+          const criadorPlanilha = String(row[colunas.usuarioCriador]).toLowerCase().trim();
+          const criadorFiltro = params.usuarioCriador.toLowerCase().trim();
+          Logger.log(`Comparando Criador: Planilha='${criadorPlanilha}', Filtro='${criadorFiltro}'`);
+          if (criadorPlanilha !== criadorFiltro) {
+            return false;
+          }
+      }
+
+      return true;
+    }).map(row => {
+      // Mapeia a linha para um objeto, garantindo que a data seja serializável
+      const dataDoPedido = row[colunas.data];
+
+        const pedido ={
+        numeroDoPedido: row[colunas.numeroDoPedido],
+        empresaId: row[colunas.empresa],
+        data: dataDoPedido instanceof Date ? Utilities.formatDate(dataDoPedido, "GMT-03:00", "yyyy-MM-dd'T'HH:mm:ss'Z'") : dataDoPedido,
+        fornecedor: row[colunas.fornecedor],
+        totalGeral: row[colunas.totalGeral],
+        status: row[colunas.status],
+        placa: row[colunas.placaVeiculo],
+        veiculo: row[colunas.veiculo],
+        observacoes: row[colunas.observacoes],
+        //itens: row[colunas.itens]
+        estado: row[colunas.estado],
+        dataCriacao: row[colunas.dataCriacao] instanceof Date ? Utilities.formatDate(row[colunas.dataCriacao], "GMT-03:00", "yyyy-MM-dd'T'HH:mm:ss'Z'") : row[colunas.dataCriacao],
+        aliquota: row[colunas.aliquota],
+        icmsSt: row[colunas.icmsSt],
+        usuarioCriador: row[colunas.usuarioCriador]
+      };
+
+      const itensJSON = row[colunas.itens];
+      if (colunas.itens !== -1 && itensJSON && String(itensJSON).trim() !== '') {
+        try {
+          pedido.itens = JSON.parse(itensJSON);
+        } catch (e) {
+          // MELHORIA: Usar Logger.log para erros do servidor
+          Logger.log(`Erro ao parsear JSON de itens do pedido ${pedido.numeroDoPedido}: ` + e);
+          pedido.itens = [];
+          pedido.erroItens = "Formato inválido";
+        }
+      } else { 
+        pedido.itens = [];
+      }
+      return pedido;
+    });
+     return { status: 'success', data: pedidosEncontrados };
+
+  } catch (e) {
+    Logger.log("Erro na função buscarPedidos: " + e + "\nStack: " + e.stack);
+    return { status: 'error', message: e.toString() };
+  }
+}
+
+function testarBuscarPedidos() {
+  const paramsTeste = {
+    empresaId: "001", mainSearch: "001", dateStart: "", dateEnd: "", plateSearch: "", usuarioCriador: ""
+  };
+  Logger.log(`--- INICIANDO TESTE para a função buscarPedidos ---`);
+  const resultado = buscarPedidosv2(paramsTeste);
+  Logger.log("--- RESULTADO DO TESTE ---");
+  Logger.log(JSON.stringify(resultado, null, 2));
 }
 
  function listarPedidosPorEmpresa(empresa) {
@@ -1222,7 +1296,7 @@ function editarPedido(pedidoObject) {
             'Nome Veiculo': pedidoObject.nomeVeiculo,
             'Observacoes': pedidoObject.observacoes || originalRowData[headerMap['Observacoes']],
             'Total Geral': pedidoObject.totalGeral,
-            'Status': 'Em Aberto',
+            'Status': 'AGUARDANDO APROVACAO' || 'EM ABERTO' || 'APROVADO',
             'Itens': JSON.stringify(pedidoObject.itens),
             'Data Criacao': pedidoObject.dataCriacao || originalRowData[headerMap['Data Criacao']],
             'Data Ultima Edicao': formatarDataParaISO(new Date()), // Sempre atualiza a data de edição
@@ -1244,4 +1318,98 @@ function editarPedido(pedidoObject) {
         Logger.log(`[editarPedido] ERRO FATAL: ${e.message}. Stack: ${e.stack}`);
         return { status: 'error', message: `Erro no servidor ao atualizar o pedido: ${e.message}` };
     }
+}
+
+      // ================================================================
+      // FUNÇÕES PARA PEDIDOS APROVADOS
+      // ================================================================
+/**
+ * Busca na planilha todos os pedidos criados por um usuário específico que tenham o status "Aprovado".
+ * @param {string} usuarioLogado O nome de usuário (login) do criador do pedido.
+ * @returns {object} Um objeto com o status da operação e os dados dos pedidos encontrados.
+ */
+function getMeusPedidosAprovados(usuarioLogado) {
+  try {
+    if (!usuarioLogado) {
+      throw new Error("O nome do usuário não foi fornecido.");
+    }
+
+    const sheet = SpreadsheetApp.openById(ID_DA_PLANILHA).getSheetByName(NOME_DA_ABA_DE_PEDIDOS);
+    if (!sheet) { throw new Error("Aba de pedidos não encontrada."); }
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data.shift(); // Pega os cabeçalhos
+
+        Logger.log("DEBUG: Cabeçalhos encontrados na planilha: " + JSON.stringify(headers));
+
+    // Encontra os índices das colunas necessárias
+    const colunas = {
+      usuarioCriador: headers.indexOf("Usuario Criador"),
+      status: headers.indexOf("Status"),
+      numeroDoPedido: headers.indexOf("Número do Pedido"),
+      data: headers.indexOf("Data"),
+      fornecedor: headers.indexOf("Fornecedor"),
+      empresa: headers.indexOf("Empresa"),
+      totalGeral: headers.indexOf("Total Geral")
+    };
+    Logger.log("DEBUG: Índices das colunas encontrados: " + JSON.stringify(colunas));
+
+    // Validação para garantir que todas as colunas foram encontradas
+    for (const key in colunas) {
+        if (colunas[key] === -1) {
+            throw new Error(`A coluna "${key}" não foi encontrada na planilha de Pedidos.`);
+        }
+    }
+
+    const pedidosAprovados = [];
+    data.forEach(row => {
+      // Filtra pelo usuário logado E pelo status "Aprovado"
+      if (row[colunas.usuarioCriador] === usuarioLogado && row[colunas.status] === "Aprovado") {
+        
+        // Monta um objeto limpo com todos os dados da linha do pedido
+        const dataDoPedido = row[colunas.data];
+        
+        // --- CORREÇÃO DE SERIALIZAÇÃO APLICADA AQUI ---
+        // Monta um objeto apenas com os dados necessários, garantindo que a data seja texto.
+        pedidosAprovados.push({
+          'Número_do_Pedido': row[colunas.numeroDoPedido],
+          'Data': dataDoPedido instanceof Date ? Utilities.formatDate(dataDoPedido, "GMT-03:00", "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") : dataDoPedido,
+          'Fornecedor': row[colunas.fornecedor],
+          'Empresa': row[colunas.empresa],
+          'Total Geral': row[colunas.totalGeral]
+        });
+      }
+    });
+    
+    console.log(`Encontrados ${pedidosAprovados.length} pedidos aprovados para o usuário ${usuarioLogado}.`);
+    return { status: 'success', data: pedidosAprovados };
+
+  } catch(e) {
+    console.error(`Erro em getMeusPedidosAprovados: ${e.message}`);
+    return { status: 'error', message: e.message };
+  }
+}     
+
+function testarGetMeusPedidosAprovados() {
+  // --- CONFIGURE AQUI ---
+  // Coloque o nome de um usuário que você sabe que tem pedidos aprovados na planilha.
+  const usuarioTeste = "admin"; 
+  const empresa = "002";
+  
+  Logger.log(`--- INICIANDO TESTE para a função getMeusPedidosAprovados ---`);
+  Logger.log(`Procurando pedidos aprovados para o usuário: "${usuarioTeste}"`);
+  
+  // Chama a função principal com os dados de teste
+  const resultado = getMeusPedidosAprovados(usuarioTeste, empresa);
+  
+  // Mostra o resultado completo no log
+  Logger.log("--- RESULTADO DO TESTE ---");
+  Logger.log(JSON.stringify(resultado, null, 2)); // Usamos JSON.stringify para ver o objeto de forma clara
+  Logger.log("--------------------------");
+  
+  if (resultado.status === 'success') {
+    Logger.log(`✅ Teste bem-sucedido! Encontrados ${resultado.data.length} pedidos.`);
+  } else {
+    Logger.log(`❌ Teste falhou! Mensagem de erro: ${resultado.message}`);
+  }
 }
