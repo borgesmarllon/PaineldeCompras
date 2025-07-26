@@ -3,25 +3,37 @@
 // =================================================================
 
 function generatePdfReport(reportParams) {
-    try {
-        // PASSO 1: O único objetivo é ver se a função é chamada.
-        Logger.log("--- DIAGNÓSTICO PROFUNDO ---");
-        Logger.log("✅ PASSO 1: A função 'generatePdfReport' foi chamada com sucesso.");
+     try {
+        Logger.log(`[generatePdfReport] 1. Iniciando. Parâmetros: ${JSON.stringify(reportParams)}`);
         
-        // PASSO 2: Verificar o tipo e o conteúdo do parâmetro recebido.
-        Logger.log(`✅ PASSO 2: Tipo do parâmetro 'reportParams' recebido: ${typeof reportParams}`);
+        if (!reportParams || !reportParams.companyId) {
+            throw new Error("Parâmetro 'companyId' é obrigatório.");
+        }
+
+        const allPedidos = _getPedidosData(reportParams);
+        const filteredPedidos = _filterPedidos(allPedidos, reportParams);
+        const reportData = _groupAndSummarizePedidos(filteredPedidos, reportParams);
+        const htmlContent = _generatePdfHtmlContent(reportData, reportParams);
+        Logger.log(`[generatePdfReport] 5. Conteúdo HTML gerado.`);
+
+        const htmlBlob = Utilities.newBlob(htmlContent, MimeType.HTML, 'Relatorio.html');
+        const pdfBlob = htmlBlob.getAs(MimeType.PDF);
+        Logger.log(`[generatePdfReport] 6. Blob PDF criado.`);
+
+        const folder = _getOrCreateFolder("RelatoriosComprasTemporarios");
+        const fileName = `Relatorio_${reportParams.reportType}_${new Date().getTime()}.pdf`;
+        const pdfFile = folder.createFile(pdfBlob).setName(fileName);
         
-        // PASSO 3: Tentar registrar o conteúdo do parâmetro.
-        // Se reportParams for um objeto inválido, o JSON.stringify pode falhar,
-        // o que nos daria uma pista importante.
-        Logger.log(`✅ PASSO 3: Conteúdo de 'reportParams': ${JSON.stringify(reportParams, null, 2)}`);
+        pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        const fileUrl = pdfFile.getDownloadUrl();
+        Logger.log(`[generatePdfReport] 7. Sucesso! URL do PDF: ${fileUrl}`);
         
-        // Se chegou até aqui, a comunicação e os parâmetros estão funcionando.
-        return { status: 'success', url: '#', message: 'Teste de comunicação e parâmetros bem-sucedido! Verifique os logs do backend.' };
+        return { status: 'success', url: fileUrl };
 
     } catch (e) {
-        Logger.log(`❌ ERRO NO TESTE DE DIAGNÓSTICO PROFUNDO: ${e.message}`);
-        return { status: 'error', message: `Falha no teste de diagnóstico: ${e.message}` };
+        Logger.log(`[generatePdfReport] ERRO FATAL: ${e.message}. Stack: ${e.stack}`);
+        // Retorna um objeto de erro em vez de lançar uma exceção
+        return { status: 'error', message: `Erro ao gerar relatório PDF: ${e.message}` };
     }
 }
 
@@ -80,11 +92,12 @@ function _getPedidosData(reportParams) {
     const colEmpresa = headers.findIndex(h => ['EMPRESA', 'ID EMPRESA', 'ID DA EMPRESA'].includes(String(h).toUpperCase().trim()));
     if (colEmpresa === -1) throw new Error("Coluna da Empresa não encontrada na planilha 'Pedidos'.");
 
+    const indexNumeroPedido = headers.findIndex(h => ['NÚMERO DO PEDIDO', 'NUMERO DO PEDIDO', 'NUMERO PEDIDO'].includes(String(h).toUpperCase().trim()));
     const idEmpresaFiltro = String(reportParams.companyId).trim();
 
     for (let i = 1; i < values.length; i++) {
         const row = values[i];
-        if (String(row[colEmpresa]).trim() !== idEmpresaFiltro) {
+        if (parseInt(row[colEmpresa], 10) !== parseInt(idEmpresaFiltro, 10)) {
             continue;
         }
 
@@ -174,140 +187,112 @@ function _groupAndSummarizePedidos(pedidos, reportParams) {
      * @param {Object} reportParams - Parâmetros do relatório para cabeçalho (reportType, startDate, endDate, supplier).
      * @returns {string} Conteúdo HTML do relatório.
      */
-    function _generatePdfHtmlContent(reportData, reportParams) {
-       const companyName = reportParams.companyName || "EMPRESA NÃO INFORMADA";
-        let reportTitle = "Relatório de Compras " + (reportParams.reportType === 'detailed' ? "Detalhado" : "Financeiro");
-        
-        const reportDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm:ss');
-        let filtersHtml = `<p>Relatório Gerado em: ${reportDate}</p>`;
-        if (reportParams.startDate) filtersHtml += `<p>Período: ${reportParams.startDate} a ${reportParams.endDate}</p>`;
-        if (reportParams.supplier) filtersHtml += `<p>Fornecedor: ${reportParams.supplier}</p>`;
+ function _generatePdfHtmlContent(reportData, reportParams) {
+    const companyName = reportParams.companyName || "EMPRESA NÃO INFORMADA";
+    const companyAddress = reportParams.companyAddress || "";
+    const companyCnpj = reportParams.empresaCnpj || "";
+    const reportDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm:ss');
+
+    let reportTitle = "Relatório de Compras " + (reportParams.reportType === 'detailed' ? "Detalhado" : "Financeiro");
+    let filtersHtml = '';
+    if (reportParams.startDate && reportParams.endDate) {
+        filtersHtml += `<strong>Período:</strong> ${Utilities.formatDate(new Date(reportParams.startDate + 'T00:00:00'), Session.getScriptTimeZone(), 'dd/MM/yyyy')} a ${Utilities.formatDate(new Date(reportParams.endDate + 'T00:00:00'), Session.getScriptTimeZone(), 'dd/MM/yyyy')}<br>`;
+    }
+    if (reportParams.supplier) {
+        filtersHtml += `<strong>Fornecedor:</strong> ${reportParams.supplier}`;
+    }
 
     let bodyContent = '';
 
-        
-
-        if (reportParams.reportType === 'detailed') {
-            if (Object.keys(reportData).length === 0) {
-                bodyContent += '<p class="no-data">Nenhum pedido encontrado para os filtros selecionados.</p>';
-            } else {
-                for (const dateStr in reportData) {
-                    const dateGroup = reportData[dateStr];
-                    bodyContent += `<div class="date-group">`;
-                    bodyContent += `<h3>Data: ${Utilities.formatDate(dateGroup.date, Session.getScriptTimeZone(), 'dd/MM/yyyy')} (Total: R$ ${dateGroup.totalDate.toFixed(2).replace('.', ',')})</h3>`;
-                    
-                    for (const supplierName in dateGroup.fornecedores) {
-                        const supplierGroup = dateGroup.fornecedores[supplierName];
-                        bodyContent += `<div class="supplier-group">`;
-                        bodyContent += `<h4>Fornecedor: ${supplierName} (Total: R$ ${supplierGroup.totalFornecedor.toFixed(2).replace('.', ',')})</h4>`;
-                        bodyContent += `<table>`;
-                        bodyContent += `<thead><tr>
-                            <th>Número Pedido</th>
-                            <th>CNPJ Fornecedor</th>
-                            <th>Razao Social</th>
-                            <th>Item</th>
-                            <th>Unidade</th>
-                            <th>Qtd.</th>
-                            <th>Preço Unit.</th>
-                            <th>Subtotal Item</th>
-                        </tr></thead>`;
-                        bodyContent += `<tbody>`;
-                        supplierGroup.pedidos.forEach(pedido => {
-                            pedido.itens.forEach(item => {
-                                bodyContent += `<tr>
-                                    <td>${pedido.numeroDoPedido}</td>
-                                    <td>${pedido.cnpjFornecedor || ''}</td>
-                                    <td>${supplierName}</td>
-                                    <td>${item.descricao || ''}</td>
-                                    <td>${item.unidade || ''}</td>
-                                    <td>${item.quantidade}</td>
-                                    <td>R$ ${parseFloat(item.precoUnitario || 0).toFixed(2).replace('.', ',')}</td>
-                                    <td>R$ ${parseFloat(item.totalItem || 0).toFixed(2).replace('.', ',')}</td>
-                                </tr>`;
-                            });
-                            // Add a row for total of this specific order
-                            bodyContent += `<tr class="pedido-total-row">
-                                <td colspan="7" style="text-align:right; font-weight:bold;">Total Pedido ${pedido.numeroDoPedido}:</td>
-                                <td style="font-weight:bold;">R$ ${parseFloat(pedido.totalGeral || 0).toFixed(2).replace('.', ',')}</td>
+    if (reportParams.reportType === 'detailed') {
+        if (Object.keys(reportData).length === 0) {
+            bodyContent = '<p class="no-data">Nenhum pedido encontrado para os filtros selecionados.</p>';
+        } else {
+            const sortedDates = Object.keys(reportData).sort();
+            sortedDates.forEach(dateStr => {
+                const dateGroup = reportData[dateStr];
+                bodyContent += `<div class="date-group"><h3>Data: ${Utilities.formatDate(dateGroup.date, Session.getScriptTimeZone(), 'dd/MM/yyyy')} &nbsp;&nbsp;<span class="total-day">Total do Dia: R$ ${dateGroup.totalDate.toFixed(2).replace('.', ',')}</span></h3>`;
+                const sortedSuppliers = Object.keys(dateGroup.fornecedores).sort();
+                sortedSuppliers.forEach(supplierName => {
+                    const supplierGroup = dateGroup.fornecedores[supplierName];
+                    bodyContent += `<div class="supplier-group"><h4>Fornecedor: ${supplierName} &nbsp;&nbsp;<span class="total-supplier">Total: R$ ${supplierGroup.totalFornecedor.toFixed(2).replace('.', ',')}</span></h4><table><thead><tr><th>Nº Pedido</th><th>Item</th><th>Qtd.</th><th>Preço Unit.</th><th>Subtotal</th></tr></thead><tbody>`;
+                    supplierGroup.pedidos.forEach(pedido => {
+                        pedido.itens.forEach(item => {
+                            bodyContent += `<tr>
+                                <td>${pedido.numeroDoPedido || ''}</td>
+                                <td>${item.descricao || ''}</td>
+                                <td class="text-right">${item.quantidade || 0}</td>
+                                <td class="text-right">R$ ${parseFloat(item.precoUnitario || 0).toFixed(2).replace('.', ',')}</td>
+                                <td class="text-right">R$ ${parseFloat(item.totalItem || 0).toFixed(2).replace('.', ',')}</td>
                             </tr>`;
                         });
-                        bodyContent += `</tbody>`;
-                        bodyContent += `</table>`;
-                        bodyContent += `</div>`; // Close supplier-group
-                    }
-                    bodyContent += `</div>`; // Close date-group
-                }
-            }
-        } else if (reportParams.reportType === 'financial') {
-            if (reportData.numeroTotalPedidos === 0) {
-                bodyContent += '<p class="no-data">Nenhum dado financeiro encontrado para os filtros selecionados.</p>';
-            } else {
-                bodyContent += `<p class="financial-summary-total">Total Geral de Pedidos: ${reportData.numeroTotalPedidos}</p>`;
-                bodyContent += `<p class="financial-summary-total">Valor Total das Compras: <span class="total-value-display">R$ ${reportData.totalGeralPedidos.toFixed(2).replace('.', ',')}</span></p>`;
-                
-                bodyContent += `<h4>Totais por Fornecedor:</h4>`;
-                bodyContent += `<table>`;
-                bodyContent += `<thead><tr><th>Fornecedor</th><th>Valor Total Comprado</th></tr></thead>`;
-                bodyContent += `<tbody>`;
-                reportData.listaTotalPorFornecedor.forEach(item => {
-                    bodyContent += `<tr>
-                        <td>${item.fornecedor}</td>
-                        <td>R$ ${item.total.toFixed(2).replace('.', ',')}</td>
-                    </tr>`;
+                    });
+                    bodyContent += `</tbody></table></div>`;
                 });
-                bodyContent += `</tbody>`;
-                bodyContent += `</table>`;
-            }
+                bodyContent += `</div>`;
+            });
         }
-
-        // Constrói o HTML completo do relatório
-        const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>${reportTitle}</title>
-            <style>
-                body { font-family: 'Arial', sans-serif; margin: 20px; font-size: 10pt; }
-                .header, .footer { text-align: center; margin-bottom: 20px; }
-                .header h1 { margin: 0; color: #0056b3; font-size: 16pt; }
-                .header p { margin: 2px 0; font-size: 8pt; }
-                .report-title { text-align: center; font-size: 14pt; margin-bottom: 15px; color: #007BFF; }
-                .filters { font-size: 9pt; text-align: center; margin-bottom: 15px; color: #555; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 9pt; }
-                th { background-color: #f2f2f2; font-weight: bold; text-align: center; }
-                .date-group, .supplier-group { margin-bottom: 25px; border: 1px solid #eee; padding: 15px; border-radius: 5px; }
-                .date-group h3 { margin-top: 0; color: #0056b3; font-size: 12pt; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 15px; }
-                .supplier-group h4 { margin-top: 0; color: #007BFF; font-size: 11pt; margin-bottom: 10px; }
-                .no-data { text-align: center; font-style: italic; color: #888; margin-top: 30px; }
-                .financial-summary-total { font-size: 12pt; font-weight: bold; text-align: center; margin-bottom: 10px; }
-                .total-value-display { color: #28a745; }
-                .pedido-total-row { background-color: #f0f8ff; font-style: italic; }
-                .pedido-total-row td { border-top: 2px solid #007bff; }
-                .page-break { page-break-before: always; } /* Para quebrar página antes de cada grupo de data/fornecedor se necessário */
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>${companyName}</h1>
-                <p>${companyAddress}</p>
-                <p>CNPJ: ${companyCnpj}</p>
-                <p>Relatório Gerado em: ${reportDate}</p>
-            </div>
-            <h2 class="report-title">${reportTitle}</h2>
-            ${filtersHtml}
-            ${bodyContent}
-            <div class="footer">
-                <p>&copy; ${new Date().getFullYear()} ${companyName}. Todos os direitos reservados.</p>
-            </div>
-        </body>
-        </html>
-        `;
-    return `<!DOCTYPE html><html><head><style>body{font-family:Arial,sans-serif;font-size:10pt}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:4px}th{background-color:#f2f2f2}</style></head><body><h1>${reportTitle}</h1><div>${filtersHtml}</div>${bodyContent}</body></html>`;
-
+    } else if (reportParams.reportType === 'financial') {
+        if (reportData.numeroTotalPedidos === 0) {
+            bodyContent = '<p class="no-data">Nenhum dado financeiro encontrado para os filtros selecionados.</p>';
+        } else {
+            bodyContent += `<div class="summary-box">
+                <p><strong>Total de Pedidos:</strong> ${reportData.numeroTotalPedidos}</p>
+                <p><strong>Valor Total das Compras:</strong> <span class="total-value">R$ ${reportData.totalGeralPedidos.toFixed(2).replace('.', ',')}</span></p>
+            </div>`;
+            bodyContent += `<h4>Totais por Fornecedor:</h4><table><thead><tr><th>Fornecedor</th><th class="text-right">Valor Total Comprado</th></tr></thead><tbody>`;
+            reportData.listaTotalPorFornecedor.forEach(item => {
+                bodyContent += `<tr><td>${item.fornecedor}</td><td class="text-right">R$ ${item.total.toFixed(2).replace('.', ',')}</td></tr>`;
+            });
+            bodyContent += `</tbody></table>`;
+        }
     }
 
-    /**
+    const html = `
+    <!DOCTYPE html><html><head><title>${reportTitle}</title>
+    <style>
+        @page { size: A4; margin: 1cm; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 10pt; color: #333; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #004a99; padding-bottom: 10px; margin-bottom: 20px; }
+        .company-info h1 { margin: 0; color: #004a99; font-size: 18pt; }
+        .company-info p { margin: 2px 0; font-size: 9pt; color: #555; }
+        .report-info { text-align: right; font-size: 9pt; color: #555; }
+        .report-title { text-align: center; font-size: 16pt; margin-bottom: 5px; color: #333; font-weight: bold; }
+        .filters { font-size: 8pt; text-align: center; margin-bottom: 20px; color: #666; background-color: #f9f9f9; padding: 8px; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #e0e0e0; padding: 8px; text-align: left; }
+        th { background-color: #f2f7fc; font-weight: bold; color: #004a99; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .text-right { text-align: right; }
+        .date-group { margin-bottom: 25px; page-break-inside: avoid; }
+        .date-group h3 { margin-top: 0; color: #004a99; font-size: 12pt; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+        .supplier-group { margin-left: 15px; margin-top: 15px; }
+        .supplier-group h4 { margin-top: 0; color: #0056b3; font-size: 11pt; }
+        .total-day, .total-supplier, .total-value { font-weight: bold; }
+        .no-data { text-align: center; font-style: italic; color: #888; margin-top: 30px; }
+        .summary-box { background-color: #f2f7fc; border: 1px solid #c9deff; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .footer { position: fixed; bottom: -20px; left: 0; right: 0; text-align: center; font-size: 8pt; color: #999; }
+    </style></head><body>
+    <div class="header">
+        <div class="company-info">
+            <h1>${companyName}</h1>
+            <p>${companyAddress}</p>
+            <p>CNPJ: ${companyCnpj}</p>
+        </div>
+        <div class="report-info">
+            <strong>${reportTitle}</strong><br>
+            Gerado em: ${reportDate}
+        </div>
+    </div>
+    <div class="filters">${filtersHtml}</div>
+    <div class="content">${bodyContent}</div>
+    <div class="footer"><p>Página <span class="pageNumber"></span> de <span class="totalPages"></span></p></div>
+    </body></html>`;
+    return html;
+}
+
+
+/**
  * Popula uma planilha do Google Sheets com os dados do relatório para exportação em XLSX.
  */
 function _populateSheetWithReportData(sheet, reportData, reportParams) {
@@ -333,13 +318,18 @@ function _populateSheetWithReportData(sheet, reportData, reportParams) {
         const headers = ['Data', 'Fornecedor', 'Nº Pedido', 'Item', 'Qtd.', 'Preço Unit.', 'Subtotal'];
         sheet.getRange(row, 1, 1, headers.length).setValues([headers]).setFontWeight('bold').setBackground('#f2f2f2');
         row++;
-        Object.values(reportData).forEach(dateGroup => {
-            Object.values(dateGroup.fornecedores).forEach(supplierGroup => {
+        
+        const sortedDates = Object.keys(reportData).sort();
+        sortedDates.forEach(dateStr => {
+            const dateGroup = reportData[dateStr];
+            const sortedSuppliers = Object.keys(dateGroup.fornecedores).sort();
+            sortedSuppliers.forEach(supplierName => {
+                const supplierGroup = dateGroup.fornecedores[supplierName];
                 supplierGroup.pedidos.forEach(pedido => {
                     pedido.itens.forEach(item => {
                         const rowData = [
                             Utilities.formatDate(pedido.data, Session.getScriptTimeZone(), 'dd/MM/yyyy'),
-                            pedido.fornecedor,
+                            supplierName,
                             pedido.numeroDoPedido,
                             item.descricao,
                             item.quantidade,
@@ -352,29 +342,28 @@ function _populateSheetWithReportData(sheet, reportData, reportParams) {
                 });
             });
         });
-        sheet.getRange(row, 6, sheet.getLastRow() - row + 1, 2).setNumberFormat('R$ #,##0.00');
+        sheet.getRange(10, 5, Math.max(1, row - 10), 3).setNumberFormat('R$ #,##0.00');
         sheet.autoResizeColumns(1, headers.length);
 
     } else if (reportParams.reportType === 'financial') {
-      // Relatório Financeiro: Sumariza totais
-            data.totalGeralPedidos = 0;
-            data.numeroTotalPedidos = 0;
-            data.totalPorFornecedor = {};
-            
-            pedidos.forEach(pedido => {
-                data.totalGeralPedidos += pedido.totalGeral || 0;
-                data.numeroTotalPedidos++;
-                const fornecedor = pedido.fornecedor || 'Desconhecido';
-                data.totalPorFornecedor[fornecedor] = (data.totalPorFornecedor[fornecedor] || 0) + (pedido.totalGeral || 0);
-            });
-            // Converter para array para facilitar o uso no HTML, se necessário
-            data.listaTotalPorFornecedor = Object.keys(data.totalPorFornecedor).map(f => ({
-                fornecedor: f,
-                total: data.totalPorFornecedor[f]
-            })).sort((a, b) => b.total - a.total); // Ordena do maior para o menor
-        }
-        Logger.log(`[_groupAndSummarizePedidos] Dados agrupados: ${JSON.stringify(data, null, 2)}`);
-        return data;
+        sheet.getRange(row, 1).setValue('Total de Pedidos:').setFontWeight('bold');
+        sheet.getRange(row, 2).setValue(reportData.numeroTotalPedidos);
+        row++;
+        sheet.getRange(row, 1).setValue('Valor Total das Compras:').setFontWeight('bold');
+        sheet.getRange(row, 2).setValue(reportData.totalGeralPedidos).setNumberFormat('R$ #,##0.00');
+        row += 2;
+
+        const headers = ['Fornecedor', 'Valor Total Comprado'];
+        sheet.getRange(row, 1, 1, 2).setValues([headers]).setFontWeight('bold').setBackground('#f2f2f2');
+        row++;
+        
+        reportData.listaTotalPorFornecedor.forEach(item => {
+            sheet.getRange(row, 1, 1, 2).setValues([[item.fornecedor, item.total]]);
+            sheet.getRange(row, 2).setNumberFormat('R$ #,##0.00');
+            row++;
+        });
+        sheet.autoResizeColumns(1, 2);
+    }
 }
 
 
