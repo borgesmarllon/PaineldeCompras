@@ -97,61 +97,64 @@
     }
 
 function validarLogin(usuario, senha, empresaSelecionada) {
-    try {
+        try {
         Logger.log(`[validarLogin] Tentativa de login para usuário: ${usuario}, Empresa: ${empresaSelecionada}`);
         
-        const userSheet = SpreadsheetApp.getActive().getSheetByName('Usuarios');
-        if (!userSheet || userSheet.getLastRow() < 2) {
-            return { status: 'erro', message: 'Nenhum usuário cadastrado.' };
+        const sheet = SpreadsheetApp.openById(ID_DA_PLANILHA).getSheetByName('Usuarios');
+        if (!sheet || sheet.getLastRow() < 2) {
+          return { status: 'erro', message: 'Nenhum usuário cadastrado.' };
         }
 
-        const dadosUsuarios = userSheet.getRange(2, 1, userSheet.getLastRow() - 1, 7).getValues();
-        const senhaDigitadaHash = gerarHash(String(senha));
+        const data = sheet.getDataRange().getValues();
+        // 1. SEPARA OS CABEÇALHOS
+        const headers = data.shift();
+        // 2. CHAMA A FERRAMENTA PARA MAPEÁ-LOS
+        const colunas = mapearColunas(headers); // Usa a função auxiliar
+            const senhaDigitadaHash = gerarHash(String(senha));
 
-        for (let i = 0; i < dadosUsuarios.length; i++) {
-            const [id, nome, user, passHashDaPlanilha, perfil, status, empresasStr] = dadosUsuarios[i];
+        // 3. USA 'find' PARA UMA BUSCA MAIS LIMPA
+        const usuarioRow = data.find(row => 
+            String(row[colunas.usuario]).toLowerCase() === String(usuario).toLowerCase() &&
+            row[colunas.senha] === senhaDigitadaHash
+        );
 
-            // 1. Compara o nome de usuário E o HASH da senha.
-            if (String(user).toLowerCase() === String(usuario).toLowerCase() && senhaDigitadaHash === passHashDaPlanilha) {
-                
-                // 2. Verifica se o usuário está ativo.
-                if (String(status).toUpperCase() !== 'ATIVO') {
-                    return { status: 'inativo', message: 'Usuário inativo ou aguardando aprovação.' };
-                }
-
-                // 3. Verifica se o usuário tem permissão para a empresa selecionada.
-                const empresasPermitidas = String(empresasStr || '').split(',').map(e => e.trim());
-                if (!empresasPermitidas.includes(String(empresaSelecionada))) {
-                    return { status: 'erro', message: 'Você não tem permissão para acessar esta empresa.' };
-                }
-
-                // 4. Busca os dados COMPLETOS da empresa, incluindo o endereço.
-                const empresaObjetoCompleto = _getEmpresaDataById(empresaSelecionada);
-                if (!empresaObjetoCompleto) {
-                    return { status: 'erro', message: `Os dados para a empresa ID ${empresaSelecionada} não foram encontrados.` };
-                }
-                
-                // 5. Retorna o objeto de sucesso com todos os dados.
-                Logger.log(`[validarLogin] Login bem-sucedido para ${usuario}.`);
-                return {
-                    status: 'ok',
-                    idUsuario: id,
-                    nomeUsuario: user, // Mantém o nome de usuário original
-                    nome: nome,      // Nome de exibição do usuário
-                    perfil: perfil,
-                    empresa: empresaObjetoCompleto // Objeto completo com id, nome, cnpj e endereco
-                };
-            }
+        // 4. SE NÃO ENCONTROU, RETORNA ERRO
+        if (!usuarioRow) {
+          return { status: 'erro', message: 'Usuário ou senha inválidos!' };
+        }
+        
+        // 5. SE ENCONTROU, USA AS COLUNAS MAPEADAS PARA PEGAR OS DADOS CORRETOS
+        if (String(usuarioRow[colunas.status]).toUpperCase() !== 'ATIVO') {
+          return { status: 'inativo', message: 'Usuário inativo ou aguardando aprovação.' };
         }
 
-        // Se o loop terminar sem encontrar uma correspondência
-        return { status: 'erro', message: 'Usuário ou senha inválidos!' };
+        const empresasPermitidas = String(usuarioRow[colunas.idEmpresa] || '').split(',').map(e => e.trim());
+        if (!empresasPermitidas.includes(String(empresaSelecionada))) {
+          return { status: 'erro', message: 'Você não tem permissão para acessar esta empresa.' };
+        }
 
-    } catch (e) {
-        Logger.log(`[validarLogin] ERRO FATAL: ${e.message}`);
+        const empresaObjetoCompleto = getDadosEmpresaPorId(empresaSelecionada);
+        if (!empresaObjetoCompleto) {
+          return { status: 'erro', message: `Os dados para a empresa ID ${empresaSelecionada} não foram encontrados.` };
+        }
+        
+        Logger.log(`[validarLogin] Login bem-sucedido para ${usuario}.`);
+        return {
+          status: 'ok',
+          usuario: String(usuario).toLowerCase(), 
+          idUsuario: usuarioRow[colunas.id],
+          nome: usuarioRow[colunas.nome],
+          perfil: usuarioRow[colunas.perfil],
+          funcao: usuarioRow[colunas.funcao],
+          statusConta: usuarioRow[colunas.status],
+          empresa: empresaObjetoCompleto
+        };
+
+      } catch (e) {
+        Logger.log(`[validarLogin] ERRO FATAL: ${e.message} ${e.stack}`);
         return { status: 'error', message: `Erro no servidor: ${e.message}` };
+      }
     }
-}
     /**
      * Lista todos os usuários da planilha 'Usuarios'.
      * @returns {Array<Object>} Uma lista de objetos de usuário.
@@ -347,6 +350,7 @@ function validarLogin(usuario, senha, empresaSelecionada) {
         const indexStatus = headersUsuarios.indexOf('STATUS');
         const indexEmpresasStr = headersUsuarios.indexOf('ID EMPRESA');
         const indexEmpresaPadrao = headersUsuarios.indexOf('ID EMPRESA PADRÃO');
+        const indexFuncao = headersUsuarios.indexOf('FUNCAO');
 
         if (indexUser === -1 || indexStatus === -1 || indexEmpresasStr === -1) {
           throw new Error("Cabeçalhos 'USUARIO', 'STATUS' ou 'ID EMPRESA' não encontrados na planilha 'Usuarios'.");
@@ -642,7 +646,14 @@ function gerarHash(senha) {
       return Utilities.base64Encode(digest);
     }
 
-    function adminRedefinirSenha(usuario, novaSenha) {
+    /**
+ * Permite que um administrador redefina a senha de qualquer usuário.
+ * Inclui verificação de segurança para garantir que o autor da chamada é um admin.
+ * @param {string} usuarioAlvo - O nome de usuário cuja senha será redefinida.
+ * @param {string} novaSenha - A nova senha em texto plano.
+ * @returns {object} Objeto de resposta com status e mensagem.
+ */
+function adminRedefinirSenha(usuario, novaSenha) {
       var sheet = SpreadsheetApp.getActive().getSheetByName('Usuarios');
       var dados = sheet.getDataRange().getValues();
       var idxUsuario = dados[0].indexOf('USUARIO');
@@ -662,7 +673,9 @@ function gerarHash(senha) {
 
       return { status: 'ok', message: 'Senha redefinida com sucesso.' };
     }
-// ===============================================
+
+
+    // ===============================================
     // FUNÇÕES PARA GERENCIAMENTO DE USUÁRIOS COM AUDITORIA
     // ===============================================
 
@@ -1020,4 +1033,44 @@ function _getEmpresasMap() {
         Logger.log(`[getEmpresaDataById] ERRO FATAL: ${e.message}`);
         return null;
     }
+}
+
+/**
+ * FUNÇÃO DE EMERGÊNCIA
+ * Reseta manualmente a senha de um usuário para o novo padrão de hash (Hexadecimal).
+ * Execute esta função diretamente do editor de scripts.
+ */
+function resetarSenhaManualmente() {
+  const usuarioParaResetar = "admin"; // Coloque aqui o nome de usuário que você quer resetar
+  const novaSenha = "1234";          // Coloque aqui a nova senha temporária
+
+  try {
+    const sheet = SpreadsheetApp.openById(ID_DA_PLANILHA).getSheetByName('Usuarios');
+    const data = sheet.getDataRange().getValues();
+    const headers = data.shift();
+    const colunas = {};
+    headers.forEach((h, i) => { colunas[toCamelCase(h)] = i; });
+
+    const rowIndex = data.findIndex(row => row[colunas.usuario]?.toLowerCase() === usuarioParaResetar.toLowerCase());
+
+    if (rowIndex === -1) {
+      Logger.log(`ERRO: Usuário "${usuarioParaResetar}" não encontrado para resetar a senha.`);
+      return;
+    }
+
+    // CORREÇÃO 1: Usa a sua função de hash antiga (gerarHash)
+    const hashAntigo = gerarHash(novaSenha); 
+
+    const linhaReal = rowIndex + 2;
+    const colunaSenha = colunas.senha + 1;
+
+    // CORREÇÃO 2: Usa a variável correta ('hashAntigo') para salvar
+    sheet.getRange(linhaReal, colunaSenha).setValue(hashAntigo);
+
+    Logger.log(`✅ SUCESSO: A senha para o usuário "${usuarioParaResetar}" foi redefinida para "${novaSenha}" (no formato antigo).`);
+    SpreadsheetApp.flush(); // Garante que a alteração seja salva imediatamente.
+
+  } catch (e) {
+    Logger.log(`ERRO FATAL ao resetar senha: ${e.message}`);
+  }
 }
