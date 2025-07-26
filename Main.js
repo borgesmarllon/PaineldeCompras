@@ -14,6 +14,10 @@ function incluir(pagina) {
   return HtmlService.createTemplateFromFile(pagina).evaluate().getContent();
 }
 
+
+    // Crie esta função auxiliar no seu backend
+    
+
 /**
      * ===============================================
      * FUNÇÕES AUXILIARES
