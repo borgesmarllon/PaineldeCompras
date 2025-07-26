@@ -13,7 +13,7 @@ function toCamelCase(str) {
 
 /**
  * Retorna a classe CSS para o status do pedido.
- */
+ 
 function getStatusClass(status) {
   switch (String(status).toLowerCase().trim()) {
     case 'concluído': return 'bg-green-100 text-green-800';
@@ -21,7 +21,7 @@ function getStatusClass(status) {
     case 'cancelado': return 'bg-red-100 text-red-800';
     default: return 'bg-gray-100 text-gray-800';
   }
-}
+}*/
 
 /**
  * Função auxiliar para formatar a data para ISO string (YYYY-MM-DD).
@@ -47,25 +47,21 @@ function formatarDataParaISO(date) {
  * @param {Object} filters - Objeto de filtros contendo { empresa: { id: '...', nome: '...' } }.
  * @returns {Array<Object>} Uma lista de objetos de pedido formatados.
  */
-function _getPedidosData(filters) {
-    Logger.log(`[backend] _getPedidosData iniciado com filtros: ${JSON.stringify(filters)}`);
+function _getPedidosDatav2(filters) {
+     Logger.log(`[backend] _getPedidosData iniciado com filtros: ${JSON.stringify(filters)}`);
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Pedidos');
     if (!sheet) {
         Logger.log('[backend] Planilha "Pedidos" não encontrada.');
         return [];
     }
-
     const dataRange = sheet.getDataRange();
     const values = dataRange.getValues();
-    
-    if (values.length < 2) { 
+    if (values.length < 2) {
         Logger.log('[backend] Planilha "Pedidos" vazia ou contém apenas cabeçalho.');
         return [];
     }
-
     const headers = values[0];
-    const pedidosComEmpresaFiltrada = []; 
-
+    const pedidosComEmpresaFiltrada = [];
     const headerMap = {};
     headers.forEach((header, index) => {
         headerMap[toCamelCase(header)] = index;
@@ -76,21 +72,31 @@ function _getPedidosData(filters) {
         Logger.log('[backend] ERRO CRÍTICO: Coluna da empresa não encontrada na planilha "Pedidos".');
         return [];
     }
-    const chaveEmpresaColuna = toCamelCase(headers[indexEmpresaColuna]);
 
+    //const chaveEmpresaColuna = toCamelCase(headers[indexEmpresaColuna]);
     const idEmpresaParaFiltrar = filters.empresa && filters.empresa.id != null ? String(filters.empresa.id).trim() : null;
+    const idEmpresaParaFiltrarNum = parseInt(idEmpresaParaFiltrar, 10);
+    Logger.log(`[backend] Filtrando para o ID da empresa (numérico): ${idEmpresaParaFiltrarNum}`);
+
+    //const pedidoEmpresaValorNaColuna = pedido[chaveEmpresaColuna];
     Logger.log(`[backend] ID da Empresa para filtrar (do localStorage via frontend): "${idEmpresaParaFiltrar}"`);
 
     for (let i = 1; i < values.length; i++) {
         const row = values[i];
-        const pedido = {};
+        const idEmpresaNaLinha = row[indexEmpresaColuna];
+        const idEmpresaNaLinhaNum = parseInt(idEmpresaNaLinha, 10);
 
+        // Compara os valores e pula para a próxima linha se a empresa for diferente
+        if (idEmpresaParaFiltrar && idEmpresaNaLinhaNum !== idEmpresaParaFiltrarNum) {
+            continue; 
+        }
+        const pedido = {};
         for (const key in headerMap) {
             pedido[key] = row[headerMap[key]];
         }if (i < 5) { // Log apenas para as primeiras 5 linhas para não encher o log
-  Logger.log(`[backend] _getPedidosData: Pedido ${i} - Objeto mapeado: ${JSON.stringify(pedido)}`);
-  Logger.log(`[backend] _getPedidosData: Pedido ${i} - Valor de p.estado: "${pedido.estadoFornecedor}"`); // Verifique se 'estado' é o nome correto
-  Logger.log(`[backend] _getPedidosData: Pedido ${i} - Headers mapeados: ${JSON.stringify(Object.keys(headerMap))}`); // Veja todos os campos mapeados
+  Logger.log(`[backend] _getPedidosDatav2: Pedido ${i} - Objeto mapeado: ${JSON.stringify(pedido)}`);
+  Logger.log(`[backend] _getPedidosDatav2: Pedido ${i} - Valor de p.estado: "${pedido.estadoFornecedor}"`); // Verifique se 'estado' é o nome correto
+  Logger.log(`[backend] _getPedidosDatav2: Pedido ${i} - Headers mapeados: ${JSON.stringify(Object.keys(headerMap))}`); // Veja todos os campos mapeados
 }
         pedido.totalGeral = parseFloat(pedido.totalGeral || 0);
 
@@ -126,19 +132,21 @@ function _getPedidosData(filters) {
         } else if (!(pedido.data instanceof Date)) {
             pedido.data = null;
         }
+        //const idEmpresaParaFiltrarNum = parseInt(idEmpresaParaFiltrar, 10);
+        //const pedidoEmpresaValorNaColunaNum = parseInt(pedidoEmpresaValorNaColuna, 10);
+        // A comparação numérica (ex: 1 === 1) funciona de forma confiável
+        //if (idEmpresaParaFiltrar && pedidoEmpresaValorNaColunaNum !== idEmpresaParaFiltrarNum) {
+        //    continue; // Pula para a próxima linha se a empresa for diferente
 
-        // FILTRAGEM POR EMPRESA
-        const pedidoEmpresaValorNaColuna = String(pedido[chaveEmpresaColuna] || '').trim();
-        if (idEmpresaParaFiltrar && pedidoEmpresaValorNaColuna !== idEmpresaParaFiltrar) {
-            continue; 
-        }
-        
+        //}    
         pedidosComEmpresaFiltrada.push(pedido);
+
     }
-    
-    Logger.log(`[backend] _getPedidosData finalizado. Total de pedidos filtrados por empresa: ${pedidosComEmpresaFiltrada.length}`);
+    Logger.log(`[backend] _getPedidosDatav2 finalizado. Total de pedidos filtrados por empresa: ${pedidosComEmpresaFiltrada.length}`);
+
     return pedidosComEmpresaFiltrada;
-}
+
+} 
 
 /**
  * Obtém o próximo código sequencial para um novo fornecedor.
@@ -313,6 +321,7 @@ function getFornecedoresList() {
             fornecedor.forma = String(fornecedor.formaDePagamento || ''); 
             fornecedor.grupo = String(fornecedor.grupo || '');
             fornecedor.estado = String(fornecedor.estado || '');
+            fornecedor.cidade = String(fornecedor.cidade || '');
             return fornecedor;
         });
     Logger.log(`[backend] getFornecedoresList: Encontrados ${fornecedores.length} fornecedores ativos com detalhes.`);
@@ -320,11 +329,11 @@ function getFornecedoresList() {
 }
 
 // Funções de cadastro/edição/exclusão de fornecedores (mantidas como estão no seu código original)
-function salvarFornecedor(fornecedor) { /* ... */ }
-function adicionarOuAtualizarFornecedor(fornecedorObject) { /* ... */ }
-function excluirFornecedor(codigoFornecedor) { /* ... */ }
-function alternarStatusFornecedor(codigoFornecedor) { /* ... */ }
-function consultarCnpj(cnpj) { /* ... */ }
+//function salvarFornecedor(fornecedor) { /* ... */ }
+//function adicionarOuAtualizarFornecedor(fornecedorObject) { /* ... */ }
+//function excluirFornecedor(codigoFornecedor) { /* ... */ }
+//function alternarStatusFornecedor(codigoFornecedor) { /* ... */ }
+//function consultarCnpj(cnpj) { /* ... */ }
 
 
 // ===============================================
@@ -604,8 +613,8 @@ function getDashboardData(filters) {
   Logger.log(`[backend] getDashboardData: Filtros recebidos: ${JSON.stringify(filters)}`);
 
   try {
-    // 1. Obter TODOS os pedidos já filtrados PELA EMPRESA LOGADA dentro de _getPedidosData
-    let finalFilteredPedidos = _getPedidosData(filters); 
+    // 1. Obter TODOS os pedidos já filtrados PELA EMPRESA LOGADA dentro de _getPedidosDatav2
+    let finalFilteredPedidos = _getPedidosDatav2(filters); 
     Logger.log(`[backend] getDashboardData: Total de pedidos após filtro por empresa: ${finalFilteredPedidos.length}`);
 
     // 2. Aplicar FILTROS ADICIONAIS (data, fornecedor, estado) sobre os pedidos já filtrados pela empresa
@@ -631,12 +640,18 @@ function getDashboardData(filters) {
     }
     Logger.log(`[backend] getDashboardData: Total final de pedidos após TODOS os filtros: ${finalFilteredPedidos.length}`);
 
-
+    
+    //    Garanta que o status na sua planilha seja 'Aprovado'.
+    const pedidosParaCalculo = finalFilteredPedidos.filter(p => 
+        p.status && String(p.status).trim().toUpperCase() === 'APROVADO'
+    );
+    Logger.log(`[backend] getDashboardData: Destes, ${pedidosParaCalculo.length} estão 'Aprovados' e serão usados para os cálculos.`);
+  
     // 3. Calcular resumos e tops com base nos 'finalFilteredPedidos'
-    const financialSummary = calculateFinancialSummary(finalFilteredPedidos);
-    const topSuppliers = calculateTopSuppliers(finalFilteredPedidos);
-    const topProducts = calculateTopProducts(finalFilteredPedidos);
-    const monthlyAnalysisData = calculateMonthlyAnalysis(finalFilteredPedidos);
+    const financialSummary = calculateFinancialSummary(pedidosParaCalculo);
+    const topSuppliers = calculateTopSuppliers(pedidosParaCalculo);
+    const topProducts = calculateTopProducts(pedidosParaCalculo);
+    const monthlyAnalysisData = calculateMonthlyAnalysis(pedidosParaCalculo);
     
     // Ordena por data decrescente para pegar os mais recentes para a tabela
     const recentOrdersSorted = [...finalFilteredPedidos].sort((a, b) => {
@@ -645,11 +660,11 @@ function getDashboardData(filters) {
     });
 
     const recentOrders = recentOrdersSorted.slice(0, 10).map(p => ({
-        id: p.numeroDoPedido || 'N/A', 
+        id: p.nUmeroDoPedido || p.id || p.numeroPedido || p.númedoDoPedido || 'N/A', 
         supplier: p.fornecedor || 'Desconhecido',
-        value: 'R$ ' + (p.totalGeral || 0).toFixed(2).replace('.', ','),
-        status: p.statusDoPedido || 'Desconhecido',
-        statusClass: getStatusClass(p.statusDoPedido)
+        value: 'R$ ' + (p.totalGeral || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+        status: p.status || 'Desconhecido',
+        statusClass: getStatusClass(p.status)
     }));
 
     // 4. Gerar sugestões da IA
@@ -692,6 +707,19 @@ function getDashboardData(filters) {
   }
 }
 
+function getStatusClass(status) {
+  if (!status) return 'bg-gray-200 text-gray-800';
+  switch (status.toUpperCase()) {
+    case 'EM ABERTO':
+      return 'bg-blue-100 text-blue-800';
+    case 'APROVADO':
+      return 'bg-green-100 text-green-800';
+    case 'CANCELADO':
+      return 'bg-red-100 text-red-800';
+    default:
+      return 'bg-gray-200 text-gray-800';
+  }
+}
 // ===============================================
 // FUNÇÕES DE SERVIÇO HTML (Para doGet e inclusão)
 // ===============================================
