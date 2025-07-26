@@ -399,32 +399,54 @@ function testarConsultaCnpj() {
   console.log(JSON.stringify(resultado, null, 2));
 }
 */
-function getEstados() {
+function getEstadosv2() {
+  Logger.log("--- Iniciando getEstados ---");
   try {
-  const sheet = SpreadsheetApp.getActive().getSheetByName('Config');
-  if (!sheet) {
-    Logger.log('ERRO: Planilha "Config" não encontrada! Verifique o nome da aba.');
+    const sheet = SpreadsheetApp.getActive().getSheetByName('Config');
+    if (!sheet) {
+      Logger.log('ERRO: Planilha "Config" não encontrada!');
+      return [];
+    }
+    Logger.log("✅ Planilha 'Config' encontrada com sucesso.");
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 3) {
+      Logger.log("AVISO: Não há dados de estados a partir da linha 3.");
+      return [];
+    }
+    
+    // Busca os dados das colunas D (4), E (5) e F (6)
+    const dados = sheet.getRange(3, 4, lastRow - 2, 3).getValues(); 
+    Logger.log("1. Dados brutos lidos da planilha (UF, Nome, Alíquota):");
+    Logger.log(JSON.stringify(dados, null, 2));
+    
+    const estadosMapeados = dados
+      .filter(([uf, nome, aliquota]) => uf && nome) // Remove linhas onde UF ou Nome são vazios
+      .map(([uf, nome, aliquota]) => ({
+        value: String(uf).trim(),
+        text: String(nome).trim(),
+        aliquota: parseFloat(String(aliquota || '0').replace(',', '.')) || 0 // Converte para número de forma segura
+      }));
+    
+    Logger.log("2. Dados finais mapeados e formatados:");
+    Logger.log(JSON.stringify(estadosMapeados, null, 2));
+    Logger.log("--- Finalizando getEstados ---");
+
+    return estadosMapeados;
+
+  } catch (e) {
+    Logger.log('!!! ERRO em getEstados: ' + e.message);
     return [];
   }
+}
 
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 3) return [];
-
-  // Colunas D (4), E (5), F (6) - linha 3 até a última
-  const dados = sheet.getRange(3, 4, lastRow - 2, 3).getValues();
-
-  return dados
-            .filter(([uf, nome, aliquota]) => uf && nome && typeof aliquota === 'number') // Garante que a alíquota é um número
-            .map(([uf, nome, aliquota]) => ({
-                value: String(uf).trim(),
-                text: String(nome).trim(),
-                // INCLUI A ALÍQUOTA NO RETORNO
-                aliquota: aliquota
-            }));
-    } catch (e) {
-        Logger.log('ERRO em getEstados: ' + e.message);
-        return [];
-    }
+function testarGetEstados() {
+  Logger.log("--- INICIANDO TESTE da função 'getEstados' ---");
+  
+  const resultado = getEstadosv2();
+  
+  Logger.log("--- RESULTADO FINAL RETORNADO PELA FUNÇÃO ---");
+  Logger.log(JSON.stringify(resultado, null, 2));
 }
 
     /**
