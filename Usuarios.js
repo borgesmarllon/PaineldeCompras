@@ -1042,7 +1042,7 @@ function _getEmpresasMap() {
  */
 function resetarSenhaManualmente() {
   const usuarioParaResetar = "admin"; // Coloque aqui o nome de usuário que você quer resetar
-  const novaSenha = "1234";          // Coloque aqui a nova senha temporária
+  const novaSenha = "----";          // Coloque aqui a nova senha temporária
 
   try {
     const sheet = SpreadsheetApp.openById(ID_DA_PLANILHA).getSheetByName('Usuarios');
