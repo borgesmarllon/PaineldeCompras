@@ -258,7 +258,7 @@
                 <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6">
                     <div class="text-center">
                         <h2 class="text-3xl font-bold text-gray-800">Portal de Compras</h2>
-                        <p class="text-gray-500 mt-2">Faça login para continuar</p>
+                        <p class="text-gray-500 mt-2">Faça login para entrar</p>
                     </div>
                     <div class="space-y-4">
                         <input type="text" id="username" placeholder="Usuário" required autofocus class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -471,34 +471,58 @@
             const templates = {
                 Menu: `
                     <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div class="lg:col-span-1 space-y-8">
-                            <div class="bg-white p-6 rounded-xl shadow-lg">
-                                <h3 class="text-xl font-bold text-gray-800 mb-4">Ações da Empresa</h3>
-                                <div class="space-y-4">
-                                    <div>
-                                        <label for="selectEmpresa" class="block text-sm font-medium text-gray-700 mb-1">Trocar de Empresa:</label>
-                                        <select id="selectEmpresa" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></select>
-                                    </div>
-                                    <button id="btnSelecionarEmpresa" class="w-full text-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700">Confirmar Troca</button>
+            
+                    <div class="lg:col-span-1 space-y-8">
+                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Ações da Empresa</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="selectEmpresa" class="block text-sm font-medium text-gray-700 mb-1">Trocar de Empresa:</label>
+                                    <select id="selectEmpresa" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></select>
                                 </div>
-                            </div>
-                            <div class="bg-white p-6 rounded-xl shadow-lg">
-                                <h3 class="text-xl font-bold text-gray-800 mb-4">Menu Principal</h3>
-                                <div id="menuOptionsGroup" class="space-y-3"></div>
+                                <button id="btnSelecionarEmpresa" class="w-full text-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700">Confirmar Troca</button>
                             </div>
                         </div>
-                        <div id="company-dashboard-container" class="lg:col-span-2 space-y-6">
-                             <div class="bg-white p-6 rounded-xl shadow-lg">
-                                <h3 class="text-xl font-bold text-gray-800 mb-4">Dashboard Rápido</h3>
-                                <div id="dashboard-content-area">
-                                    <div class="text-center py-10 text-gray-500">
-                                        <div class="spinner mx-auto"></div>
-                                        <p class="mt-4">A carregar...</p>
-                                    </div>
-                                </div>
-                             </div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Menu Principal</h3>
+                            <div id="menuOptionsGroup" class="space-y-3"></div>
                         </div>
-                    </div>`,
+                    </div>
+
+                    <div id="company-dashboard-container" class="lg:col-span-2 space-y-8">
+                        
+                        
+                            <div id="approval-card-wrapper" class="bg-white p-6 rounded-xl shadow-lg">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-check-double text-green-500 mr-3"></i>
+                                Aprovações Pendentes
+                            </h3>
+                            <div id="approval-queue-container" class="flex space-x-4 overflow-x-auto py-2">
+                                <p class="text-sm text-gray-500">A carregar...</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                            <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                                <i class="fas fa-bullhorn mr-3 text-orange-500"></i>
+                                Mural de Avisos
+                            </h3>
+                            <div id="notice-board-content" class="text-sm text-gray-600 space-y-3 p-3 bg-slate-50 rounded-md border border-slate-200 max-h-48 overflow-y-auto">
+                                <p class="text-sm text-gray-500">A carregar...</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Ultimos Pedidos</h3>
+                            <div id="dashboard-content-area">
+                                <div class="text-center py-10 text-gray-500">
+                                    <div class="spinner mx-auto"></div>
+                                    <p class="mt-4">A carregar...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`,
                 GerenciarUsuarios: `                    
                      <div class="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
                         <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">Gerenciar Usuários</h2>
@@ -723,14 +747,14 @@
                                             <label for="placaVeiculo" class="block text-sm font-medium text-gray-700">
                                                 Placa <span id="placa-required" class="text-red-500 hidden">*</span>
                                             </label>
-                                            <input type="text" id="placaVeiculo" name="placaVeiculo" placeholder="" class="mt-1 block w-full px-3 py-2 bg-gray-50 border-gray-300 rounded-md">
+                                            <input type="text" id="placaVeiculo" name="placaVeiculo" placeholder="" class="mt-1 block w-full px-3 py-2 bg-gray-50 border-gray-300 rounded-md auto-uppercase">
                                         </div>
                                     </div>
                                     <div>
                                         <label for="observacoesPedido" class="block text-sm font-medium text-gray-700">
                                             Observações do Pedido <span id="obs-required" class="text-red-500 hidden">*</span>
                                         </label>
-                                        <textarea id="observacoesPedido" name="observacoesPedido" rows="3" placeholder="Adicione observações importantes para o pedido..." class="mt-1 block w-full px-3 py-2 bg-gray-50 border-gray-300 rounded-md"></textarea>
+                                        <textarea id="observacoesPedido" name="observacoesPedido" rows="3" placeholder="Adicione observações importantes para o pedido..." class="mt-1 block w-full px-3 py-2 bg-gray-50 border-gray-300 rounded-md auto-uppercase"></textarea>
                                     </div>
                                 </div>
 
@@ -743,11 +767,11 @@
                                         <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
                                             <div class="md:col-span-2">
                                                 <label for="itemDescricao" class="block text-sm font-medium text-gray-700">Descrição do Item</label>
-                                                <input type="text" id="itemDescricao" name="itemDescricao" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="Ex: Paralama Random">
+                                                <input type="text" id="itemDescricao" name="itemDescricao" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm auto-uppercase" placeholder="Ex: Paralama Random">
                                             </div>
                                             <div class="md:col-span-2">
                                                 <label for="CodigoFornecedor" class="block text-sm font-medium text-gray-700">Código Produto Fornecedor</label>
-                                                <input type="text" id="itemProdutoFornecedor" name="produtoFornecedor" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="Ex: S10037">
+                                                <input type="text" id="itemProdutoFornecedor" name="produtoFornecedor" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm auto-uppercase" placeholder="Ex: S10037">
                                             </div>
                                             <div>
                                                 <label for="itemQuantidade" class="block text-sm font-medium text-gray-700">Qtd.</label>
@@ -837,6 +861,44 @@
                             </div>
                         </main>
                     </div>`,
+                MeusPedidos: `
+                        <div class="max-w-7xl mx-auto">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-800">Meus Pedidos Aprovados</h2>
+                                <p class="text-gray-500">Aqui está o histórico de todos os seus pedidos que já foram aprovados.</p>
+                            </div>
+                            <button onclick="loadPageContent('Menu', setupMenuScreen)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                                &larr; Voltar ao Menu
+                            </button>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-left text-gray-500">
+                                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3">Nº Pedido</th>
+                                            <th scope="col" class="px-6 py-3">Data</th>
+                                            <th scope="col" class="px-6 py-3">Fornecedor</th>
+                                            <th scope="col" class="px-6 py-3">Empresa</th>
+                                            <th scope="col" class="px-6 py-3 text-right">Valor Total</th>
+                                            <th scope="col" class="px-6 py-3 text-center">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabela-meus-pedidos">
+                                        <!-- O conteúdo da tabela será carregado aqui -->
+                                        <tr>
+                                            <td colspan="6" class="text-center p-8">
+                                                <div class="spinner mx-auto"></div>
+                                                <p class="mt-2 text-gray-500">Carregando seus pedidos...</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>`, 
                 PedidoSalvo: `
                     <div class="text-center p-8 bg-white rounded-2xl shadow-xl space-y-6 max-w-lg mx-auto">
                         <i class="fas fa-check-circle text-6xl text-green-500"></i>
@@ -850,7 +912,7 @@
                         </div>
                     </div>`,
                 PedidoImpressao: `
-                    <div>
+                     <div>
                         <style>
                             body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background-color: #fff; -webkit-print-color-adjust: exact; color-adjust: exact; }
                             .print-container { width: 210mm; min-height: 297mm; margin: 10mm auto; border: 1px solid #ccc; box-shadow: 0 0 5px rgba(0,0,0,0.1); background-color: #fff; padding: 15mm; box-sizing: border-box; }
@@ -948,7 +1010,10 @@
                                     <input type="date" id="dateStart" title="Data Inicial" class="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg">
                                     <input type="date" id="dateEnd" title="Data Final" class="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg">
                                     <input type="text" id="plateSearch" placeholder="Placa do Veículo" class="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg">
-                                    <input type="text" id="userSearch" placeholder="Utilizador que criou" class="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg">
+                                    <!-- CAMPO ADICIONAL PARA ADMIN -->
+                                    <div id="filtro-admin-usuario" class="hidden">
+                                        <input type="text" id="busca-usuario-criador" placeholder="Usuário que criou" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg">
+                                    </div>
                                     <button id="clearFiltersButton" class="md:col-span-2 w-full h-full bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300">Limpar Filtros</button>
                                 </div>
                             </div>
@@ -1589,14 +1654,61 @@
             return showToast(text, type);
         }
         
+        /**
+         * Gerencia a navegação com a tecla Enter no formulário de login.
+         * @param {KeyboardEvent} event O objeto do evento de teclado.
+         */
+        function handleEnterKeyNavigation(event) {
+            // Se a tecla pressionada não for 'Enter', não faz nada.
+            if (event.key !== 'Enter') {
+                return;
+            }
+
+            // Impede o comportamento padrão do Enter (como submeter um formulário e recarregar a página)
+            event.preventDefault();
+
+            const usernameField = document.getElementById('username');
+            const passwordField = document.getElementById('password');
+            const empresaSelect = document.getElementById('selectEmpresaLogin');
+
+            // Descobre qual elemento está ativo no momento
+            const activeElementId = document.activeElement.id;
+
+            switch (activeElementId) {
+                case 'username':
+                    // Se estiver no campo de usuário, pula para a senha
+                    if (passwordField) {
+                        passwordField.focus();
+                    }
+                    break;
+
+                case 'password':
+                    // Se estiver no campo de senha, pula para o seletor de empresa
+                    if (empresaSelect) {
+                        empresaSelect.focus();
+                    }
+                    break;
+
+                case 'selectEmpresaLogin':
+                    // Se estiver no seletor de empresa, tenta fazer o login
+                    // (A função logar() já deve ter as validações internas)
+                    logar();
+                    break;
+            }
+        }
+
         // ===============================================
         // LÓGICA DA TELA DE LOGIN
         // ===============================================
         function setupLoginScreen() {
+            console.log("Inicializando listeners da tela de login...");
+    
             const loginButton = document.getElementById('loginButton');
             const createAccountButton = document.getElementById('createAccountButton');
             const usernameField = document.getElementById('username');
-            const screenLogin = document.getElementById('screen-login');
+            const passwordField = document.getElementById('password');
+            //const screenLogin = document.getElementById('screen-login');
+            //const empresaSelect = document.getElementById('selectEmpresaLogin');
             
             if (loginButton) {
                 loginButton.addEventListener('click', logar);
@@ -1608,13 +1720,53 @@
             
             if (usernameField) {
                 usernameField.addEventListener('blur', carregarEmpresasParaLogin);
+                usernameField.addEventListener('keydown', handleEnterKeyNavigation);
+            }
+
+            if (passwordField) {
+              passwordField.addEventListener('keydown', handleEnterKeyNavigation);
+            }
+
+            //if (empresaSelect) {
+             // empresaField.addEventListener('keydown', handleEnterKeyNavigation);
+           // }
+            
+            //if (screenLogin) {
+              //  screenLogin.addEventListener('keydown', (e) => {
+              //      if (e.key === 'Enter') logar();
+              //  });
+           // }
+        }
+
+        /**
+         * Reseta o formulário de login para seu estado inicial e limpo.
+         * Deve ser chamada toda vez que a tela de login for exibida após um logout.
+         */
+        function resetarFormularioLogin() {
+            console.log("Resetando formulário de login...");
+
+            const usernameInput = document.getElementById('username');
+            if (usernameInput) usernameInput.value = '';
+
+            const passwordInput = document.getElementById('password');
+            if (passwordInput) passwordInput.value = '';
+
+            const empresaSelect = document.getElementById('selectEmpresaLogin');
+            if (empresaSelect) {
+                empresaSelect.innerHTML = '<option value="">Primeiro, digite o usuário</option>';
+                empresaSelect.disabled = false;
+            }
+
+            const loginButton = document.getElementById('loginButton');
+            if (loginButton) {
+                loginButton.disabled = false;
+                loginButton.innerHTML = 'Entrar';
             }
             
-            if (screenLogin) {
-                screenLogin.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') logar();
-                });
-            }
+            const messageLogin = document.getElementById('message-login');
+            if (messageLogin) messageLogin.textContent = '';
+
+            if (usernameInput) usernameInput.focus();
         }
 
         function carregarEmpresasParaLogin() {
@@ -1679,11 +1831,16 @@
             
             google.script.run
                 .withSuccessHandler(res => {
+                  console.log("Resposta COMPLETA recebida do validarLogin:", res);
                     if (res.status === 'ok' && res.empresa) {
+                      if (res.empresa.id) {
+                          res.empresa.id = String(res.empresa.id).padStart(3, '0');
+                      }
                         localStorage.setItem('nome', res.nome);
                         localStorage.setItem('perfil', res.perfil);
                         localStorage.setItem('usuarioLogado', username);
                         localStorage.setItem('empresaSelecionada', JSON.stringify(res.empresa));
+                        localStorage.setItem('funcao', res.funcao);
                         
                         showToast(`Bem-vindo, ${res.nome}!`, 'success', 'Login Realizado');
                         
@@ -1794,25 +1951,55 @@
         
         function logout() {
             // Limpar todos os dados do localStorage
-            localStorage.removeItem('usuarioLogado');
-            localStorage.removeItem('nome');
-            localStorage.removeItem('perfil');
-            localStorage.removeItem('empresaSelecionada');
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('empresaOriginalAdmin');
-            localStorage.removeItem('pedidoParaVisualizar');
-            localStorage.removeItem('modoVisualizacao');
-            
-            // Redirecionar para a tela de login
+            localStorage.clear();
             showScreen('screen-login');
-            setupLoginScreen();
+            resetarFormularioLogin();
         }
         
-        function setupMenuScreen() {
+        
+        // Variavel Global 
+        let AppCache = {
+            userCompanies: []
+        };
+
+        // Função para buscar e salvar a lista de empresas
+        function loadUserCompanies() {
+            return new Promise((resolve, reject) => {
+                const usuarioLogado = localStorage.getItem('usuarioLogado');
+                google.script.run
+                    .withSuccessHandler(response => {
+                        if (response && response.empresas) {
+                            AppCache.userCompanies = response.empresas; // Salva a lista de empresas
+                            console.log('Cache de empresas carregado:', AppCache.userCompanies);
+                            resolve();
+                        } else {
+                            reject('Resposta inválida ao buscar empresas.');
+                        }
+                    })
+                    .withFailureHandler(reject)
+                    .obterEmpresasDoUsuario(usuarioLogado);
+            });
+        } 
+
+
+        async function setupMenuScreen() {
+          try {
+              // 1. PRIMEIRO, carrega a lista de empresas e espera terminar
+              await loadUserCompanies();
             const perfil = (localStorage.getItem("perfil") || "").toLowerCase();
+            const approvalCardContainer = document.getElementById('approval-card-wrapper');
             const usuarioLogado = localStorage.getItem('usuarioLogado');
             const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
             
+            if (perfil === 'admin'){
+              // Se for Admin, mostra o card e carrega os dados
+              if (approvalCardContainer) approvalCardContainer.style.display = 'block';
+              loadApprovalQueue();
+            } else {
+              // Se NÃO for Admin, esconde completamente o card de aprovações
+              if (approvalCardContainer) approvalCardContainer.style.display = 'none';
+            }
+
             const switcherSelect = document.getElementById('selectEmpresa');
             google.script.run
                 .withSuccessHandler(response => {
@@ -1857,11 +2044,12 @@
                 console.log('🔧 Variáveis de visualização limpas para novo pedido');
                 loadPageContent('Pedido', setupPedidoScreen);
             }, menuOptionsGroup);
+            createMenuButton('Meus Pedidos Aprovados', () => loadPageContent('MeusPedidos', setupMeusPedidosScreen), menuOptionsGroup);
             createMenuButton('Gerenciar Rascunhos', () => loadPageContent('GerenciarRascunhos', setupGerenciarRascunhosScreen), menuOptionsGroup);
             createMenuButton('Cadastro de Fornecedores', () => loadPageContent('CadastroFornecedor', setupCadastroFornecedorScreen), menuOptionsGroup);
             createMenuButton('Buscar Pedido', () => loadPageContent('BuscarPedido', setupBuscaScreen), menuOptionsGroup);
             createMenuButton('Trocar Senha', () => loadPageContent('TrocarSenha', setupTrocarSenhaScreen), menuOptionsGroup);
-            
+                        
             if (perfil === "admin") {
                 createMenuButton('Dashboard Completo', () => loadPageContent('Dashboard', setupDashboardScreen), menuOptionsGroup);
                 createMenuButton('Relatórios', () => loadPageContent('Relatorios', setupRelatoriosScreen), menuOptionsGroup);
@@ -1870,7 +2058,8 @@
             }
             
             loadAdminDashboardCards();
-            
+            loadNoticeBoard();
+             
         function createMenuButton(text, onClick, container) {
             const button = document.createElement('button');
             button.className = 'w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors duration-200 flex items-center justify-between group';
@@ -1879,309 +2068,311 @@
                 <i class="fas fa-chevron-right text-gray-400 group-hover:text-blue-600"></i>
             `;
             button.addEventListener('click', onClick);
-            container.appendChild(button);
+            container.appendChild(button)
+        }
+
+        // --- ERRO 2 CORRIGIDO AQUI ---
+          } catch (error) { // <-- ADICIONADO O BLOCO 'catch' QUE FALTAVA
+              console.error("Erro fatal durante o setup do menu:", error);
+              showGlobalModal("Erro Crítico", "Ocorreu um erro ao carregar o menu principal. Por favor, recarregue a página.");
+        } 
+}
+        // ===============================================
+        // NOVAS FUNÇÕES PARA CARREGAR OS CARDS
+        // ===============================================
+
+        function loadApprovalQueue() {
+           const container = document.getElementById('approval-queue-container');
+    if (!container) return;
+    container.innerHTML = '<p class="text-sm text-gray-500">A carregar aprovações...</p>';
+
+    google.script.run
+        .withSuccessHandler(approvals => {
+            if (!approvals || approvals.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500">Nenhuma aprovação pendente no momento. ✨</p>';
+                return;
+            }
+
+            let html = '';
+            approvals.forEach(pedido => {
+                const numeroPedido = pedido.numeroDoPedido || 'N/D';
+                const empresaId = pedido.empresaId || '';
+                
+                // A busca que já confirmamos que funciona:
+                const empresaObj = AppCache.userCompanies.find(c => String(c.id).trim() == String(empresaId).trim());
+                
+                // Usamos o resultado da busca para definir o nome
+                const empresaNome = empresaObj ? empresaObj.nome : 'Empresa não identificada';
+
+                const valorFormatado = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pedido.totalGeral || 0);
+
+                // =========================================================
+                // HTML FINAL E CORRIGIDO
+                // =========================================================
+                html += `
+                    <div id="approval-card-${numeroPedido}" class="flex-shrink-0 min-w-[300px] p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                        <div class="flex justify-between items-start mb-1">
+                            <p class="font-bold text-gray-800 truncate">Pedido #${numeroPedido}</p>
+                            <span class="text-xs font-semibold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full truncate" title="${empresaNome}">${empresaNome}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 truncate mb-2">Fornecedor: ${pedido.fornecedor}</p>
+                        <p class="text-lg font-bold text-yellow-800 mt-1">${valorFormatado}</p>
+                        <div class="flex space-x-2 mt-3">
+                            <button onclick="visualizarPedidoExistente('${numeroPedido}', '${empresaId}', '${empresaNome}')" class="w-full py-1 text-xs bg-gray-500 text-white rounded-md hover:bg-gray-600">Visualizar</button>
+                            <button onclick="processarAprovacao('${numeroPedido}', 'Rejeitado')" class="w-full py-1 text-xs bg-red-500 text-white rounded-md hover:bg-red-600">Rejeitar</button>
+                            <button onclick="processarAprovacao('${numeroPedido}', 'Aprovado')" class="w-full py-1 text-xs bg-green-500 text-white rounded-md hover:bg-green-600">Aprovar</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        })
+        .getPendingApprovals();
+}
+
+        // ===============================================
+        // NOVAS FUNÇÕES DO CARD DE APROVAÇÃO
+        // ===============================================
+        /**
+           * Processa a aprovação ou rejeição de um pedido.
+           * @param {string} numeroPedido O número do pedido a ser processado.
+           * @param {string} novoStatus O novo status ("Aprovado" ou "Rejeitado").
+           */
+          function processarAprovacao(numeroPedido, novoStatus) {
+              const cardElement = document.getElementById(`approval-card-${numeroPedido}`);
+              if (!cardElement) return;
+
+              // 1. Fornece feedback visual imediato para o usuário
+              const buttons = cardElement.querySelectorAll('button');
+              buttons.forEach(button => button.disabled = true);
+              cardElement.style.opacity = '0.5';
+
+              console.log(`Processando pedido #${numeroPedido} para o status: ${novoStatus}...`);
+
+              // 2. Chama a função do backend
+              google.script.run
+                  .withSuccessHandler(response => {
+                      if (response.status === 'success') {
+                          console.log(response.message);
+                          // Animação de remoção suave e depois remove o elemento
+                          cardElement.style.transition = 'transform 0.5s, opacity 0.5s';
+                          cardElement.style.transform = 'scale(0.9)';
+                          cardElement.style.opacity = '0';
+                          setTimeout(() => {
+                              cardElement.remove();
+                              // Verifica se ainda há cards pendentes
+                              const container = document.getElementById('approval-queue-container');
+                              if (container && container.children.length === 0) {
+                                  container.innerHTML = '<p class="text-sm text-gray-500">Nenhuma aprovação pendente no momento. ✨</p>';
+                              }
+                          }, 500); // Espera a animação terminar
+
+                          showToast(response.message, 'success'); // Supondo que você tenha uma função de notificação
+                      } else {
+                          // Em caso de erro vindo do backend, reverte o estado visual
+                          console.error("Erro do backend:", response.message);
+                          showGlobalModal("Erro", response.message);
+                          buttons.forEach(button => button.disabled = false);
+                          cardElement.style.opacity = '1';
+                      }
+                  })
+                  .withFailureHandler(error => {
+                      // Em caso de falha na comunicação, reverte o estado visual
+                      console.error("Falha na comunicação:", error);
+                      showGlobalModal("Erro de Comunicação", "Não foi possível processar a solicitação. Tente novamente.");
+                      buttons.forEach(button => button.disabled = false);
+                      cardElement.style.opacity = '1';
+                  })
+                  .atualizarStatusPedido(numeroPedido, novoStatus);
+          }
+
+        function loadNoticeBoard() {
+            const container = document.getElementById('notice-board-content');
+            if (!container) return;
+            container.innerHTML = '<p class="text-sm text-gray-500">A carregar avisos...</p>';
+
+            google.script.run
+                .withSuccessHandler(notices => {
+                    if (!notices || notices.length === 0) {
+                        container.innerHTML = '<p class="text-sm text-gray-500">Nenhum aviso no momento.</p>';
+                        return;
+                    }
+
+                    let html = '';
+                    notices.forEach((notice, index) => {
+                        html += `<p><strong>${notice.data}:</strong> ${notice.mensagem}</p>`;
+                        if (index < notices.length - 1) {
+                            html += '<hr>';
+                        }
+                    });
+                    container.innerHTML = html;
+                })
+                .getNotices(); 
         }
 
         function loadAdminDashboardCards() {
-        const perfil = (localStorage.getItem("perfil") || "").toLowerCase();
-        const dashboardContainer = document.getElementById('company-dashboard-container');
-        if (!dashboardContainer) return;
+      const perfil = (localStorage.getItem("perfil") || "").toLowerCase();
+      const contentArea = document.getElementById('dashboard-content-area');
+      if (!contentArea) {
+          console.error("ERRO: 'dashboard-content-area' não foi encontrado.");
+          return;
+      }
 
-        const contentArea = dashboardContainer.querySelector('#dashboard-content-area');
-        if (!contentArea) return;
+    // Lógica para USUÁRIO NORMAL
+    if (perfil !== 'admin') {
+        const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
+        const idDaEmpresa = empresaAtual.id || empresaAtual.codigo;
+        
+        contentArea.innerHTML = `<div class="text-center py-10 text-gray-500"><div class="spinner mx-auto"></div><p class="mt-4">Carregando seus últimos pedidos...</p></div>`;
 
-         if (perfil !== 'admin') {
-            // Dashboard simplificado para usuários normais - mostrar apenas pedidos da empresa atual
-            const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
-            const idDaEmpresa = empresaAtual.id || empresaAtual.codigo;
-            
-            contentArea.innerHTML = `<div class="text-center py-10 text-gray-500"><div class="spinner mx-auto"></div><p class="mt-4">Carregando seus últimos pedidos...</p></div>`;
+        google.script.run
+            .withSuccessHandler(response => {
+                if (response.status === 'success' && response.data.length > 0) {
+                    const pedidosOrdenados = response.data.sort((a, b) => new Date((b.dataCriacao || b.data).replace(' ', 'T')) - new Date((a.dataCriacao || a.data).replace(' ', 'T')));
+                    console.log("🚨 Pedidos ordenados:", pedidosOrdenados.map(p => ({
+                      id: p.id,
+                      data: (p.dataCriacao || p.data),
+                      dataFormatada: new Date((p.dataCriacao || p.data).replace(' ', 'T'))
+                    })));
+                    const ultimosPedidos = pedidosOrdenados.slice(0, 2); 
 
-            google.script.run
-                .withSuccessHandler(response => {
-                    contentArea.innerHTML = '';
-                    
-                    if (response.status === 'success' && response.data.length > 0) {
-                        // Ordenar pedidos por data decrescente
-                        const pedidosOrdenados = response.data.sort((a, b) => {
-                        const dateA = new Date((a.dataCriacao || a.data).replace(' ', 'T'));
-                        const dateB = new Date((b.dataCriacao || b.data).replace(' ', 'T'));
-                        return dateB - dateA; // Ordena do mais recente para o mais antigo
-                        });
-                        
-                        // Pegar os últimos 5 pedidos
-                        const ultimosPedidos = pedidosOrdenados.slice(0, 2);
-                        
-                        const cardContainer = document.createElement('div');
-                        cardContainer.className = 'bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-6';
-                        cardContainer.innerHTML = `
-                            <div class="flex items-center mb-4">
-                                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full h-12 w-12 flex items-center justify-center mr-3">
-                                    <i class="fas fa-receipt text-lg"></i>
-                                </div>
+                    let cardsHtml = '';
+                    ultimosPedidos.forEach((pedido, index) => {
+                        cardsHtml += createOrderCardHTML(pedido, empresaAtual, index === 0);
+                    });
+
+                    contentArea.innerHTML = `
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                            <div class="p-5 border-b border-gray-200">
                                 <h3 class="text-xl font-bold text-gray-800">Seus Últimos Pedidos - ${empresaAtual.nome}</h3>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="pedidos-usuario-cards"></div>
-                        `;
-                        
-                        contentArea.appendChild(cardContainer);
-                        
-                        const pedidosContainer = document.getElementById('pedidos-usuario-cards');
-                        
-                        ultimosPedidos.forEach((pedido, index) => {
-                            console.log(`🔍 DEBUG - Pedido ${index + 1}:`, pedido);
-                            console.log(`🔍 DEBUG - Estado do pedido ${index + 1}:`, pedido.estadoFornecedor);
-                            const numeroPedido = pedido.numeroDoPedido || 'N/D';
-                            const valorTotal = `R$ ${parseFloat(pedido.totalGeral || 0).toFixed(2).replace('.', ',')}`;
-                            const dataFormatada = new Date((pedido.dataCriacao || pedido.data).replace(' ', 'T'))
-                            .toLocaleString('pt-BR', { 
-                                day: '2-digit', 
-                                month: '2-digit', 
-                                year: 'numeric', 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                            });
-                            const isRecente = index === 0;
-                            
-                            const pedidoCard = document.createElement('div');
-                            pedidoCard.className = `bg-gradient-to-br ${isRecente ? 'from-green-50 to-green-100 border-green-300' : 'from-gray-50 to-gray-100 border-gray-200'} rounded-lg p-4 border`;
-                            pedidoCard.innerHTML = `
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center space-x-2">
-                                        <div class="${isRecente ? 'bg-green-500' : 'bg-blue-500'} text-white rounded-full h-8 w-8 flex items-center justify-center">
-                                            <i class="fas ${isRecente ? 'fa-star' : 'fa-file-invoice'} text-sm"></i>
-                                        </div>
-                                        <span class="text-xs font-medium ${isRecente ? 'text-green-700' : 'text-blue-700'} uppercase tracking-wide">
-                                            ${isRecente ? 'Mais Recente' : `#${index + 1}`}
-                                        </span>
-                                    </div>
-                                    <span class="text-lg font-bold ${isRecente ? 'text-green-800' : 'text-gray-800'}">${valorTotal}</span>
-                                </div>
-                                
-                                <div class="space-y-2 text-sm mb-3">
-                                    <p class="text-gray-700"><span class="font-semibold">Pedido:</span> ${pedido.numeroDoPedido}</p>
-                                    <p class="text-gray-700"><span class="font-semibold">Data:</span> ${dataFormatada}</p>
-                                    <p class="text-gray-700"><span class="font-semibold">Fornecedor:</span> ${pedido.fornecedor}</p>
-                                    <p class="text-gray-700"><span class="font-semibold">Estado:</span> ${pedido.estadoFornecedor || 'N/A'}</p>
-                                </div>
-                                
-                                <div class="flex gap-2 mt-3 pt-3 border-t border-gray-200">
-                                    <button onclick="visualizarPedidoAdmin('${pedido.numeroDoPedido}', '${empresaAtual.id}', '${empresaAtual.nome}')" 
-                                            class="flex-1 text-xs px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 flex items-center justify-center gap-1">
-                                        <i class="fas fa-eye"></i>
-                                        <span>Visualizar</span>
-                                    </button>
-                                    <button onclick="abrirImpressaoPedido('${pedido.numeroDoPedido}')" 
-                                            class="flex-1 text-xs px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors duration-200 flex items-center justify-center gap-1">
-                                        <i class="fas fa-print"></i>
-                                        <span>Imprimir</span>
-                                    </button>
-                                </div>
-                            `;
-                            
-                            pedidosContainer.appendChild(pedidoCard);
-                        });
-                    } else {
-                        contentArea.innerHTML = `
-                            <div class="bg-white p-6 rounded-xl shadow-lg text-center">
-                                <div class="bg-gray-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
-                                    <i class="fas fa-inbox text-gray-400 text-xl"></i>
-                                </div>
-                                <p class="text-gray-500 text-lg mb-2">Nenhum pedido encontrado</p>
-                                <p class="text-gray-400 text-sm">Você ainda não criou nenhum pedido para esta empresa.</p>
-                                <button onclick="criarNovoPedidoFromRascunho()" class="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200">
-                                    <i class="fas fa-plus mr-2"></i>Criar Primeiro Pedido
-                                </button>
+                            <div class="p-5">
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${cardsHtml}</div>
                             </div>
-                        `;
-                    }
-                })
-                .withFailureHandler(err => {
-                     contentArea.innerHTML = `
-                        <div class="bg-white p-6 rounded-xl shadow-lg text-center">
-                            <div class="bg-red-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
+                            <div class="px-5 py-4 bg-gray-50 text-center">
+                                <button class="text-sm font-medium text-blue-600 hover:text-blue-800">Ver todos os pedidos</button>
                             </div>
-                            <p class="text-red-500 text-lg mb-2">Erro ao carregar pedidos</p>
-                            <p class="text-gray-500 text-sm">Tente novamente em alguns instantes.</p>
                         </div>
-                     `;
-                     console.error("Erro ao buscar pedidos do usuário:", err);
-                })
-                .buscarPedidos("", idDaEmpresa);
-            return;
-        }
-        
-        // Lógica exclusiva para administradores
-        const usuarioLogado = localStorage.getItem('usuarioLogado');
-        contentArea.innerHTML = `<div class="text-center py-10 text-gray-500"><div class="spinner mx-auto"></div><p class="mt-4">Carregando resumos das empresas...</p></div>`;
-        
-        google.script.run
-            .withSuccessHandler(function(dadosCompletos) {
-                console.log("Resposta da API:", dadosCompletos);
-                
-                contentArea.innerHTML = '';
-                
-                // Verificar se temos dados válidos
-                if (!dadosCompletos || !dadosCompletos.empresas) {
-                    contentArea.innerHTML = '<div class="bg-white p-6 rounded-xl shadow-lg text-center"><p class="text-red-500 italic">Dados inválidos retornados.</p></div>';
-                    return;
-                }
-                
-                var arrayEmpresas = dadosCompletos.empresas;
-                
-                if (arrayEmpresas.length > 0) {
-                    console.log("Processando", arrayEmpresas.length, "empresas");
-                    
-                    arrayEmpresas.forEach(function(empresaAtual) {
-                        console.log("Criando card para:", empresaAtual.nome);
-                        
-                        var cardEmpresa = document.createElement('div');
-                        cardEmpresa.className = 'bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300 mb-6';
-                        cardEmpresa.innerHTML = `
-                            <div class="flex items-center mb-4">
-                                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full h-12 w-12 flex items-center justify-center mr-3">
-                                    <i class="fas fa-building text-lg"></i>
-                                </div>
-                                <h3 class="text-xl font-bold text-gray-800">${empresaAtual.nome}</h3>
-                            </div>
-                            <div id="card-content-${empresaAtual.id}" class="text-center">
-                                <div class="flex items-center justify-center space-x-2 text-gray-500">
-                                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                                    <span class="text-sm">Carregando últimos pedidos...</span>
-                                </div>
-                            </div>
-                        `;
-                        contentArea.appendChild(cardEmpresa);
-                        
-                        // Buscar os últimos 2 pedidos desta empresa
-                        google.script.run
-                            .withSuccessHandler(function(responsePedidos) {
-                                var elementoCard = document.getElementById(`card-content-${empresaAtual.id}`);
-                                
-                                if (responsePedidos.status === 'success' && responsePedidos.data.length > 0) {
-                                    // Ordenar por data decrescente para garantir que são os mais recentes
-                                    var pedidosOrdenados = responsePedidos.data.sort((a, b) => {
-                                    var dateA = new Date((a.dataCriacao || a.data).replace(' ', 'T'));
-                                    var dateB = new Date((b.dataCriacao || b.data).replace(' ', 'T'));
-                                    return dateB - dateA; // Ordena do mais recente para o mais antigo
-                                    });
-                                    
-                                    // Pegar os 2 mais recentes
-                                    var ultimosDoisPedidos = pedidosOrdenados.slice(0, 2);
-                                    
-                                    var cardsHtml = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
-                                    
-                                    ultimosDoisPedidos.forEach(function(pedido, index) {
-                                        var valorTotal = `R$ ${parseFloat(pedido.totalGeral || 0).toFixed(2).replace('.', ',')}`;
-                                        var dataUltimoPedido = new Date((pedido.dataCriacao || pedido.data).replace(' ', 'T'))
-                                          .toLocaleString('pt-BR', { 
-                                              day: '2-digit', 
-                                              month: '2-digit', 
-                                              year: 'numeric', 
-                                              hour: '2-digit', 
-                                              minute: '2-digit' 
-                                          });
-                                        var isRecente = index === 0; // O primeiro é o mais recente
-                                        
-                                        cardsHtml += `
-                                            <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border ${isRecente ? 'border-green-300 bg-gradient-to-br from-green-50 to-green-100' : 'border-gray-200'}">
-                                                <div class="flex items-center justify-between mb-3">
-                                                    <div class="flex items-center space-x-2">
-                                                        <div class="${isRecente ? 'bg-green-500' : 'bg-blue-500'} text-white rounded-full h-8 w-8 flex items-center justify-center">
-                                                            <i class="fas ${isRecente ? 'fa-star' : 'fa-receipt'} text-sm"></i>
-                                                        </div>
-                                                        <span class="text-xs font-medium ${isRecente ? 'text-green-700' : 'text-blue-700'} uppercase tracking-wide">
-                                                            ${isRecente ? 'Mais Recente' : 'Anterior'}
-                                                        </span>
-                                                    </div>
-                                                    <span class="text-lg font-bold ${isRecente ? 'text-green-800' : 'text-gray-800'}">${valorTotal}</span>
-                                                </div>
-                                                
-                                                <div class="space-y-2 text-sm mb-3">
-                                                    <p class="text-gray-700"><span class="font-semibold">Pedido:</span> #${pedido.numeroDoPedido}</p>
-                                                    <!-- Corrigir para considerar data e hora do pedido -->
-                                                    <p class="text-gray-700"><span class="font-semibold">Data:</span> ${
-                                                        (() => {
-                                                            let dataFormatada;
-                                                            if (pedido.data && pedido.data.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
-                                                                dataFormatada = new Date(pedido.data.replace(' ', 'T')).toLocaleString('pt-BR');
-                                                            } else if (pedido.data) {
-                                                                dataFormatada = new Date(pedido.data).toLocaleString('pt-BR');
-                                                            } else {
-                                                                dataFormatada = 'N/A';
-                                                            }
-                                                            return dataFormatada;
-                                                        })()
-                                                    }</p>
-                                                    <p class="text-gray-700"><span class="font-semibold">Fornecedor:</span> ${pedido.fornecedor}</p>
-                                                    <p class="text-gray-700"><span class="font-semibold">Estado:</span> ${pedido.estadoFornecedor || 'N/A'}</p>
-                                                </div>
-                                                
-                                                <div class="flex gap-2 mt-3 pt-3 border-t border-gray-200">
-                                                    <button onclick="visualizarPedidoAdmin('${pedido.numeroDoPedido}', '${empresaAtual.id}', '${empresaAtual.nome}')" 
-                                                            class="flex-1 text-xs px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 flex items-center justify-center gap-1">
-                                                        <i class="fas fa-eye"></i>
-                                                        <span>Visualizar</span>
-                                                    </button>
-                                                    <button onclick="abrirImpressaoPedidoAdmin('${pedido.numeroDoPedido}', '${empresaAtual.id}', '${empresaAtual.nome}')" 
-                                                            class="flex-1 text-xs px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors duration-200 flex items-center justify-center gap-1">
-                                                        <i class="fas fa-print"></i>
-                                                        <span>Imprimir</span>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        `;
-                                   
-                                   
-                                    });
-                                    
-                                    cardsHtml += '</div>';
-                                    
-                                    // Se houver apenas 1 pedido, mostrar mensagem
-                                    if (ultimosDoisPedidos.length === 1) {
-                                        cardsHtml += '<p class="text-center text-gray-500 text-sm mt-4 italic">Esta empresa possui apenas 1 pedido registrado.</p>';
-                                    }
-                                    
-                                    elementoCard.innerHTML = cardsHtml;
-                                } else {
-                                    elementoCard.innerHTML = `
-                                        <div class="text-center py-8">
-                                            <div class="bg-gray-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-3">
-                                                <i class="fas fa-inbox text-gray-400 text-xl"></i>
-                                            </div>
-                                            <p class="text-gray-500 italic text-sm">Nenhum pedido encontrado para esta empresa.</p>
-                                        </div>
-                                    `;
-                                }
-                            })
-                            .withFailureHandler(function(erro) {
-                                console.error(`Erro ao buscar pedidos da empresa ${empresaAtual.nome}:`, erro);
-                                var elementoCard = document.getElementById(`card-content-${empresaAtual.id}`);
-                                elementoCard.innerHTML = `
-                                    <div class="text-center py-8">
-                                        <div class="bg-red-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-3">
-                                            <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
-                                        </div>
-                                        <p class="text-red-500 italic text-sm">Erro ao carregar pedidos desta empresa.</p>
-                                    </div>
-                                `;
-                            })
-                            .buscarPedidos('', empresaAtual.id);
-                    });
+                    `;
                 } else {
-                    contentArea.innerHTML = '<div class="bg-white p-6 rounded-xl shadow-lg text-center"><p class="text-gray-500 italic">Nenhuma empresa encontrada para este usuário.</p></div>';
+                    // Card para quando não há pedidos
+                    contentArea.innerHTML = `
+                        <div class="bg-white p-6 rounded-xl shadow-lg text-center">
+                           <div class="bg-gray-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4"><i class="fas fa-inbox text-gray-400 text-xl"></i></div>
+                           <p class="text-gray-500 text-lg mb-2">Nenhum pedido encontrado</p>
+                           <p class="text-gray-400 text-sm">Você ainda não criou nenhum pedido para esta empresa.</p>
+                           <button onclick="loadPageContent(templates.Pedido, setupPedidoScreen)" class="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200"><i class="fas fa-plus mr-2"></i>Criar Primeiro Pedido</button>
+                        </div>`;
                 }
             })
-            .withFailureHandler(function(erro) {
-                console.error("Erro ao buscar empresas:", erro);
-                contentArea.innerHTML = '<div class="bg-white p-6 rounded-xl shadow-lg text-center"><p class="text-red-500 italic">Erro ao carregar lista de empresas.</p></div>';
+            .withFailureHandler(err => {
+                contentArea.innerHTML = `<p class="text-red-500">Erro ao carregar pedidos.</p>`;
+                console.error("Erro ao buscar pedidos do usuário:", err);
             })
-            .obterEmpresasDoUsuario(usuarioLogado);
-        }
+            .buscarPedidosv2(params);
+        return;
+    }
+    
+    // Lógica para ADMINISTRADOR
+    const usuarioLogado = localStorage.getItem('usuarioLogado');
+    contentArea.innerHTML = `<div class="text-center py-10 text-gray-500"><div class="spinner mx-auto"></div><p class="mt-4">Carregando resumos das empresas...</p></div>`;
+    
+    google.script.run
+        .withSuccessHandler(dadosCompletos => {
+            if (!dadosCompletos || !dadosCompletos.empresas || dadosCompletos.empresas.length === 0) {
+                contentArea.innerHTML = '<p>Nenhuma empresa encontrada.</p>';
+                return;
+            }
+            
+            contentArea.innerHTML = ''; // Limpa o "carregando"
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'grid grid-cols-1 lg:grid-cols-2 gap-6';
+            contentArea.appendChild(gridContainer);
+
+            dadosCompletos.empresas.forEach(empresaAtual => {
+                const cardEmpresa = document.createElement('div');
+                cardEmpresa.className = 'bg-white rounded-xl shadow-lg overflow-hidden transition-shadow hover:shadow-xl flex flex-col';
+                cardEmpresa.innerHTML = `
+                    <div class="p-5 border-b border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-lg font-bold text-gray-800">${empresaAtual.nome}</h4>
+                            <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-1 rounded-full">Ativa</span>
+                        </div>
+                    </div>
+                    <div id="card-content-${empresaAtual.id}" class="p-5 space-y-4 flex-grow">
+                        <div class="spinner-small mx-auto"></div> </div>
+                     
+                `;
+                gridContainer.appendChild(cardEmpresa);
+                
+                // Buscar os últimos 2 pedidos desta empresa
+                const params = { empresaId: empresaAtual.id };
+                google.script.run
+                    .withSuccessHandler(responsePedidos => {
+                      console.log(`--- RELATÓRIO DE DIAGNÓSTICO (Empresa ${empresaAtual.id}) ---`, responsePedidos);
+                        
+                        const elementoCard = document.getElementById(`card-content-${empresaAtual.id}`);
+                        if (responsePedidos && responsePedidos.status === 'success' && responsePedidos.data.length > 0) {
+                            const pedidosOrdenados = responsePedidos.data.sort((a, b) => new Date((b.dataCriacao || b.data).replace(' ', 'T')) - new Date((a.dataCriacao || a.data).replace(' ', 'T')));
+                            console.log("🚨 Pedidos ordenados:", pedidosOrdenados.map(p => ({
+                              id: p.id,
+                              data: (p.dataCriacao || p.data),
+                              dataFormatada: new Date((p.dataCriacao || p.data).replace(' ', 'T'))
+                            })));
+                            const ultimosDoisPedidos = pedidosOrdenados.slice(0, 2);
+                            
+                            let cardsHtml = '';
+                            ultimosDoisPedidos.forEach((pedido, index) => {
+                                cardsHtml += createOrderCardHTML(pedido, empresaAtual, index === 0);
+                            });
+                            elementoCard.innerHTML = cardsHtml;
+                        } else {
+                            elementoCard.innerHTML = '<p class="text-sm text-gray-500 text-center italic">Nenhum pedido encontrado para esta empresa.</p>';
+                        }
+                    })
+                    .buscarPedidosv2(params);
+            });
+        })
+        .obterEmpresasDoUsuario(usuarioLogado);
+}
+
+
+// =================================================================
+// NOVA FUNÇÃO AUXILIAR PARA CRIAR CARDS DE PEDIDOS
+// =================================================================
+function createOrderCardHTML(pedido, empresa, isRecente = false) {
+    const numeroPedido = pedido.numeroDoPedido || 'N/D';
+    const valorTotal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pedido.totalGeral || 0);
+    const dataFormatada = new Date((pedido.dataCriacao || pedido.data).replace(' ', 'T')).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    
+    const tagLabel = isRecente ? 'Mais Recente' : 'Anterior';
+    const tagBgColor = isRecente ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
+
+    return `
+        <div class="border border-gray-200 rounded-lg p-4 space-y-3">
+            <div class="flex justify-between items-start">
+                <p class="font-bold text-gray-800">Pedido ${numeroPedido}</p>
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${tagBgColor}">${tagLabel}</span>
+            </div>
+            <div class="text-sm space-y-1">
+                <p><i class="fas fa-truck fa-fw text-gray-400 mr-2"></i>${pedido.fornecedor}</p>
+                <p><i class="fas fa-calendar-alt fa-fw text-gray-400 mr-2"></i>${dataFormatada}</p>
+                <p><i class="fas fa-info-circle fa-fw text-gray-400 mr-2"></i>Estado: <span class="font-semibold">${pedido.estado || 'N/A'}</span></p>
+                <p><i class="fas fa-money-bill-wave fa-fw text-gray-400 mr-2"></i><span class="font-semibold">${valorTotal}</span></p>
+            </div>
+            <div class="flex gap-2 pt-3 border-t border-gray-200">
+                <button onclick="visualizarPedidoExistente('${numeroPedido}', '${empresa.id}', '${empresa.nome}')" class="flex-1 text-xs px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md">
+                    Visualizar
+                </button>
+                <button onclick="iniciarImpressao('${numeroPedido}', '${empresa.id}')" class="flex-1 text-xs px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors">
+                    <i class="fas fa-print mr-1"></i> Imprimir
+                </button>
+            </div>
+        </div>
+    `;
+  }
         
-        // Fechamento da função setupMenuScreen
-        }
+        
         
         // ===============================================
         // FUNÇÕES ESPECÍFICAS PARA ADMIN NO DASHBOARD
@@ -2194,7 +2385,7 @@
               }
               
               console.log(`Admin abrindo pedido ${numeroPedido} da empresa ${nomeEmpresa} (ID: ${empresaId})`);
-              showGlobalModal('Aguarde', `Preparando impressão do pedido ${numeroPedido} da empresa ${nomeEmpresa}...`, 'info');
+              showToast('Aguarde', `Preparando impressão do pedido ${numeroPedido} da empresa ${nomeEmpresa}...`, 'info');
 
               google.script.run
                   .withSuccessHandler(function(pedidoData) {
@@ -2294,63 +2485,33 @@
         // VISUALIZAR PEDIDO USANDO TELA EXISTENTE
         // ===============================================
 
-        function visualizarPedidoExistente(numeroPedido, empresaId, nomeEmpresa) {
-            console.log(`🔍 Visualizando pedido: ${numeroPedido}`);
-            
-            // Definir que veio do menu de usuário normal
+        function visualizarPedidoExistente(numeroPedido, empresaId, nomeEmpresa, origem = 'menu-principal') {
+            console.log(`🔍 Visualizando pedido: ${numeroPedido} a partir de ${origem}`);
+    
             localStorage.setItem('modoVisualizacao', 'true');
-            localStorage.setItem('origemVisualizacao', 'menu-usuario');
+            localStorage.setItem('origemVisualizacao', origem); 
             localStorage.setItem('numeroPedidoVisualizacao', numeroPedido);
             
-            // PRIMEIRO: Buscar dados do pedido
-            console.log('🔍 Buscando dados do pedido antes de carregar a tela...');
+            const params = { empresaId: empresaId, mainSearch: numeroPedido };
+
             google.script.run
-                .withSuccessHandler(async (response) => {
+                .withSuccessHandler(response => {
                     if (response.status === 'success' && response.data.length > 0) {
-                        console.log("📄 Dados do pedido recebidos:", response.data);
-                        
-                        // Encontrar o pedido específico
-                        let pedidoEncontrado = response.data.find(p => p.numeroDoPedido == numeroPedido);
-                        
-                        if (!pedidoEncontrado) {
-                            // Tentar com string
-                            pedidoEncontrado = response.data.find(p => String(p.numeroDoPedido) === String(numeroPedido));
-                        }
-                        
-                        if (!pedidoEncontrado) {
-                            // Tentar com padding
-                            const numeroComZeros = numeroPedido.padStart(4, '0');
-                            pedidoEncontrado = response.data.find(p => 
-                                String(p.numeroDoPedido).padStart(4, '0') === numeroComZeros
-                            );
-                        }
-                        
+                        const pedidoEncontrado = response.data[0];
                         if (pedidoEncontrado) {
-                            console.log("✅ Pedido encontrado:", pedidoEncontrado);
-                            console.log("🔍 DEBUG - Campo estadoFornecedor:", pedidoEncontrado.estadoFornecedor);
-                            console.log("🔍 DEBUG - Todos os campos do pedido:", Object.keys(pedidoEncontrado));
-                            
-                            // Salvar dados do pedido no localStorage ANTES de carregar a tela
                             localStorage.setItem('pedidoParaVisualizar', JSON.stringify(pedidoEncontrado));
-                            console.log('✅ Dados salvos no localStorage');
-                            
-                            // AGORA carregar a tela de pedido
                             loadPageContent('Pedido', setupPedidoScreen);
-                            
                         } else {
-                            console.error("❌ Pedido não encontrado");
                             showGlobalModal("Erro", `Pedido ${numeroPedido} não encontrado.`);
                         }
-                        
                     } else {
-                        showGlobalModal("Erro", "Pedido não encontrado");
+                        showGlobalModal("Erro", "Pedido não encontrado ou falha na busca.");
                     }
                 })
-                .withFailureHandler((error) => {
-                    console.error("❌ Erro ao buscar pedido:", error);
+                .withFailureHandler(error => {
                     showGlobalModal("Erro", "Erro ao carregar pedido: " + error.message);
                 })
-                .buscarPedidos(numeroPedido, empresaId);
+                .buscarPedidosv2(params);
         }
 
         // Função específica para visualização no dashboard admin
@@ -2414,66 +2575,82 @@
                     console.error("❌ Erro ao buscar pedido (Admin):", error);
                     showGlobalModal("Erro", "Erro ao carregar pedido: " + error.message);
                 })
-                .buscarPedidos(numeroPedido, empresaId);
+                .buscarPedidosv2(numeroPedido, empresaId);
         }
 
         function preencherTelaPedidoExistente() {
-    try {
-        console.log('=== INICIANDO PREENCHIMENTO DA TELA ===');
-        
-        // Recuperar dados salvos
-        const pedidoDataString = localStorage.getItem('pedidoParaVisualizar');
-        const empresaOriginal = localStorage.getItem('empresaOriginalAdmin');
-        
-        console.log('Dados do localStorage:');
-        console.log('- pedidoParaVisualizar:', pedidoDataString);
-        console.log('- empresaOriginalAdmin:', empresaOriginal);
-        
-        // Definir origem baseado na presença de empresaOriginalAdmin
-        if (empresaOriginal) {
-            console.log('🔍 Detectado: origem = dashboard-admin');
-            localStorage.setItem('origemVisualizacao', 'dashboard-admin');
-        } else {
-            console.log('🔍 Detectado: origem = menu-usuario');
-            localStorage.setItem('origemVisualizacao', 'menu-usuario');
-        }
-        
-        if (!pedidoDataString) {
-            console.error('❌ Dados do pedido não encontrados no localStorage');
-            showGlobalModal('Erro', 'Dados do pedido não encontrados.');
-            return;
-        }
-        
-        let pedidoData;
-        try {
-            pedidoData = JSON.parse(pedidoDataString);
-        } catch (parseError) {
-            console.error('❌ Erro ao fazer parse dos dados:', parseError);
-            showGlobalModal('Erro', 'Erro ao processar dados do pedido.');
-            return;
-        }
-        
-        console.log('Dados parseados:', pedidoData);
-        
-        if (!pedidoData || !pedidoData.numeroDoPedido) {
-            console.error('❌ Dados do pedido inválidos:', pedidoData);
-            showGlobalModal('Erro', 'Dados do pedido inválidos.');
-            return;
-        }
-        
-        console.log('✅ Dados válidos, iniciando preenchimento...');
-        
-        // Aguardar mais um pouco para garantir que a tela carregou
-        setTimeout(() => {
-            processarPreenchimentoTela(pedidoData, empresaOriginal);
-        }, 1000);
-        
-    } catch (error) {
-        console.error("❌ Erro no preenchimento da tela:", error);
-        console.error("Stack trace:", error.stack);
-        showGlobalModal('Erro', 'Erro ao preencher os dados na tela.');
-    }
-}
+           console.log("=== INICIANDO PREENCHIMENTO DA TELA (AGORA COM SEGURANÇA) ===");
+              const pedidoDataString = localStorage.getItem('pedidoParaVisualizar');
+               console.log("Dados brutos do localStorage:", pedidoDataString);
+              if (!pedidoDataString) {
+                  showGlobalModal('Erro', 'Dados do pedido não encontrados para visualização.');
+                  return;
+              }
+              const pedidoData = JSON.parse(pedidoDataString);
+
+              // Preenche campos simples
+              if(document.getElementById('numeroPedido')) document.getElementById('numeroPedido').value = pedidoData.numeroDoPedido;
+              
+              // --- CORREÇÃO DA DATA ---
+              const dataInput = document.getElementById('dataPedido');
+              if(dataInput && pedidoData.data) {
+                  try {
+                      const dateString = String(pedidoData.data).replace(' ', 'T');
+                      const dateObj = new Date(dateString);
+
+                      if (isNaN(dateObj.getTime())) {
+                          console.error("Erro: A data recebida é inválida:", pedidoData.data);
+                          dataInput.value = '';
+                      } else {
+                          // Formata a data para YYYY-MM-DD
+                          const ano = dateObj.getFullYear();
+                          const mes = String(dateObj.getMonth() + 1).padStart(2, '0');
+                          const dia = String(dateObj.getDate()).padStart(2, '0');
+                          dataInput.value = `${ano}-${mes}-${dia}`;
+                      }
+                  } catch(e) { 
+                      console.error("Erro ao formatar data:", e);
+                      dataInput.value = '';
+                  }
+              }
+              
+              if(document.getElementById('placaVeiculo')) {
+              document.getElementById('placaVeiculo').value = pedidoData.placa || pedidoData.placaVeiculo || '';
+              }
+              if(document.getElementById('nomeVeiculo')) {
+                document.getElementById('nomeVeiculo').value = pedidoData.veiculo || pedidoData.nomeVeiculo || '';
+              }
+              if(document.getElementById('observacoesPedido')) document.getElementById('observacoesPedido').value = pedidoData.observacoes || '';
+
+              // Seleciona Fornecedor
+              const fornecedorSelect = document.getElementById('fornecedorPedido');
+              if (fornecedorSelect && pedidoData.fornecedor) {
+                  const nomeFornecedor = pedidoData.fornecedor;
+                  const option = Array.from(fornecedorSelect.options).find(opt => opt.text === nomeFornecedor);
+                  if (option) {
+                      fornecedorSelect.value = option.value;
+                      fornecedorSelect.dispatchEvent(new Event('change'));
+                  }
+              }
+              
+              // Seleciona Veículo
+              const veiculoSelect = document.getElementById('nomeVeiculo');
+              if (veiculoSelect && pedidoData.nomeVeiculo) {
+                  veiculoSelect.value = pedidoData.nomeVeiculo;
+              }
+  
+              // Preenche Itens
+              if (pedidoData.itens) {
+                  const itens = pedidoData.itens || [];
+                  console.log("Objeto do pedido após o parse:", pedidoData);
+                  if (typeof preencherItensContainer === 'function') preencherItensContainer(itens);
+              }
+              
+              if (typeof atualizarTotaisDoPedido === 'function') atualizarTotaisDoPedido();
+
+              // Configura a tela para o modo de apenas leitura
+              setupModoVisualizacao();
+          }
 
 function processarPreenchimentoTela(pedidoData, empresaOriginal) {
     try {
@@ -2545,8 +2722,7 @@ function finalizarPreenchimento(pedidoData, empresaOriginal) {
             console.log('🔧 Origem não identificada ou sem botões a adicionar');
         }
         
-        // Limpar dados temporários
-        localStorage.removeItem('pedidoParaVisualizar');
+        
         
         showToast(`Pedido ${pedidoData.numeroDoPedido} carregado com sucesso!`, 'success', 'Sucesso');
         
@@ -2571,12 +2747,15 @@ function finalizarPreenchimento(pedidoData, empresaOriginal) {
                     campo.classList.add('bg-gray-100', 'text-gray-600', 'cursor-not-allowed');
                     console.log(`🔒 Campo desabilitado (final): ${campo.id || campo.name || campo.tagName}`);
                 }
+            
+            // Limpar dados temporários
+            localStorage.removeItem('pedidoParaVisualizar');
             });
             
             // Desabilitar botões (exceto navegação)
             buttons.forEach(button => {
                 const id = button.id || '';
-                const isNavButton = id.includes('voltar') || id.includes('imprimir') || id.includes('Menu') || id.includes('Dashboard');
+                const isNavButton = id.includes('voltar') || id.includes('imprimir') || id.includes('Menu') || id.includes('Dashboard') || id.includes('Sair');
                 
                 if (!isNavButton) {
                     button.disabled = true;
@@ -2663,11 +2842,25 @@ function preencherCamposPedido(dadosPedido) {
     }, 1500);
     
     // 7. ITENS
-    if (dadosPedido.itens && Array.isArray(dadosPedido.itens)) {
-        console.log(`Preenchendo ${dadosPedido.itens.length} itens...`);
-        preencherItensContainer(dadosPedido.itens);
+     let itensArray = dadosPedido.itens;
+
+    // VERIFICA SE 'itens' É UMA STRING JSON E, SE FOR, CONVERTE PARA UM ARRAY
+    if (typeof itensArray === 'string' && itensArray.startsWith('[')) {
+        try {
+            itensArray = JSON.parse(itensArray);
+            console.log('✅ Itens convertidos de STRING para ARRAY:', itensArray);
+        } catch (e) {
+            console.error('❌ Erro ao fazer parse da string de itens:', e);
+            itensArray = []; // Define como array vazio em caso de erro de parse
+        }
+    }
+
+    // AGORA A VERIFICAÇÃO VAI FUNCIONAR CORRETAMENTE
+    if (itensArray && Array.isArray(itensArray) && itensArray.length > 0) {
+        console.log(`Preenchendo ${itensArray.length} itens...`);
+        preencherItensContainer(itensArray); // Usa o array já convertido
     } else {
-        console.warn('❌ Nenhum item encontrado ou formato inválido');
+        console.warn('❌ Nenhum item encontrado ou formato inválido após a verificação.');
     }
 }
 
@@ -2874,7 +3067,7 @@ function preencherItensContainer(itens) {
             summaryTotalElement.textContent = valorFormatado;
             console.log(`✅ Summary total atualizado: ${valorFormatado}`);
         }
-    }, 100);
+    }, 150);
 }
 
         // Função para remover item da lista
@@ -3134,51 +3327,13 @@ function preencherItensContainer(itens) {
         }
 
         function imprimirPedidoAtual() {
-            try {
-                console.log('=== INICIANDO IMPRESSÃO DO PEDIDO ATUAL ===');
-                
-                // Verificar elementos necessários
-                const elementos = verificarElementosNecessarios();
-                
-                const numeroPedido = elementos.numeroPedido?.value?.trim();
-                
-                if (!numeroPedido) {
-                    console.error('Número do pedido não encontrado');
-                    showGlobalModal('Erro', 'Número do pedido não encontrado para impressão.');
-                    return;
-                }
-                
-                console.log('Número do pedido encontrado:', numeroPedido);
-                
-                // Verificar se a função de impressão existe
-                if (typeof abrirImpressaoPedido !== 'function') {
-                    console.error('Função abrirImpressaoPedido não encontrada');
-                    showGlobalModal('Erro', 'Função de impressão não disponível.');
-                    return;
-                }
-                
-                // Verificar conexão com Google Apps Script
-                if (typeof google === 'undefined' || !google.script) {
-                    console.error('Google Apps Script não disponível');
-                    showGlobalModal('Erro', 'Conexão com servidor não disponível.');
-                    return;
-                }
-                
-                // Chamar função de impressão com timeout para evitar conflitos
-                setTimeout(() => {
-                    try {
-                        abrirImpressaoPedido(numeroPedido);
-                    } catch (printError) {
-                        console.error('Erro na função de impressão:', printError);
-                        showGlobalModal('Erro', `Erro ao executar impressão: ${printError.message}`);
-                    }
-                }, 150);
-                
-            } catch (error) {
-                console.error('Erro em imprimirPedidoAtual:', error);
-                showGlobalModal('Erro', `Erro ao imprimir pedido: ${error.message}`);
-            }
-        }
+           console.log('Iniciando impressão do pedido em tela...');
+          const numeroPedido = document.getElementById('numeroPedido')?.value;
+          const empresaId = JSON.parse(localStorage.getItem('empresaSelecionada'))?.id;
+          
+          // Chama a nossa gerente de impressão
+          iniciarImpressao(numeroPedido, empresaId);
+      }
 
     // ===============================================
     // FUNÇÃO PARA CALCULO DE IMPOSTOS
@@ -3694,7 +3849,7 @@ function preencherItensContainer(itens) {
                         }
                         
                         console.warn('⚠️ Fornecedor não encontrado nos selects disponíveis');
-                    }, 1500);
+                    }, 2000);
                 } else {
                     console.warn('⚠️ Campo fornecedorPedido não encontrado');
                 }
@@ -3823,7 +3978,8 @@ function preencherItensContainer(itens) {
         let cacheData = {
             fornecedores: null,
             veiculos: null,
-            timestamp: null,
+           timestamp: null,
+           aliquotaporEstado: null,
             expireTime: 5 * 60 * 1000 // 5 minutos
         };
         
@@ -3831,270 +3987,223 @@ function preencherItensContainer(itens) {
             return cacheData.timestamp && 
                    cacheData.fornecedores && 
                    cacheData.veiculos && 
+                   cacheData.aliquotaporEstado &&
                    (new Date().getTime() - cacheData.timestamp) < cacheData.expireTime;
         }
         
         // Variável para guardar nosso mapa de alíquotas para consulta rápida
         let aliquotasPorEstado = {}; // Garanta que esta variável seja declarada no escopo do seu script
         
-        function setupPedidoScreen(modoEdicao = false, dadosEdicao = null) {
-            console.log('🔧 setupPedidoScreen iniciado', { modoEdicao, dadosEdicao });
+        function carregarDadosIniciais() {
+    console.log("Promise: Iniciando carregamento de dados essenciais...");
 
-            let fornecedoresCarregados = false;
-            let veiculosCarregados = false;
-            carregarDadosDeConfiguracao();
-            populateFornecedores();
+    // Sua lógica de verificação de cache
+    if (typeof isCacheValid === 'function' && isCacheValid()) {
+        console.log('🚀 Usando dados do cache para carregamento rápido');
+        if (typeof populateFornecedores === 'function') populateFornecedores(cacheData.fornecedores);
+        if (typeof populateVeiculos === 'function') populateVeiculos(cacheData.veiculos);
+        //if (typeof popularDropDownFornecedores === 'function') popularDropDownFornecedores(cacheData.fornecedores);
+        if (aliquotasPorEstado && Object.keys(aliquotasPorEstado).length > 0) {
+        return Promise.resolve(); // Resolve imediatamente se o cache for válido
+        }
+    }
 
-            // --- PARTE 1: REFERÊNCIAS AOS ELEMENTOS DO MODAL ---
-            const modal = document.getElementById('modal-veiculo');
-            const modalOverlay = document.getElementById('modal-veiculo-overlay');
-            const nomeVeiculoInput = document.getElementById('nome-veiculo-input');
-            const btnSalvarVeiculo = document.getElementById('modal-salvar-veiculo-btn');
-            const btnCancelar = document.getElementById('modal-cancelar-btn');
-            const btnAdicionarPrincipal = document.getElementById('addVeiculoBtn');
+    return new Promise((resolve, reject) => {
+        console.log("Promise: Iniciando carregamento de dados essenciais...");
+        Promise.all([
+            new Promise((res, rej) => google.script.run.withSuccessHandler(data => { populateFornecedores(data); res(); }).withFailureHandler(rej).getFornecedoresListv2()),
+            new Promise((res, rej) => google.script.run.withSuccessHandler(data => { populateVeiculos(data); res(); }).withFailureHandler(rej).getVeiculosList()),
+            //new Promise((res, rej) => google.script.run.withSuccessHandler(data => { popularDropDownFornecedores(data); res(); }).withFailureHandler(rej).getFornecedoresListv2()),
+            new Promise((res, rej) => google.script.run.withSuccessHandler(data => {
+                const mapa = {};
+                if (Array.isArray(data)) {
+                    data.forEach(estado => { mapa[estado.value] = estado.aliquota; });
+                }
+                window.aliquotasPorEstado = mapa;
+                res();
+            }).withFailureHandler(rej).getEstadosv2())
+        ]).then(() => {
+            console.log("🚀 Carregamento paralelo concluído!");
+            resolve();
+        }).catch(error => {
+            console.error('❌ Erro no carregamento paralelo:', error);
+            reject(error);
+        });
+    });
+}
 
-            // --- PARTE 2: FUNÇÕES PARA ABRIR E FECHAR ---
-            const abrirModalVeiculo = () => {
-              if (modal) {
+async function setupPedidoScreen(modoEdicao = false, dadosEdicao = null) {
+    console.log('🔧 setupPedidoScreen (async) iniciado', { modoEdicao, dadosEdicao });
+
+    try {
+        // ========================================================
+        // PASSO 1: ESPERAR OS DADOS ESSENCIAIS
+        // 'await' pausa a execução DESTA função até que carregarDadosIniciais() termine.
+        // A corrida acabou. O código abaixo só roda depois que os selects estão prontos.
+        // ========================================================
+        await carregarDadosIniciais();
+        console.log("✅ Dados essenciais (fornecedores, veículos) carregados. Prosseguindo...");
+
+        // ========================================================
+        // PASSO 2: CONFIGURAR TODA A LÓGICA DA TELA
+        // Toda a sua lógica original, agora executada na ordem correta.
+        // ========================================================
+        //popularDropdownFornecedores();
+        // --- Lógica do Modal de Veículos ---
+        const modal = document.getElementById('modal-veiculo');
+        const modalOverlay = document.getElementById('modal-veiculo-overlay');
+        const nomeVeiculoInput = document.getElementById('nome-veiculo-input');
+        const btnSalvarVeiculo = document.getElementById('modal-salvar-veiculo-btn');
+        const btnCancelar = document.getElementById('modal-cancelar-btn');
+        const btnAdicionarPrincipal = document.getElementById('addVeiculoBtn');
+
+        const abrirModalVeiculo = () => {
+            if (modal) {
                 modal.classList.remove('hidden');
-                nomeVeiculoInput.focus(); // Foco automático no campo de texto
-              }
-            };
+                if(nomeVeiculoInput) nomeVeiculoInput.focus();
+            }
+        };
 
-            const fecharModalVeiculo = () => {
-              if (modal) {
+        const fecharModalVeiculo = () => {
+            if (modal) {
                 modal.classList.add('hidden');
-                nomeVeiculoInput.value = ''; // Limpa o campo ao fechar
-              }
-            };
+                if(nomeVeiculoInput) nomeVeiculoInput.value = '';
+            }
+        };
 
-            // --- PARTE 3: FUNÇÃO PARA SALVAR O NOVO VEÍCULO ---
-            const salvarNovoVeiculo = () => {
-              const nomeVeiculo = nomeVeiculoInput.value;
-
-              if (!nomeVeiculo || nomeVeiculo.trim() === '') {
+        const salvarNovoVeiculo = () => {
+            const nomeVeiculo = nomeVeiculoInput.value;
+            if (!nomeVeiculo || nomeVeiculo.trim() === '') {
                 showToast('Por favor, digite o nome do veículo.', 'error');
                 return;
-              }
+            }
 
-              showToast('Adicionando veículo...', 'info');
-              btnSalvarVeiculo.disabled = true; // Desabilita o botão para evitar cliques duplos
-
-              google.script.run
+            showToast('Adicionando veículo...', 'info');
+            if(btnSalvarVeiculo) btnSalvarVeiculo.disabled = true;
+            google.script.run
                 .withSuccessHandler(response => {
-                  btnSalvarVeiculo.disabled = false; // Reabilita o botão
-
-                  if (response && response.status === 'ok') {
-                    showToast(response.message || 'Veículo adicionado!', 'success');
-                    
-                    // Atualiza a lista de veículos na tela principal
-                    const veiculoSelect = document.getElementById('nomeVeiculo'); 
-                    if (veiculoSelect && response.novoVeiculo) {
-                      const novaOpcao = document.createElement('option');
-                      novaOpcao.value = response.novoVeiculo;
-                      novaOpcao.textContent = response.novoVeiculo;
-                      veiculoSelect.appendChild(novaOpcao);
-                      veiculoSelect.value = response.novoVeiculo;
+                    if(btnSalvarVeiculo) btnSalvarVeiculo.disabled = false;
+                    if (response && response.status === 'ok') {
+                        showToast(response.message || 'Veículo adicionado!', 'success');
+                        const veiculoSelect = document.getElementById('nomeVeiculo');
+                        if (veiculoSelect && response.novoVeiculo) {
+                            const novaOpcao = document.createElement('option');
+                            novaOpcao.value = response.novoVeiculo;
+                            novaOpcao.textContent = response.novoVeiculo;
+                            veiculoSelect.appendChild(novaOpcao);
+                            veiculoSelect.value = response.novoVeiculo;
+                        }
+                        fecharModalVeiculo();
+                    } else {
+                        showToast(response ? response.message : 'Erro ao adicionar veículo.', 'error');
                     }
-                    
-                    fecharModalVeiculo(); // Fecha o modal após o sucesso
-                  } else {
-                    showToast(response ? response.message : 'Erro ao adicionar veículo.', 'error');
-                  }
                 })
                 .withFailureHandler(err => {
-                  btnSalvarVeiculo.disabled = false; // Reabilita o botão
-                  showToast('Erro de comunicação.', 'error');
-                  console.error('Erro ao chamar adicionarNovoVeiculo:', err);
+                    if(btnSalvarVeiculo) btnSalvarVeiculo.disabled = false;
+                    showToast('Erro de comunicação.', 'error');
+                    console.error('Erro ao chamar adicionarNovoVeiculo:', err);
                 })
                 .adicionarNovoVeiculo(nomeVeiculo.trim());
-            };
+        };
 
-            // --- PARTE 4: CONECTANDO OS BOTÕES ÀS FUNÇÕES ---
-            if (btnAdicionarPrincipal) btnAdicionarPrincipal.addEventListener('click', abrirModalVeiculo);
-            if (btnCancelar) btnCancelar.addEventListener('click', fecharModalVeiculo);
-            if (modalOverlay) modalOverlay.addEventListener('click', fecharModalVeiculo);
-            if (btnSalvarVeiculo) btnSalvarVeiculo.addEventListener('click', salvarNovoVeiculo);
-            
-            // Permite salvar com a tecla "Enter"
-            if (nomeVeiculoInput) {
-              nomeVeiculoInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                  salvarNovoVeiculo();
-                }
-              });
-            }
-
-            const fornecedorSelect = document.getElementById('fornecedorPedido');
-            if (fornecedorSelect) {
-               // Configura o "ouvinte" de eventos
-              fornecedorSelect.addEventListener('change', () => {
-                  const selectedOption = fornecedorSelect.options[fornecedorSelect.selectedIndex];
-                  const estado = selectedOption ? selectedOption.dataset.estado : null;
-                  
-                  // ATUALIZA O DISPLAY DE ESTADO
-                  const estadoElement = document.getElementById('fornecedor-estado');
-                  if (estadoElement) {
-                    estadoElement.textContent = estado || 'Selecione';
-                  }
-
-                  // ATUALIZA O DISPLAY DE ALÍQUOTA
-                  const aliquotaDisplay = document.getElementById('aliquota-display');
-                  if (aliquotaDisplay && estado && aliquotasPorEstado[estado] !== undefined) {
+        if (btnAdicionarPrincipal) btnAdicionarPrincipal.addEventListener('click', abrirModalVeiculo);
+        if (btnCancelar) btnCancelar.addEventListener('click', fecharModalVeiculo);
+        if (modalOverlay) modalOverlay.addEventListener('click', fecharModalVeiculo);
+        if (btnSalvarVeiculo) btnSalvarVeiculo.addEventListener('click', salvarNovoVeiculo);
+        if (nomeVeiculoInput) {
+            nomeVeiculoInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') salvarNovoVeiculo();
+            });
+        }
+        
+        // --- Lógica do select de Fornecedor ---
+        const fornecedorSelect = document.getElementById('fornecedorPedido');
+        if (fornecedorSelect) {
+            fornecedorSelect.addEventListener('change', () => {
+                const selectedOption = fornecedorSelect.options[fornecedorSelect.selectedIndex];
+                const estado = selectedOption ? selectedOption.dataset.estado : null;
+                const estadoElement = document.getElementById('fornecedor-estado');
+                if (estadoElement) estadoElement.textContent = estado || 'Selecione';
+                
+                const aliquotaDisplay = document.getElementById('aliquota-display');
+                if (aliquotaDisplay && estado && aliquotasPorEstado[estado] !== undefined) {
                     const aliquota = aliquotasPorEstado[estado];
                     aliquotaDisplay.textContent = `${(aliquota * 100).toFixed(1).replace('.',',')}%`;
-                  } else if (aliquotaDisplay) {
+                } else if (aliquotaDisplay) {
                     aliquotaDisplay.textContent = '-- %';
-                  }
-                  
-                  // CHAMA A FUNÇÃO MAESTRO PARA RECALCULAR TUDO
-                  atualizarTotaisDoPedido();
-              });
+                }
+                if(typeof atualizarTotaisDoPedido === 'function') atualizarTotaisDoPedido();
+            });
+        }
+        
+        // --- Lógica de Limpeza e Configuração de Botões ---
+        const salvarPedidoBtn = document.getElementById('salvarPedidoButton');
+        const salvarRascunhoBtn = document.getElementById('salvarRascunhoButton');
+        const cancelarPedidoBtn = document.getElementById('cancelarPedidoButton');
+        const addItemBtn = document.getElementById('addItemButton');
+
+        const newSalvarButton = salvarPedidoBtn.cloneNode(true);
+        salvarPedidoBtn.parentNode.replaceChild(newSalvarButton, salvarPedidoBtn);
+        
+        const newRascunhoButton = salvarRascunhoBtn ? salvarRascunhoBtn.cloneNode(true) : null;
+        if(newRascunhoButton && salvarRascunhoBtn) salvarRascunhoBtn.parentNode.replaceChild(newRascunhoButton, salvarRascunhoBtn);
+        
+        const newCancelarButton = cancelarPedidoBtn ? cancelarPedidoBtn.cloneNode(true) : null;
+        if(newCancelarButton && cancelarPedidoBtn) cancelarPedidoBtn.parentNode.replaceChild(newCancelarButton, cancelarPedidoBtn);
+        
+        const newItemBtn = addItemBtn ? addItemBtn.cloneNode(true) : null;
+        if(newItemBtn && addItemBtn) addItemBtn.parentNode.replaceChild(newItemBtn, addItemBtn);
+
+
+        // ========================================================
+        // PASSO 3: DECIDIR O MODO (Criação vs. Edição vs. Visualização)
+        // Esta lógica agora roda com 100% de certeza de que os selects estão preenchidos.
+        // ========================================================
+        const isViewMode = localStorage.getItem('modoVisualizacao') === 'true';
+
+        if (isViewMode) {
+            console.log('🔍 MODO: Visualização. Preenchendo dados do pedido existente...');
+            preencherTelaPedidoExistente();
+        } else if (modoEdicao) {
+            console.log("... configurando para MODO EDIÇÃO.");
+            if(typeof setupModoEdicao === 'function') setupModoEdicao(dadosEdicao);
+            newSalvarButton.addEventListener('click', salvarEdicaoPedido);
+            console.log("✅ Event listener do botão Salvar configurado para 'salvarEdicaoPedido'.");
+        } else {
+            console.log('📝 MODO: Criação. Configurando para um novo pedido...');
+            
+            // Lógica de inicialização para um novo pedido
+            const tableBody = document.getElementById('itensTableBody');
+            if (tableBody) tableBody.innerHTML = '<tr id="no-items-row"><td colspan="7" class="text-center text-gray-500 py-10">Nenhum item adicionado.</td></tr>';
+            window.itensAdicionados = [];
+            window.itemCounter = 0;
+            
+            const dataPedidoElement = document.getElementById('dataPedido');
+            if (dataPedidoElement) {
+                const today = new Date();
+                dataPedidoElement.value = today.toISOString().split('T')[0];
             }
 
-            // --- LÓGICA DE VERIFICAÇÃO DE MODO ---
-            const modoVisualizacao = localStorage.getItem('modoVisualizacao');
-            const origemVisualizacao = localStorage.getItem('origemVisualizacao');
-            const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
-            const idDaEmpresa = empresaAtual.id || empresaAtual.codigo;
+            // Configura os botões para o modo de criação
+            newSalvarButton.addEventListener('click', salvarPedido);
+            if(newRascunhoButton) newRascunhoButton.addEventListener('click', salvarRascunho);
+        }
 
-            if (!idDaEmpresa) {
-                showGlobalModal('Erro', 'Não foi possível identificar a empresa. Por favor, faça o login novamente.');
-                return;
-            }
-
-            // --- LIMPEZA E CONFIGURAÇÃO DOS BOTÕES ---
-            const salvarPedidoBtn = document.getElementById('salvarPedidoButton');
-            const salvarRascunhoBtn = document.getElementById('salvarRascunhoButton');
-            const cancelarPedidoBtn = document.getElementById('cancelarPedidoButton');
-            const addItemBtn = document.getElementById('addItemButton');
-
-            if (!salvarPedidoBtn) {
-                console.error("ERRO CRÍTICO: Botão 'salvarPedidoButton' não foi encontrado.");
-                return;
-            }
-
-            // Clona os botões para limpar event listeners antigos e evitar chamadas duplicadas
-            const newSalvarButton = salvarPedidoBtn.cloneNode(true);
-            salvarPedidoBtn.parentNode.replaceChild(newSalvarButton, salvarPedidoBtn);
-
-            const newRascunhoButton = salvarRascunhoBtn ? salvarRascunhoBtn.cloneNode(true) : null;
-            if(newRascunhoButton) salvarRascunhoBtn.parentNode.replaceChild(newRascunhoButton, salvarRascunhoBtn);
-            
-            const newCancelarButton = cancelarPedidoBtn ? cancelarPedidoBtn.cloneNode(true) : null;
-            if(newCancelarButton) cancelarPedidoBtn.parentNode.replaceChild(newCancelarButton, cancelarPedidoBtn);
-            
-            const newItemBtn = addItemBtn ? addItemBtn.cloneNode(true) : null;
-            if(newItemBtn) addItemBtn.parentNode.replaceChild(newItemBtn, addItemBtn);
-
-            const btnAdicionar = document.getElementById('adicionarNovoVeiculoBtn');
-            if (btnAdicionar) {
-              btnAdicionar.addEventListener('click', handleAdicionarNovoVeiculo);
-            }
-
-            // --- LÓGICA CONDICIONAL PARA CRIAÇÃO VS EDIÇÃO ---
-            if (modoEdicao) {
-                // ==================
-                // MODO EDIÇÃO
-                // ==================
-                console.log("... configurando para MODO EDIÇÃO.");
-                setupModoEdicao(dadosEdicao); // Sua função para mudar a aparência da tela
-                
-                // Adiciona o event listener CORRETO para salvar a edição
-                newSalvarButton.addEventListener('click', salvarEdicaoPedido);
-                console.log("✅ Event listener do botão Salvar configurado para 'salvarEdicaoPedido'.");
-
-            } else {
-                // ==================
-                // MODO CRIAÇÃO (ou visualização que vira criação)
-                // ==================
-                console.log("... configurando para MODO CRIAÇÃO.");
-                // Adiciona o event listener CORRETO para criar um novo pedido
-                newSalvarButton.addEventListener('click', salvarPedido);
-                console.log("✅ Event listener do botão Salvar configurado para 'salvarPedido'.");
-                if(newRascunhoButton) newRascunhoButton.addEventListener('click', salvarRascunho);
-                    }
-                    
-                    // Configuração de botões comuns a ambos os modos
-                    if(newCancelarButton) {
-                        newCancelarButton.addEventListener('click', () => {
-                            if(typeof EdicaoPedido !== 'undefined') EdicaoPedido.limpar();
-                            if(typeof limparDadosEdicaoRascunho !== 'undefined') limparDadosEdicaoRascunho();
-                            loadPageContent('Menu', setupMenuScreen);
-                        });
-                    }
-                    if(newItemBtn) newItemBtn.addEventListener('click', adicionarItem);
-
-           
-
-            // Verificar se podemos usar o cache
-            if (isCacheValid()) {
-                console.log('🚀 Usando dados do cache para carregamento rápido');
-                populateFornecedores(cacheData.fornecedores);
-                populateVeiculos(cacheData.veiculos);
-                fornecedoresCarregados = true;
-                veiculosCarregados = true;
-                verificarCarregamentoCompleto();
-                return;
-            }
-            
-            // Carregamento paralelo dos dados
-            console.log('⏱️ Iniciando carregamento paralelo...');
-            const startTime = performance.now();
-            
-            // Mostrar indicador de carregamento
-            const loadingIndicator = document.createElement('div');
-            loadingIndicator.id = 'loading-indicator';
-            loadingIndicator.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center';
-            loadingIndicator.innerHTML = `
-                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Carregando dados...
-            `;
-            document.body.appendChild(loadingIndicator);
-            
-
-            /**
-               * Chama o backend para buscar as configurações (estados e alíquotas)
-               * e prepara os dados para uso na tela de pedido.
-               */
-              function carregarDadosDeConfiguracao() {
-                console.log("Carregando configurações (estados e alíquotas)...");
-
-                // Chama a SUA função de backend 'getEstados'
-                google.script.run
-                  .withSuccessHandler(listaDeEstados => {
-                    if (!listaDeEstados || listaDeEstados.length === 0) {
-                      console.warn("Nenhum estado/alíquota encontrado na configuração.");
-                      return;
-                    }
-                    
-                    console.log("Configurações recebidas:", listaDeEstados);
-
-                    // 1. Processa a lista recebida para criar o mapa de alíquotas
-                    const mapa = {};
-                    listaDeEstados.forEach(estado => {
-                      // Para cada estado na lista, cria uma entrada no mapa. Ex: { "SP": 0.12 }
-                      mapa[estado.value] = estado.aliquota;
-                    });
-                    aliquotasPorEstado = mapa;
-                    console.log("Mapa de alíquotas criado:", aliquotasPorEstado);
-
-                    // 2. (Opcional) Se você tiver um dropdown de estados em algum lugar,
-                    //    você pode usar a 'listaDeEstados' para populá-lo aqui.
-                    // ex: popularDropdownDeEstados(listaDeEstados);
-                    
-                  })
-                  .withFailureHandler(err => {
-                    console.error("Falha ao carregar configurações:", err);
-                    showToast("Erro de comunicação ao carregar configurações.", "error");
-                  })
-                  .getEstados(); // <-- Chamando a sua função existente
-              }
-
+        // Configuração de botões comuns a todos os modos (exceto visualização, que é tratado em setupModoVisualizacao)
+        if (!isViewMode) {
+             if(newCancelarButton) newCancelarButton.addEventListener('click', () => loadPageContent('Menu', setupMenuScreen));
+             if(newItemBtn) newItemBtn.addEventListener('click', adicionarItem);
+        }
+        
+    } catch (error) {
+        console.error("❌ Erro crítico durante o setup da tela de pedido:", error);
+        showGlobalModal("Erro Crítico", "Não foi possível carregar os dados essenciais para esta tela.");
+    }
+}
               /**
                * Busca e preenche o dropdown de fornecedores com os data-attributes corretos.
                */
-              function popularDropdownFornecedores() {
+              function popularDropdownFornecedores(fornecedores) {
                 const selectFornecedor = document.getElementById('fornecedorPedido');
                 if (!selectFornecedor) return;
 
@@ -4129,8 +4238,7 @@ function preencherItensContainer(itens) {
               fornecedores.forEach(f => {
                 const option = document.createElement('option');
                 option.value = f.id || f.codigo;
-                option.textContent = f.razaoSocial;
-                
+                option.textContent = f.razaoSocial;                
                 option.dataset.estado = f.estado || '';
                 option.dataset.grupo = f.grupo || '';
                 option.dataset.regime = f.regime || ''; // <-- GARANTE QUE O DATA-ATTRIBUTE SEJA CRIADO
@@ -4171,253 +4279,9 @@ function preencherItensContainer(itens) {
                     });
                 }
             }
-            
-            // Carregamento paralelo usando Promise.all
-            Promise.all([
-                // Carregar fornecedores
-                new Promise((resolve, reject) => {
-                    google.script.run.withSuccessHandler(fornecedores => {
-                        try {
-                            populateFornecedores(fornecedores);
-                            cacheData.fornecedores = fornecedores;
-                            console.log('✅ Fornecedores carregados:', fornecedores.length);
-                            fornecedoresCarregados = true;
-                            resolve(fornecedores);
-                        } catch (error) {
-                            reject(error);
-                        }
-                    }).withFailureHandler(reject).getFornecedoresListv2();
-                }),
-                
-                // Carregar veículos
-                new Promise((resolve, reject) => {
-                    google.script.run.withSuccessHandler(veiculos => {
-                        try {
-                            populateVeiculos(veiculos);
-                            cacheData.veiculos = veiculos;
-                            console.log('✅ Veículos carregados:', veiculos.length);
-                            veiculosCarregados = true;
-                            resolve(veiculos);
-                        } catch (error) {
-                            reject(error);
-                        }
-                    }).withFailureHandler(reject).getVeiculosList();
-                })
-            ]).then(() => {
-                // Atualizar timestamp do cache
-                cacheData.timestamp = new Date().getTime();
-                
-                const endTime = performance.now();
-                console.log(`🚀 Carregamento paralelo concluído em ${Math.round(endTime - startTime)}ms`);
-                
-                // Remover indicador de carregamento
-                const indicator = document.getElementById('loading-indicator');
-                if (indicator) {
-                    indicator.remove();
-                }
-                
-                verificarCarregamentoCompleto();
-            }).catch(error => {
-                console.error('❌ Erro no carregamento paralelo:', error);
-                
-                // Remover indicador de carregamento mesmo em caso de erro
-                const indicator = document.getElementById('loading-indicator');
-                if (indicator) {
-                    indicator.remove();
-                }
-            });
-            
-            // Verificar se estamos em modo visualização
-            if (modoVisualizacao === 'true') {
-                console.log("🔍 Modo visualização detectado");
-                
-                // Verificar se já temos dados do pedido
-                const pedidoParaVisualizar = localStorage.getItem('pedidoParaVisualizar');
-                
-                if (pedidoParaVisualizar) {
-                    console.log("📋 Dados do pedido já disponíveis, prosseguindo com visualização");
-                    
-                    // Detectar contexto e usar a função apropriada
-                    if (origemVisualizacao === 'dashboard-admin') {
-                        console.log("🔍 Modo visualização: Dashboard Admin - NÃO chamando setupModoVisualizacao");
-                        // Não chamar setupModoVisualizacao aqui, será chamado pelo finalizarPreenchimento
-                    } else {
-                        console.log("🔍 Modo visualização: Menu Usuário - chamando setupModoVisualizacao");
-                        setupModoVisualizacao();
-                    }
-                    
-                    setTimeout(() => {
-                        console.log('🔧 Chamando preencherTelaPedidoExistente após 1000ms');
-                        preencherTelaPedidoExistente();
-                    }, 1000);
-                    return;
-                } else {
-                    console.log("⏳ Aguardando dados do pedido serem carregados...");
-                    // Aguardar um pouco e tentar novamente (dados podem estar sendo buscados)
-                    setTimeout(() => {
-                        const pedidoTardio = localStorage.getItem('pedidoParaVisualizar');
-                        if (pedidoTardio) {
-                            console.log("📋 Dados do pedido carregados tardiamente, prosseguindo");
-                            if (origemVisualizacao === 'dashboard-admin') {
-                                console.log("🔍 Modo visualização: Dashboard Admin - NÃO chamando setupModoVisualizacao");
-                            } else {
-                                console.log("🔍 Modo visualização: Menu Usuário - chamando setupModoVisualizacao");
-                                setupModoVisualizacao();
-                            }
-                            preencherTelaPedidoExistente();
-                        } else {
-                            console.warn("⚠️ Modo visualização ativo mas dados do pedido não encontrados");
-                            // Limpar modo visualização e continuar como criação
-                            localStorage.removeItem('modoVisualizacao');
-                            localStorage.removeItem('origemVisualizacao');
-                        }
-                    }, 1000);
-                    return;
-                }
-            }
-
-          // Configurar eventos do formulário de entrada principal
-            const itemQuantidadeInput = document.getElementById('itemQuantidade');
-            const itemProdutoFornecedorInput = document.getElementById('itemProdutoFornecedor');
-            const itemPrecoUnitarioInput = document.getElementById('itemPrecoUnitario');
-            const itemDescricaoInput = document.getElementById('itemDescricao');
-            const itemUnidadeSelect = document.getElementById('itemUnidade');
-            
-            if (itemQuantidadeInput && itemPrecoUnitarioInput) {
-                // Calcular subtotal em tempo real
-                const calcularSubtotal = () => {
-                    const quantidade = parseFloat(itemQuantidadeInput.value) || 0;
-                    const preco = parseFloat(itemPrecoUnitarioInput.value.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
-                    const subtotal = quantidade * preco;
-                    
-                    const liveSubtotalElement = document.getElementById('live-subtotal');
-                    if (liveSubtotalElement) {
-                        liveSubtotalElement.textContent = `R$ ${subtotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                    }
-                };
-                
-                itemQuantidadeInput.addEventListener('input', calcularSubtotal);
-                itemPrecoUnitarioInput.addEventListener('input', calcularSubtotal);
-            }
-            
-            // Configurar Enter key no formulário principal
-            if (itemDescricaoInput && itemProdutoFornecedorInput && itemQuantidadeInput && itemUnidadeSelect && itemPrecoUnitarioInput) {
-                const campos = [itemDescricaoInput, itemProdutoFornecedorInput, itemQuantidadeInput, itemUnidadeSelect, itemPrecoUnitarioInput];
-                
-                campos.forEach(campo => {
-                    campo.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                            
-                            // Validar se todos os campos estão preenchidos
-                            const descricao = itemDescricaoInput.value.trim();
-                            const produto = itemProdutoFornecedorInput.value.trim();
-                            const quantidade = parseFloat(itemQuantidadeInput.value) || 0;
-                            const unidade = itemUnidadeSelect.value;
-                            const preco = parseFloat(itemPrecoUnitarioInput.value.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
-                            
-                            if (descricao && quantidade > 0 && unidade && preco > 0) {
-                                adicionarItem();
-                            } else {
-                                // Focar no próximo campo não preenchido
-                                if (!descricao) {
-                                    itemDescricaoInput.focus();
-                                } else if (!produto) {
-                                  itemProdutoFornecedorInput.focus();
-                                } else if (quantidade <= 0) {
-                                    itemQuantidadeInput.focus();
-                                } else if (!unidade) {
-                                    itemUnidadeSelect.focus();
-                                } else if (preco <= 0) {
-                                    itemPrecoUnitarioInput.focus();
-                                }
-                            }
-                        }
-                    });
-                });
-            }
-            
-            const itensContainer = document.getElementById('itensContainer');
-            if (itensContainer) {
-                console.log('ℹ️ Container de itens encontrado (usado para compatibilidade)');
-            } else {
-                console.warn('⚠️ Container de itens não encontrado!');
-            }
-            
-            // Inicializar variáveis globais
-            window.itensAdicionados = [];
-            window.itemCounter = 0;
-            
-            const today = new Date();
-            const dataPedidoElement = document.getElementById('dataPedido');
-            if (dataPedidoElement) {
-                // Usar data local ao invés de UTC para evitar problemas de fuso horário
-                const ano = today.getFullYear();
-                const mes = String(today.getMonth() + 1).padStart(2, '0');
-                const dia = String(today.getDate()).padStart(2, '0');
-                const dataLocal = `${ano}-${mes}-${dia}`;
-                
-                dataPedidoElement.value = dataLocal;
-                console.log('📅 Data do pedido inicializada:', dataLocal);
-            }
-
-            // Garantir que os eventos sejam configurados mesmo com atraso no carregamento
-            setTimeout(() => {
-                console.log('🔄 Verificação adicional dos event listeners...');
-                
-                const addItemBtnCheck = document.getElementById('addItemButton');
-                if (addItemBtnCheck && !addItemBtnCheck.hasClickListener) {
-                    console.log('🔧 Configurando event listener do botão (segunda tentativa)');
-                    addItemBtnCheck.addEventListener('click', adicionarItem);
-                    addItemBtnCheck.hasClickListener = true;
-                }
-            }, 500);
-
-            // Carregar fornecedores e veículos com cache e em paralelo
-            console.log('🔧 Carregando fornecedores e veículos...');
-            
-            
-            
-            function verificarCarregamentoCompleto() {
-                if (fornecedoresCarregados && veiculosCarregados && modoEdicao && dadosEdicao) {
-                    console.log('🔧 Todos os dados carregados, preenchendo campos...');
-                    setTimeout(() => {
-                        preencherCamposEdicao(dadosEdicao);
-                    }, 300); // Reduzido de 500ms para 300ms
-                }
-            }
-            // Simulação do seu carregamento de dados
-          Promise.all([
-              new Promise(resolve => google.script.run.withSuccessHandler(data => {
-                  if(typeof populateFornecedores === 'function') populateFornecedores(data);
-                  fornecedoresCarregados = true;
-                  resolve();
-              }).getFornecedoresListv2()),
-              new Promise(resolve => google.script.run.withSuccessHandler(data => {
-                  if(typeof populateVeiculos === 'function') populateVeiculos(data);
-                  veiculosCarregados = true;
-                  resolve();
-              }).getVeiculosList())
-          ]).then(verificarCarregamentoCompleto);
-          
-          if (!modoEdicao) {
-            // Inicializa a data apenas se for um novo pedido
-            const today = new Date();
-            const dataPedidoElement = document.getElementById('dataPedido');
-            if (dataPedidoElement) {
-                const ano = today.getFullYear();
-                const mes = String(today.getMonth() + 1).padStart(2, '0');
-                const dia = String(today.getDate()).padStart(2, '0');
-                dataPedidoElement.value = `${ano}-${mes}-${dia}`;
-            }
-          }
-                                  
-            
-        }
-
         // Função específica para garantir modo somente leitura
-        function garantirModoSomenteGeitura() {
-            console.log('🔒 Função garantirModoSomenteGeitura executada');
+        function garantirModoSomenteLeitura() {
+            console.log('🔒 Função garantirModoSomenteLeitura executada');
             
             // Tentar múltiplos seletores para encontrar o container
             let container = document.querySelector('.max-w-7xl.mx-auto');
@@ -4464,7 +4328,7 @@ function preencherItensContainer(itens) {
                 // Desabilitar botões (exceto navegação)
                 buttons.forEach(button => {
                     const id = button.id || '';
-                    const isNavButton = id.includes('voltar') || id.includes('imprimir') || id.includes('Menu') || id.includes('Dashboard');
+                    const isNavButton = id.includes('voltar') || id.includes('imprimir') || id.includes('Menu') || id.includes('Dashboard') || id.includes('Sair') || id.includes('logout');
                     
                     if (!isNavButton) {
                         button.disabled = true;
@@ -4481,124 +4345,86 @@ function preencherItensContainer(itens) {
             }
         }
 
-        function setupModoVisualizacao() {
-            console.log("🔍 setupModoVisualizacao - Configurando modo visualização de pedido");
-            
-            // Trocar os botões da área de ações
-            console.log('🔍 Procurando área de botões...');
-            let botoesArea = document.querySelector('.pt-6.space-y-3');
-            console.log('🔍 Tentativa 1 (.pt-6.space-y-3):', botoesArea);
-            
-            if (!botoesArea) {
-                // Tentar seletores alternativos
-                botoesArea = document.querySelector('[class*="space-y-3"]');
-                console.log('🔍 Tentativa 2 ([class*="space-y-3"]):', botoesArea);
-            }
-            
-            if (!botoesArea) {
-                botoesArea = document.querySelector('#salvarPedidoButton')?.parentElement;
-                console.log('🔍 Tentativa 3 (parent do salvarPedidoButton):', botoesArea);
-            }
-            
-            if (!botoesArea) {
-                botoesArea = document.querySelector('#salvarRascunhoButton')?.parentElement;
-                console.log('🔍 Tentativa 4 (parent do salvarRascunhoButton):', botoesArea);
-            }
-            
-            if (botoesArea) {
-                console.log('🔧 setupModoVisualizacao - Área de botões encontrada, substituindo');
-                const numeroPedido = localStorage.getItem('numeroPedidoVisualizacao') || '';
+        /**
+ * Função centralizada para configurar a tela para o modo de apenas leitura.
+ * Ela é chamada após o preenchimento dos dados.
+ */
+function setupModoVisualizacao() {
+   console.log("🔍 Configurando modo visualização de pedido...");
+
+    // 1. Esconder a seção de adicionar novos itens
+    const secaoAdicionarItens = document.getElementById('add-item-section'); 
+    if (secaoAdicionarItens) secaoAdicionarItens.style.display = 'none';
+
+    // 2. Desabilitar todos os campos do formulário
+    const formContainer = document.getElementById('main-content-area');
+    if (formContainer) {
+        const fields = formContainer.querySelectorAll('input, select, textarea');
+        fields.forEach(field => {
+            field.disabled = true;
+            field.classList.add('bg-gray-100', 'cursor-not-allowed');
+        });
+        console.log(`✅ ${fields.length} campos do formulário desabilitados.`);
+    }
+
+    // 3. Desabilitar os botões de remover item na tabela
+    const botoesRemover = document.querySelectorAll('button[onclick^="removerItem"]');
+    botoesRemover.forEach(botao => {
+        botao.disabled = true;
+        botao.classList.add('text-gray-400', 'cursor-not-allowed');
+        botao.onclick = () => false;
+    });
+    console.log(`✅ ${botoesRemover.length} botões de remover item foram desativados.`);
+
+    // 4. Substituir os botões de ação principais
+    let botoesArea = document.querySelector('.pt-6.space-y-3') || document.querySelector('#salvarPedidoButton')?.parentElement;
+    if (botoesArea) {
+        const numeroPedido = localStorage.getItem('numeroPedidoVisualizacao') || '';
+        const origem = localStorage.getItem('origemVisualizacao') || 'menu-principal';
+
+        botoesArea.innerHTML = `
+            <button type="button" id="voltarButton" class="w-full bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-gray-700"><i class="fas fa-arrow-left mr-2"></i>Voltar</button>
+            <button type="button" id="imprimirPedidoButton" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-700"><i class="fas fa-print mr-2"></i>Imprimir Pedido</button>
+        `;
+        
+        const voltarBtn = document.getElementById('voltarButton');
+        const imprimirBtn = document.getElementById('imprimirPedidoButton');
+
+        if (voltarBtn) {
+            voltarBtn.addEventListener('click', () => {
+                localStorage.removeItem('modoVisualizacao');
+                localStorage.removeItem('pedidoParaVisualizar');
+                localStorage.removeItem('origemVisualizacao');
                 
-                botoesArea.innerHTML = `
-                    <button type="button" id="voltarMenuButton" class="w-full bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-gray-700">
-                        <i class="fas fa-arrow-left mr-2"></i>Voltar ao Menu
-                    </button>
-                    <button type="button" id="imprimirPedidoButton" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-700">
-                        <i class="fas fa-print mr-2"></i>Imprimir Pedido
-                    </button>
-                `;
-                
-                console.log('🔧 setupModoVisualizacao - Botões substituídos, adicionando event listeners');
-                
-                // Adicionar eventos aos novos botões
-                document.getElementById('voltarMenuButton').addEventListener('click', () => {
-                    console.log('🔙 Botão Voltar ao Menu clicado');
-                    localStorage.removeItem('modoVisualizacao');
-                    localStorage.removeItem('numeroPedidoVisualizacao');
-                    localStorage.removeItem('origemVisualizacao');
-                    loadPageContent('Menu', setupMenuScreen);
-                });
-                
-                document.getElementById('imprimirPedidoButton').addEventListener('click', () => {
-                    console.log('🖨️ Botão Imprimir clicado para pedido:', numeroPedido);
-                    abrirImpressaoPedido(numeroPedido);
-                });
-                
-                console.log('✅ setupModoVisualizacao - Event listeners adicionados');
-            } else {
-                console.warn('⚠️ setupModoVisualizacao - Área de botões não encontrada');
-            }
-            
-            // Esconder o botão "Adicionar Item" 
-            const addItemButton = document.getElementById('addItemButton');
-            if (addItemButton) {
-                addItemButton.style.display = 'none';
-            }
-            
-            // Desabilitar todos os campos para modo somente leitura
-            setTimeout(() => {
-                console.log('🔒 Iniciando desabilitação de campos...');
-                
-                // Tentar múltiplos seletores para encontrar o container
-                let container = document.querySelector('.max-w-7xl.mx-auto');
-                if (!container) container = document.querySelector('main');
-                if (!container) container = document.querySelector('body');
-                
-                console.log('🔍 Container encontrado:', container ? 'SIM' : 'NÃO');
-                
-                if (container) {
-                    // Buscar campos de forma mais específica
-                    const inputs = container.querySelectorAll('input:not([readonly])');
-                    const selects = container.querySelectorAll('select');
-                    const textareas = container.querySelectorAll('textarea');
-                    
-                    console.log(`🔒 Encontrados ${inputs.length} inputs, ${selects.length} selects, ${textareas.length} textareas`);
-                    
-                    [...inputs, ...selects, ...textareas].forEach(campo => {
-                        campo.disabled = true;
-                        campo.readOnly = true; // Adicionar readonly também
-                        campo.classList.add('bg-gray-100', 'text-gray-600', 'cursor-not-allowed');
-                        console.log(`🔒 Campo desabilitado: ${campo.id || campo.name || campo.tagName}`);
-                    });
-                    
-                    console.log('✅ Todos os campos foram desabilitados para modo visualização');
-                    
-                    // Esconder seção de adicionar itens
-                    const secoes = container.querySelectorAll('.bg-white');
-                    secoes.forEach(secao => {
-                        const titulo = secao.querySelector('h3');
-                        if (titulo && titulo.textContent.includes('Adicionar Itens')) {
-                            secao.style.display = 'none';
-                            console.log('✅ Seção "Adicionar Itens" escondida');
-                        }
-                    });
+                // Lógica de "Voltar" Inteligente
+                if (origem === 'meus-pedidos') {
+                    loadPageContent('MeusPedidos', setupMeusPedidosScreen);
+                } else if (origem === 'busca-pedidos') {
+                    loadPageContent('BuscarPedido', setupBuscaScreen);
                 } else {
-                    console.warn('⚠️ Container principal não encontrado para desabilitar campos');
+                    loadPageContent('Menu', setupMenuScreen);
                 }
-            }, 1500); // Aumentar timeout para executar após preenchimento completo
-            
-            // Alterar o título da tela
+            });
+        }
+        if (imprimirBtn) {
+            imprimirBtn.addEventListener('click', () => {
+                const pedidoData = JSON.parse(localStorage.getItem('pedidoParaVisualizar'));
+                if (pedidoData && typeof abrirImpressao === 'function') {
+                    abrirImpressao(pedidoData);
+                }
+            });
+        }
+        console.log("✅ Botões de ação substituídos para modo visualização.");
+    }
+
+    // Alterar o título da tela
             const titulo = document.querySelector('h1');
             if (titulo) {
                 titulo.textContent = 'Visualizar Pedido de Compra';
                 titulo.classList.add('text-blue-800');
             }
             
-            // Garantir modo somente leitura com função específica
-            setTimeout(() => {
-                garantirModoSomenteGeitura();
-            }, 2000);
-        }
+}
 
         function handleItemInputChange(event) {
             if (event.target.name === 'itemQuantidade' || event.target.name === 'itemPrecoUnitario') {
@@ -4831,74 +4657,7 @@ function preencherItensContainer(itens) {
             
             console.log('✅ Item removido com sucesso');
         }
-
-        // Função de debug para testar o botão adicionar item
-        function testarBotaoAdicionarItem() {
-            console.log('🧪 TESTE: Verificando botão Adicionar Item');
-            const botao = document.getElementById('addItemButton');
-            console.log('Botão encontrado:', !!botao);
-            if (botao) {
-                console.log('Botão visível:', botao.offsetWidth > 0 && botao.offsetHeight > 0);
-                console.log('Botão habilitado:', !botao.disabled);
-                console.log('Has click listener:', !!botao.hasClickListener);
-                console.log('Container de itens atual:', document.getElementById('itensContainer')?.children.length || 'não encontrado');
-                console.log('ItemCounter atual:', window.itemCounter || 'não definido');
-                
-                // Testar clique programático
-                console.log('🖱️ Testando clique programático...');
-                const itensBefore = document.getElementById('itensContainer')?.children.length || 0;
-                console.log('Itens antes do clique:', itensBefore);
-                
-                botao.click();
-                
-                setTimeout(() => {
-                    const itensAfter = document.getElementById('itensContainer')?.children.length || 0;
-                    console.log('Itens após clique:', itensAfter);
-                    console.log('Novo item adicionado:', itensAfter > itensBefore ? 'SIM' : 'NÃO');
-                }, 100);
-            }
-            return botao;
-        }
-
-        // Função de debug para testar Enter
-        function testarEnterKeydown() {
-            console.log('🧪 TESTE: Simulando tecla Enter');
-            const container = document.getElementById('itensContainer');
-            const primeiroItem = container?.querySelector('.item-row');
-            
-            if (primeiroItem) {
-                const descricaoInput = primeiroItem.querySelector('input[name="itemDescricao"]');
-                if (descricaoInput) {
-                    // Preencher campos para teste
-                    descricaoInput.value = 'Teste Item';
-                    const quantidadeInput = primeiroItem.querySelector('input[name="itemQuantidade"]');
-                    const unidadeSelect = primeiroItem.querySelector('select[name="itemUnidade"]');
-                    const precoInput = primeiroItem.querySelector('input[name="itemPrecoUnitario"]');
-                    
-                    if (quantidadeInput) quantidadeInput.value = '1';
-                    if (unidadeSelect) unidadeSelect.value = 'UN';
-                    if (precoInput) precoInput.value = '10.00';
-                    
-                    console.log('Campos preenchidos para teste. Simulando Enter...');
-                    
-                    // Focar no campo e simular Enter
-                    descricaoInput.focus();
-                    
-                    const enterEvent = new KeyboardEvent('keydown', {
-                        key: 'Enter',
-                        code: 'Enter',
-                        bubbles: true,
-                        cancelable: true
-                    });
-                    
-                    descricaoInput.dispatchEvent(enterEvent);
-                    console.log('Evento Enter disparado');
-                }
-            } else {
-                console.log('❌ Nenhum item encontrado para testar');
-            }
-        }
-
+       
         function calcularTotalItem(itemId) {
             const quantidadeElement = document.getElementById(`itemQuantidade_${itemId}`);
             const precoElement = document.getElementById(`itemPrecoUnitario_${itemId}`);
@@ -4945,6 +4704,7 @@ function preencherItensContainer(itens) {
             const fornecedorSelect = document.getElementById('fornecedorPedido');
             const placaInput = document.getElementById('placaVeiculo');
             const perfilUsuario = localStorage.getItem('perfil');
+            const usuarioLogado = localStorage.getItem('usuarioLogado');
             
             if (!fornecedorSelect || !placaInput) { /* ... tratamento de erro ... */ return; }
             
@@ -5207,7 +4967,7 @@ function preencherItensContainer(itens) {
                                 salvarButton.innerHTML = '<i class="fas fa-save mr-2"></i>Salvar Pedido';
                             }
                         })
-                        .salvarPedido(dadosPedido);
+                        .salvarPedido(dadosPedido, usuarioLogado);
                 })
                 .withFailureHandler(err => {
                     console.error('Erro ao gerar número do pedido:', err);
@@ -5378,6 +5138,72 @@ function preencherItensContainer(itens) {
         }
 
         // ===============================================
+        // LÓGICA DA PÁGINA MEUS PEDIDOS
+         // ===============================================
+         function setupMeusPedidosScreen() {
+        const tabelaBody = document.getElementById('tabela-meus-pedidos');
+        const usuarioLogado = localStorage.getItem('usuarioLogado');
+
+        if (!tabelaBody || !usuarioLogado) {
+            console.error("Não foi possível carregar a tela 'Meus Pedidos'. Elementos faltando ou usuário não logado.");
+            return;
+        }
+
+        google.script.run
+            .withSuccessHandler(response => {
+                    if (!response) {
+                      console.error("Erro fatal: A resposta do backend foi nula. Verifique os logs do Apps Script para a função 'getMeusPedidosAprovados'.");
+                      tabelaBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-red-500">Ocorreu um erro crítico ao comunicar com o servidor.</td></tr>`;
+                      return;
+                  }
+                if (response.status === 'success' && response.data.length > 0) {
+                    tabelaBody.innerHTML = ''; // Limpa o "carregando"
+                    response.data.forEach(pedido => {
+                        const row = document.createElement('tr');
+                        row.className = 'bg-white border-b hover:bg-gray-50';
+                        
+                        // ATENÇÃO: Os nomes das propriedades (ex: pedido['Número_do_Pedido'])
+                        // devem bater EXATAMENTE com os cabeçalhos da sua planilha.
+                        const numeroPedido = pedido['Número_do_Pedido'] || pedido['numeroDoPedido'] || 'N/D';
+                        const dataPedido = new Date(pedido['Data']).toLocaleDateString('pt-BR');
+                        const fornecedor = pedido['Fornecedor'] || 'N/D';
+                        const empresaId = pedido['Empresa'] || '';
+                        const empresaObj = AppCache.userCompanies.find(c => c.id == empresaId);
+                        const empresaNome = empresaObj ? empresaObj.nome : 'N/D';
+                        const valorBruto = pedido['Total Geral'] || pedido['Valor'] || 0;
+                        const valorTotal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorBruto);
+
+                        row.innerHTML = `
+                            <td class="px-6 py-4 font-medium text-gray-900">${numeroPedido}</td>
+                            <td class="px-6 py-4">${dataPedido}</td>
+                            <td class="px-6 py-4">${fornecedor}</td>
+                            <td class="px-6 py-4">${empresaNome}</td>
+                            <td class="px-6 py-4 text-right font-semibold">${valorTotal}</td>
+                            <td class="px-6 py-4 text-center">
+                                <button onclick="visualizarPedidoExistente('${numeroPedido}', '${empresaId}', '${empresaNome}', 'meus-pedidos')" class="font-medium text-blue-600 hover:underline">Visualizar</button>
+                            </td>
+                        `;
+                        tabelaBody.appendChild(row);
+                    });
+                } else {
+                    tabelaBody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center p-8">
+                                <i class="fas fa-inbox text-4xl text-gray-300 mb-2"></i>
+                                <p class="text-gray-500">Você ainda não tem pedidos aprovados.</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            })
+            .withFailureHandler(error => {
+                console.error("Erro ao buscar 'Meus Pedidos Aprovados':", error);
+                tabelaBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-red-500">Ocorreu um erro ao carregar seus pedidos.</td></tr>`;
+            })
+            .getMeusPedidosAprovados(usuarioLogado);
+    } 
+
+        // ===============================================
         // LÓGICA DA PÁGINA DE CADASTRO DE FORNECEDOR
         // ===============================================
         function setupCadastroFornecedorScreen(codigoFornecedor) {
@@ -5536,7 +5362,7 @@ function preencherItensContainer(itens) {
                     showToast('Erro ao carregar estados.', 'error', 'Erro');
                   populateSelect('estado', estadosLocal, 'Selecione o Estado');
                 })
-                .getEstados();
+                .getEstadosv2();
         }
 
 
@@ -5555,7 +5381,64 @@ function preencherItensContainer(itens) {
             const plateSearch = document.getElementById('plateSearch');
             const userSearch = document.getElementById('userSearch');
             const resultsBody = document.getElementById('searchResultsBody');
+            const filtroAdminContainer = document.getElementById('filtro-admin-usuario');
 
+            const perfil = (localStorage.getItem('perfil') || '').toLowerCase();
+
+            // --- LÓGICA DE VISIBILIDADE PARA ADMIN ---
+            if (perfil === 'admin' && filtroAdminContainer) {
+                filtroAdminContainer.classList.remove('hidden');
+            }
+
+             // --- Função Principal de Busca ---
+            const realizarBuscaAvancada = () => {
+              // Pega a empresa atual do localStorage para filtrar a busca
+                const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
+                // --- CORREÇÃO APLICADA AQUI para ser mais robusto ---
+                const empresaId = empresaAtual.id || empresaAtual.codigo || '';
+                
+                if (!empresaId) {
+                    showGlobalModal("Erro", "Empresa não selecionada. Por favor, volte ao menu e selecione uma empresa.");
+                    return;
+                }
+                // Monta o objeto de parâmetros para o backend
+                const params = {
+                  empresaId: empresaId,
+                    mainSearch: mainSearch.value.trim(),
+                    dateStart: dateStart.value,
+                    dateEnd: dateEnd.value,
+                    plateSearch: plateSearch.value.trim(),
+                    usuarioCriador: (perfil === 'admin' && userSearch) ? userSearch.value.trim() : ''
+                };
+
+                 console.log("Enviando para o backend os seguintes parâmetros de busca:", params);
+
+            // Feedback visual de carregamento
+                resultsBody.innerHTML = `<tr><td colspan="6" class="text-center p-8"><div class="spinner mx-auto"></div></td></tr>`;
+                searchButton.disabled = true;
+                searchButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Buscando...';
+
+                google.script.run
+                    .withSuccessHandler(response => {
+                      console.log("Resposta recebida do backend:", response);
+
+                        searchButton.disabled = false;
+                        searchButton.innerHTML = '<i class="fas fa-search mr-2"></i>Buscar';
+                        if (response.status === 'success' && response.data.length > 0) {
+                            preencherTabelaBusca(response.data, resultsBody);
+                        } else {
+                            resultsBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-gray-500">Nenhum pedido encontrado.</td></tr>`;
+                        }
+                    })
+                    .withFailureHandler(err => {
+                        searchButton.disabled = false;
+                        searchButton.innerHTML = '<i class="fas fa-search mr-2"></i>Buscar';
+                        resultsBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-red-500">Erro ao realizar a busca.</td></tr>`;
+                        console.error("Erro ao buscar pedidos:", err);
+                    })
+                    .buscarPedidosv2(params);
+            };
+            
             // Event listener para busca principal
             if (searchButton) {
                 searchButton.addEventListener('click', realizarBuscaAvancada);
@@ -5572,12 +5455,9 @@ function preencherItensContainer(itens) {
             // Toggle filtros avançados
             if (toggleAdvancedBtn && advancedFiltersDiv) {
                 toggleAdvancedBtn.addEventListener('click', () => {
-                    const icon = toggleAdvancedBtn.querySelector('i');
                     advancedFiltersDiv.classList.toggle('hidden');
-                    if (icon) {
-                        icon.classList.toggle('fa-chevron-down');
-                        icon.classList.toggle('fa-chevron-up');
-                    }
+                    const icon = toggleAdvancedBtn.querySelector('i');
+                    if (icon) icon.classList.toggle('rotate-180');
                 });
             }
 
@@ -5610,10 +5490,10 @@ function preencherItensContainer(itens) {
             setupPrintModal();
             
             // Mostrar mensagem inicial em vez de carregar todos os pedidos
-            if (resultsBody) {
-                resultsBody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 py-12"><div class="flex flex-col items-center"><i class="fas fa-search fa-3x mb-4 text-gray-300"></i><p class="text-lg font-medium">Use os filtros acima para buscar pedidos</p><p class="text-sm text-gray-400 mt-2">Digite um número de pedido, nome do fornecedor ou use os filtros avançados</p></div></td></tr>';
+            //if (resultsBody) {
+            //    resultsBody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 py-12"><div class="flex flex-col items-center"><i class="fas fa-search fa-3x mb-4 text-gray-300"></i><p class="text-lg font-medium">Use os filtros acima para buscar pedidos</p><p class="text-sm text-gray-400 mt-2">Digite um número de pedido, nome do fornecedor ou use os filtros avançados</p></div></td></tr>';
             }
-        }
+        //}
 
         // --- Variáveis Globais (para os gráficos) ---
     let monthlyChart;
@@ -5639,12 +5519,12 @@ function preencherItensContainer(itens) {
    //     console.error("Erro ao parsear JSON de empresaSelecionada do localStorage:", e);
    // }
 
-    if (nomeEmpresaElement && empresaAtual.empresa) {
+    if (nomeEmpresaElement && empresaAtual.nome) {
     nomeEmpresaElement.textContent = empresaAtual.empresa; 
-    console.log("Nome da empresa definido no HTML:", empresaAtual.empresa);
+    console.log("Nome da empresa definido no HTML:", empresaAtual.nome);
       } else if (nomeEmpresaElement) {
           nomeEmpresaElement.textContent = 'Empresa não definida';
-          console.log("Nome da empresa não encontrado em empresaAtual.empresa. Definido como 'Empresa não definida'.");
+          console.log("Nome da empresa não encontrado em empresaAtual.nome. Definido como 'Empresa não definida'.");
       }
     console.log("--- Fim da verificação de empresa no setupDashboardScreen ---");
 
@@ -5789,7 +5669,7 @@ function preencherItensContainer(itens) {
                     console.error('Erro ao carregar fornecedores para o filtro:', error);
                     showToast('error', 'Erro!', 'Falha ao carregar fornecedores. ' + (error.message || error));
                 })
-                .getFornecedoresListv2(); // Chama a função CORRETA do Apps Script
+                .getFornecedoresList(); // Chama a função CORRETA do Apps Script
         }
 
         // Popula o select de estados usando getEstados()
@@ -6088,7 +5968,7 @@ function populateSupplierSelectForReports() {
             console.error('Erro ao carregar fornecedores para o relatório:', error);
             showToast(`Falha ao carregar fornecedores: ${error.message || error}`, 'error');
         })
-        .getFornecedoresListv2();
+        .getFornecedoresList();
 }
 
 
@@ -6299,7 +6179,7 @@ function populateSupplierSelectForReports() {
                             filtroFornecedor.appendChild(option);
                         });
                     })
-                    .getFornecedoresListv2();
+                    .getFornecedoresList();
             }
             
             // Event listeners para filtros
@@ -6426,7 +6306,7 @@ function populateSupplierSelectForReports() {
 
             if (printButton) {
                 printButton.addEventListener('click', () => {
-                    abrirImpressaoPedido(numeroPedido);
+                    iniciarImpressao(numeroPedido, empresaId);
                 });
             }
         }
@@ -6556,7 +6436,7 @@ function populateSupplierSelectForReports() {
             console.log('🔍 Filtros aplicados:', filtros);
 
             // Verificar se pelo menos um filtro foi preenchido
-            const temFiltros = filtros.query || filtros.dataInicial || filtros.dataFinal || filtros.placa || filtros.usuario;
+            const temFiltros = filtros.query || filtros.dataInicial || filtros.dataFinal || filtros.placa || filtros.usuarioCriador;
             
             if (!temFiltros) {
                 if (resultsBody) {
@@ -6620,7 +6500,7 @@ function populateSupplierSelectForReports() {
                     }
                     showToast('Erro na busca: ' + err.message, 'error');
                 })
-                .buscarPedidos(filtros.query || '', empresaAtual.id);
+                .buscarPedidosv2(filtros.query || '', empresaAtual.id);
         }
 
         function filtrarPedidosAvancado(pedidos, filtros) {
@@ -6758,12 +6638,29 @@ function populateSupplierSelectForReports() {
             tbody.innerHTML = '';
             
             pedidos.forEach(pedido => {
-              const numeroPedido = pedido.numeroDoPedido || pedido.numeroPedido || pedido.numero || 'N/A';
+                const tableRow = document.createElement('tr');
+                tableRow.className = 'hover:bg-gray-50';
+                const numeroPedido = pedido.numeroDoPedido || pedido.numeroPedido || pedido.numero || 'N/A';
                 console.log('📊 Processando pedido:', pedido);
-                             
+                const empresaId = pedido.empresaId || pedido.empresa || '';
+                const empresaObj = AppCache.userCompanies.find(c => String(c.id).trim() == String(empresaId).trim());
+                const empresaNome = empresaObj ? empresaObj.nome : 'N/A';
+                //const valorFormatado = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pedido.totalGeral || 0);
+                //const dataFormatada = new Date(pedido.data).toLocaleDateString('pt-BR');
+                //const statusClass = pedido.status === 'Cancelado' ? 'bg-red-200 text-red-800' : 'bg-green-100 text-green-800';
+
+                // ---------------------------------------------------------
+
+                // Verificar se pedido tem dados válidos
+                if (numeroPedido === 'N/A' || !pedido.fornecedor) {
+                    console.warn('Pedido com dados incompletos ignorado:', pedido);
+                    return; // Pula este pedido
+                }
+
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50';
-                
+                row.className = 'hover:bg-gray-50 border-b';
+                           
+                            
                 // Verificar se o pedido está cancelado
                 const isCanceled = pedido.status === 'Cancelado';
                 if (isCanceled) {
@@ -6805,12 +6702,17 @@ function populateSupplierSelectForReports() {
                     <td class="px-6 py-4 text-sm text-gray-500">${pedido.fornecedor || 'N/A'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-bold">${valorFormatado}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-center">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}"
                             ${pedido.status || 'Em Aberto'}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
-                        <button onclick="abrirImpressaoPedido('${numeroPedido}')" title="Imprimir" class="text-blue-600 hover:text-blue-900">
+                        <button onclick="visualizarPedidoExistente('${numeroPedido}', '${empresaId}', '${empresaNome}', 'busca-pedidos')" 
+                                title="Visualizar Pedido" 
+                                class="text-blue-600 hover:text-blue-900">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button onclick="iniciarImpressao('${numeroPedido}', '${empresaId}')" title="Imprimir" class="text-blue-600 hover:text-blue-900">
                             <i class="fas fa-print"></i>
                         </button>
                         <button onclick="editarPedido('${numeroPedido}')" title="Editar" 
@@ -6882,7 +6784,7 @@ function populateSupplierSelectForReports() {
                 .withFailureHandler(err => {
                     console.error('Erro ao verificar status do pedido:', err);
                 })
-                .buscarPedidos(numeroPedido, JSON.parse(localStorage.getItem('empresaSelecionada') || '{}').id);
+                .buscarPedidosv2(numeroPedido, JSON.parse(localStorage.getItem('empresaSelecionada') || '{}').id);
 
             if (printModal) {
                 printModal.classList.remove('hidden');
@@ -7072,7 +6974,7 @@ const EdicaoPedido = (function() {
                     showToast('Erro de comunicação ao buscar pedido.', 'error');
                     console.error('Erro ao buscar pedido para edição:', err);
                 })
-                .buscarPedidos(numeroPedido, empresaAtual.id);
+                .buscarPedidosv2(numeroPedido, empresaAtual.id);
         }
 
         function trocarSenha() {
@@ -7679,9 +7581,363 @@ const EdicaoPedido = (function() {
 
         // Função auxiliar global para impressão direta (usada nos cards do dashboard)
         function imprimirPedidoDireto(numeroPedido, empresaId) {
-            abrirImpressaoPedido(numeroPedido);
+            iniciarImpressao(numeroPedido, empresaId);
         }
+
+          /**
+           * ===================================================================
+           * FUNÇÃO #1: A "GRÁFICA" (RENDERIZADORA)
+           * ===================================================================
+           * Recebe um objeto com todos os dados já prontos e é a ÚNICA responsável 
+           * por preencher o template HTML e abrir a janela de impressão.
+           * @param {object} pedidoCompleto - O objeto completo do pedido, já com os dados da empresa.
+           */
+        function gerarDocumentoParaImpressao(pedidoCompleto, debugMode = false) {
+    try {
+        // --- Funções Auxiliares (sem alterações) ---
+        const formatarMoeda = (valor) => {
+            const numero = parseFloat(valor || 0);
+            return 'R$ ' + numero.toFixed(2).replace('.', ',');
+        };
         
+        // --- LÓGICA DE GERAÇÃO DO LAYOUT (VERSÃO MODERNA) ---
+        const construirLayoutModerno = (doc, pedido) => {
+            console.log("Iniciando construção de layout moderno do zero...");
+            const empresa = pedido.empresaInfo || {};
+            const fornecedor = pedido.fornecedorInfo || {};
+            const itens = pedido.itens || [];
+
+            // Limpa completamente o corpo do documento para ignorar o template original
+            doc.body.innerHTML = '';
+            doc.body.style.fontFamily = "'Segoe UI', 'Roboto', 'Arial', sans-serif";
+            doc.body.style.margin = '20px';
+            doc.body.style.color = '#333';
+
+            doc.title = 'Pedido de Compra - ' + (pedido.numeroDoPedido || 'N/A');
+
+            // --- Seção 1: Cabeçalho ---
+            const header = doc.createElement('div');
+            header.style.display = 'flex';
+            header.style.justifyContent = 'space-between';
+            header.style.alignItems = 'flex-start';
+            header.style.borderBottom = '2px solid #000';
+            header.style.paddingBottom = '15px';
+            header.style.marginBottom = '20px';
+            
+            const logoContainer = doc.createElement('div');
+            if (empresa.logourl) {
+                const logoImg = doc.createElement('img');
+                logoImg.src = empresa.logourl;
+                logoImg.style.maxWidth = '150px';
+                logoImg.style.maxHeight = '70px';
+                logoImg.classList.add('company-logo');
+                logoContainer.appendChild(logoImg);
+            }
+            
+            const infoEmpresa = doc.createElement('div');
+            infoEmpresa.style.textAlign = 'left';
+            infoEmpresa.style.lineHeight = '1.5';
+            infoEmpresa.innerHTML = `
+                <strong style="font-size: 16px;">${empresa.nome || empresa.empresa || ''}</strong><br>
+                <span style="font-size: 12px; color: #555;">${empresa.endereco || ''} - ${empresa.cidadeuf || ''}</span><br>
+                <span style="font-size: 12px; color: #555;">CNPJ: ${empresa.cnpj || ''}</span>
+            `;
+
+            const infoContato = doc.createElement('div');
+            infoContato.style.textAlign = 'right';
+            infoContato.style.fontSize = '12px';
+            infoContato.style.lineHeight = '1.5';
+            infoContato.innerHTML = `
+                <strong style="color: #555;"Email:</strong> ${empresa.email || ''}<br>
+                <strong style="color: #555;"Telefone:</strong> ${empresa.telefone || ''}
+            `;
+            
+            header.appendChild(logoContainer);
+            header.appendChild(infoEmpresa);
+            header.appendChild(infoContato);
+            doc.body.appendChild(header);
+
+            // --- Seção 2: Informações do Pedido e Fornecedor ---
+            const infoGeral = doc.createElement('div');
+            infoGeral.style.display = 'flex';
+            infoGeral.style.justifyContent = 'space-between';
+            infoGeral.style.padding = '10px';
+            infoGeral.style.backgroundColor = '#f8f9fa';
+            infoGeral.style.borderRadius = '5px';
+            infoGeral.style.marginBottom = '20px';
+            infoGeral.style.fontSize = '12px';
+            infoGeral.style.border = '1px solid #dee2e6';
+
+            const dataPedidoObj = new Date(pedido.data || Date.now());
+            infoGeral.innerHTML = `
+                <div>
+                    <strong>PEDIDO Nº:</strong><br>
+                    <span style="font-size: 16px; color: #007bff;font-weight: bold;">${pedido.numeroDoPedido || 'N/A'}</span>
+                </div>
+                <div style="text-align: right;">
+                    <strong>DATA DE EMISSÃO:</strong><br>
+                    <span style="font-size: 16px; font-weight: bold;">${dataPedidoObj.toLocaleDateString('pt-BR')}</span>
+                </div>
+            `;
+            doc.body.appendChild(infoGeral);
+
+            const infoFornecedor = doc.createElement('div');
+            infoFornecedor.style.border = '1px solid #ddd';
+            infoFornecedor.style.padding = '15px';
+            infoFornecedor.style.marginBottom = '20px';
+            infoFornecedor.style.borderRadius = '5px';
+            infoFornecedor.style.fontSize = '12px';
+            infoFornecedor.innerHTML = `
+                <strong style="font-size: 14px; display: block; margin-bottom: 10px;">INFORMAÇÕES DO FORNECEDOR</strong>
+                <div style="display: flex; justify-content: space-between;">
+                    <div>
+                        <strong>Fornecedor:</strong> ${pedido.fornecedor || ''}<br>
+                        <strong>Endereço:</strong> ${fornecedor.endereco || ''}<br>
+                        <strong>CNPJ:</strong> ${fornecedor.cnpj || ''}
+                    </div>
+                    <div style="text-align: right;">
+                        <strong>Condição de Pagamento:</strong> ${fornecedor.condicaoDePagamento || ''}<br>
+                        <strong>Forma de Pagamento:</strong> ${fornecedor.formaDePagamento || ''}
+                    </div>
+                </div>
+            `;
+            doc.body.appendChild(infoFornecedor);
+
+
+            // --- Seção 3: Tabela de Itens ---
+            const tabelaContainer = doc.createElement('div');
+            const tabela = doc.createElement('table');
+            tabela.style.width = '100%';
+            tabela.style.borderCollapse = 'collapse';
+            tabela.style.marginBottom = '20px';
+            tabela.innerHTML = `
+                <thead style="background-color: #343a40; color: #fff; font-size: 12px;">
+                    <tr>
+                        <th style="padding: 10px; text-align: center; width: 5%;">#</th>
+                        <th style="padding: 10px; text-align: left;">DESCRIÇÃO</th>
+                        <th style="padding: 10px; text-align: center; width: 10%;">UN</th>
+                        <th style="padding: 10px; text-align: center; width: 10%;">QTD</th>
+                        <th style="padding: 10px; text-align: right; width: 15%;">VALOR UNIT.</th>
+                        <th style="padding: 10px; text-align: right; width: 15%;">SUBTOTAL</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            const tBody = tabela.querySelector('tbody');
+            if (itens.length > 0) {
+                itens.forEach((item, index) => {
+                    const codigoFornecedor = item.codigoProdutoFornecedor || item.produtoFornecedor || 'N/A';
+                    const tr = doc.createElement('tr');
+                    tr.style.borderBottom = '1px solid #ddd';
+                    tr.style.fontSize = '12px';
+                    tr.style.backgroundColor = index % 2 === 0 ? '#fff' : '#f8f9fa';
+                    tr.innerHTML = `
+                        <td style="padding: 8px; text-align: center;">${index + 1}</td>
+                        <td style="padding: 8px; text-align: left;">
+                            ${item.descricao || ''}
+                            <div style="font-size: 10px;">
+                                Cód. Forn: <strong style="color: #dc3545;">${codigoFornecedor}</strong>
+                            </div>
+                        </td>
+                        <td style="padding: 8px; text-align: center;">${item.unidade || ''}</td>
+                        <td style="padding: 8px; text-align: center;">${item.quantidade || 0}</td>
+                        <td style="padding: 8px; text-align: right;">${formatarMoeda(item.precoUnitario)}</td>
+                        <td style="padding: 8px; text-align: right;">${formatarMoeda(item.totalItem)}</td>
+                    `;
+                    tBody.appendChild(tr);
+                });
+            } else {
+                 tBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Nenhum item neste pedido.</td></tr>';
+            }
+            tabelaContainer.appendChild(tabela);
+            doc.body.appendChild(tabelaContainer);
+            
+            // --- Seção 4: Total e Observações ---
+            const footer = doc.createElement('div');
+            footer.style.display = 'flex';
+            footer.style.justifyContent = 'space-between';
+            footer.style.alignItems = 'flex-start';
+            footer.style.marginTop = '20px';
+            
+            const obsContainer = doc.createElement('div');
+            obsContainer.style.fontSize = '12px';
+            obsContainer.style.maxWidth = '60%';
+            obsContainer.innerHTML = `<strong>Observações:</strong><br>${pedido.observacoes || 'Sem observações.'}`;
+            
+            const totalContainer = doc.createElement('div');
+            totalContainer.style.textAlign = 'right';
+            totalContainer.style.width = '35%';
+            const subtotal = pedido.totalGeral || 0;
+            const imposto = pedido.icmsStTotal || 0;
+            const totalFinal = subtotal + imposto;
+            
+            totalContainer.innerHTML = `
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;">
+                    <span>Subtotal:</span>
+                    <span>${formatarMoeda(subtotal)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px;">
+                    <span>Imposto (ICMS-ST):</span>
+                    <span>${formatarMoeda(imposto)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px; color: #007bff;">
+                    <span>VALOR TOTAL:</span>
+                    <span>${formatarMoeda(totalFinal)}</span>
+                </div>
+            `;
+            
+            footer.appendChild(obsContainer);
+            footer.appendChild(totalContainer);
+            doc.body.appendChild(footer);
+
+            // --- Seção 5: Aviso de Alteração ---
+            const avisoContainer = doc.createElement('div');
+            avisoContainer.textContent = "Atenção: Qualquer alteração só pode ser realizada mediante autorização prévia, sob risco de não pagamento.";
+            avisoContainer.style.color = '#dc3545';
+            avisoContainer.style.fontSize = '11px';
+            avisoContainer.style.marginTop = '25px';
+            avisoContainer.style.textAlign = 'center';
+            avisoContainer.style.border = '1px solid #f5c6cb';
+            avisoContainer.style.padding = '8px';
+            avisoContainer.style.borderRadius = '4px';
+            avisoContainer.style.backgroundColor = '#f8d7da';
+            doc.body.appendChild(avisoContainer);
+
+
+            // --- Seção 6: Assinatura ---
+            const assinaturaContainer = doc.createElement('div');
+            assinaturaContainer.style.textAlign = 'center';
+            assinaturaContainer.style.marginTop = '80px';
+            const nomeUsuario = localStorage.getItem('nome');
+            const perfilUsuario = localStorage.getItem('funcao');
+            assinaturaContainer.innerHTML = `
+                <div style="display: inline-block; border-top: 1px solid #000; width: 280px; padding-top: 5px; font-size: 12px;">
+                    <strong style="font-size: 13px;">${nomeUsuario ? nomeUsuario.toUpperCase() : ''}</strong><br>
+                    <span>${perfilUsuario ? perfilUsuario.toUpperCase() : ''}</span>
+                </div>
+            `;
+            doc.body.appendChild(assinaturaContainer);
+
+            console.log("Layout moderno construído com sucesso.");
+        };
+
+        // --- Execução (sem alterações) ---
+        const pageHtml = `<html><head><title></title></head><body></body></html>`; // Um template em branco
+
+        if (debugMode) {
+            console.log('%c--- MODO DE DEPURAÇÃO ATIVADO ---', 'color: #fff; background-color: #f0ad4e; padding: 4px; border-radius: 4px;');
+            let container = document.getElementById('debugPrintContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'debugPrintContainer';
+                container.style.border = '2px dashed red';
+                container.style.padding = '10px';
+                container.style.marginTop = '20px';
+                document.body.appendChild(container);
+            }
+            // Para debug, usamos um 'doc' simulado (o próprio container)
+            container.innerHTML = '';
+            construirLayoutModerno({ body: container, title: '' }, pedidoCompleto); 
+            console.log('%c--- FIM DO MODO DE DEPURAÇÃO ---', 'color: #fff; background-color: #f0ad4e; padding: 4px; border-radius: 4px;');
+        } else {
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
+
+            const printDoc = iframe.contentWindow.document;
+
+            iframe.onload = function() {
+                construirLayoutModerno(printDoc, pedidoCompleto);
+
+                const logoImg = printDoc.querySelector('.company-logo');
+
+                const triggerPrint = () => {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    setTimeout(() => {
+                        document.body.removeChild(iframe);
+                    }, 1000);
+                };
+                
+                if (!logoImg || !logoImg.src) {
+                    setTimeout(triggerPrint, 50);
+                    //triggerPrint();
+                    return;
+                }
+                
+                if (logoImg.complete) {
+                    triggerPrint();
+                    } else {
+                    logoImg.onload = triggerPrint;
+                    logoImg.onerror = function() {
+                        console.error("Falha ao carregar a imagem da logo. URL:", logoImg.src);
+                        triggerPrint(); 
+                    };
+                }
+            };
+                
+
+            printDoc.open();
+            printDoc.write(pageHtml);
+            printDoc.close();
+        }
+
+    } catch (error) {
+        console.error("Erro CRÍTICO ao gerar documento para impressão:", error);
+        showGlobalModal('Erro Crítico', 'Não foi possível gerar o documento para impressão. Verifique a consola para mais detalhes.');
+    }
+}
+
+          /**
+           * ===================================================================
+           * FUNÇÃO #2: A "GERENTE" (ORQUESTRADORA)
+           * ===================================================================
+           * Ponto de entrada para qualquer impressão. Recebe os IDs, busca os dados 
+           * no back-end e, se bem-sucedido, chama a função de renderização.
+           * @param {string} numeroPedido - O número do pedido a imprimir.
+           * @param {string} empresaId - O ID da empresa do pedido.
+           */
+          async function iniciarImpressao(numeroPedido, empresaId) {
+            if (!numeroPedido || !empresaId) {
+              showGlobalModal('Erro', 'Dados insuficientes para imprimir (Nº Pedido e ID da Empresa são obrigatórios).');
+              return;
+            }
+            
+            showToast(`Preparando impressão do pedido ${numeroPedido}...`, null, 'Aguarde');
+            
+            try {
+              const pedidoCompleto = await new Promise((resolve, reject) => {
+                google.script.run
+                  .withSuccessHandler(resolve)
+                  .withFailureHandler(reject)
+                  .getPedidoCompletoPorId(numeroPedido, empresaId);
+              });
+
+               console.log("📦 Dados completos recebidos do back-end:", pedidoCompleto);
+              if (pedidoCompleto) {
+            // --- CÓDIGO DE DIAGNÓSTICO CORRIGIDO ---
+            // Agora verificamos a propriedade correta: 'fornecedorInfo'
+            if (pedidoCompleto.fornecedorInfo && Object.keys(pedidoCompleto.fornecedorInfo).length > 0) {
+                console.log("✅ SUCESSO: Informações do Fornecedor foram encontradas e anexadas:", pedidoCompleto.fornecedorInfo);
+            } else {
+                // Este aviso agora só aparecerá se 'fornecedorInfo' realmente não existir
+                console.warn("⚠️ FALHA: Informações do Fornecedor (fornecedorInfo) não foram encontradas. Verifique se o nome do fornecedor corresponde exatamente na aba 'Pedidos' e 'Fornecedores'.");
+            }
+            // --- FIM DO CÓDIGO DE DIAGNÓSTICO ---
+            
+            gerarDocumentoParaImpressao(pedidoCompleto);
+        } else {
+            showGlobalModal('Erro', 'Não foi possível encontrar os dados do pedido para impressão.');
+        }
+    } catch (error) {
+        console.error("Erro ao iniciar impressão:", error);
+        showGlobalModal('Erro', `Falha ao buscar dados do pedido: ${error.message || error}`);
+    }
+}
+
         // ===============================================
         // FUNÇÕES GLOBAIS PARA GERENCIAR RASCUNHOS
         // ===============================================
@@ -8136,14 +8392,17 @@ const EdicaoPedido = (function() {
         // ===============================================
         
         // Expor funções de teste globalmente
-        window.testarBotaoAdicionarItem = testarBotaoAdicionarItem;
-        window.testarEnterKeydown = testarEnterKeydown;
+        //window.testarBotaoAdicionarItem = testarBotaoAdicionarItem;
+       // window.testarEnterKeydown = testarEnterKeydown;
         window.itemCounter = itemCounter;
         
         document.addEventListener('DOMContentLoaded', () => {
             setupLoginScreen();
             setupCadastroScreen();
             showScreen('screen-login');
+            document.getElementById('username').focus();
+            //setupMenuScreen();
+
         });
     </script>
 </body>
