@@ -9,27 +9,43 @@ function calcularImpostoPedidoCompleto(itensDoPedido, dadosGerais) {
   Logger.log("--- FUNÇÃO 'calcularImpostoPedidoCompleto' INICIADA ---");
   Logger.log("Parâmetro 'itensDoPedido' recebido: %s", JSON.stringify(itensDoPedido));
   Logger.log("Parâmetro 'dadosGerais' recebido: %s", JSON.stringify(dadosGerais));
-  try {
+   try {
     const planilhaAtual = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = planilhaAtual.getSheetByName('CalculoICMS');
     if (!sheet) throw new Error("Aba 'CalculoICMS' não encontrada.");
 
+    // ====================================================================
+    // ===== BUSCA SEGURA PELA LINHA TOTAL (A CORREÇÃO DEFINITIVA) =====
+    // ====================================================================
+    Logger.log("Iniciando busca pela linha TOTAL...");
+    
+    // Define o intervalo de busca para a coluna B, começando da linha 2.
+    // Isso FORÇA o script a IGNORAR a linha 1 (cabeçalhos).
+    // A célula mesclada B21:D21 com "TOTAL" será encontrada por esta busca.
     const rangeBusca = sheet.getRange("B2:B" + sheet.getLastRow()); 
-    const textFinder = rangeBusca.createTextFinder("TOTAL").matchEntireCell(true).matchCase(false);
+    
+    const textFinder = rangeBusca.createTextFinder("TOTAL")
+    .matchEntireCell(true) // Procura pela célula com o texto exato
+    .matchCase(false);    // Ignora maiúsculas/minúsculas
+    
     const totalCell = textFinder.findNext();
     
     if (!totalCell) {
-      throw new Error("A célula com o texto 'TOTAL' não foi encontrada na coluna B (a partir da linha 2).");
+      // Se ainda não encontrar, o erro é claro.
+      throw new Error("CRÍTICO: A célula com o texto 'TOTAL' não foi encontrada na coluna B (a partir da linha 2). Verifique se a célula B21 contém exatamente a palavra 'TOTAL'.");
     }
+    
     const linhaTotal = totalCell.getRow();
-    console.log(`Linha TOTAL encontrada na posição correta: ${linhaTotal}`);
-     if (linhaTotal > 2) {
+    Logger.log(`SUCESSO: Linha TOTAL encontrada na linha correta: ${linhaTotal}`);
+    // ====================================================================
+
+    // O resto da sua função, que já está correto, continua a partir daqui...
+    if (linhaTotal > 3) {
       sheet.getRange(`A2:C${linhaTotal - 1}`).clearContent();
       sheet.getRange(`D2:D${linhaTotal - 1}`).clearContent();
+      sheet.getRange(`F2:F${linhaTotal - 1}`).clearContent();
     }
-    
-    // ==========================================================
-    
+
     const numeroDeItens = itensDoPedido.length;
     const linhasDisponiveis = linhaTotal - 2;
     if (numeroDeItens > linhasDisponiveis) {
@@ -41,33 +57,26 @@ function calcularImpostoPedidoCompleto(itensDoPedido, dadosGerais) {
       rangeModelo.copyTo(rangeDestino);
     }
 
-    // Preenche os dados dos itens (lógica continua a mesma)
     itensDoPedido.forEach((item, index) => {
       const linhaAtual = 2 + index;
-      sheet.getRange(linhaAtual, 2).setValue(dadosGerais.numeroNFE);
+      sheet.getRange(linhaAtual, 1).setValue(dadosGerais.numeroNFE);
       sheet.getRange(linhaAtual, 3).setValue(dadosGerais.ufFornecedor);
       sheet.getRange(linhaAtual, 4).setValue(dadosGerais.regimeTributario);
-      sheet.getRange(linhaAtual, 6).setValue(item.totalItem);
+      sheet.getRange(linhaAtual, 6).setValue(item.subtotal);
     });
 
     SpreadsheetApp.flush();
     
-    // A lógica para ler os resultados da linha TOTAL continua a mesma
-     const novoFinder = sheet.getRange("B2:B" + sheet.getLastRow()).createTextFinder("TOTAL").matchEntireCell(true).matchCase(false);
-    const novaTotalCell = novoFinder.findNext();
-    const novaLinhaTotal = novaTotalCell.getRow();
-
+    // Reencontra a linha total para garantir que pegamos a posição certa após inserir linhas
+    const novaLinhaTotal = sheet.getRange("B2:B" + sheet.getLastRow()).createTextFinder("TOTAL").findNext().getRow();
     const resultadosFinais = sheet.getRange(novaLinhaTotal, 1, 1, sheet.getLastColumn()).getValues()[0];
-
-    const icmsStTotal = resultadosFinais[13];      // Coluna N
-    const diferencaIcmsSn = resultadosFinais[14];   // Coluna O
+    
+    const icmsStTotal = resultadosFinais[13];
+    const diferencaIcmsSn = resultadosFinais[14];
     
     return {
       status: 'ok',
-      resultados: {
-        icmsStTotal: resultadosFinais[13], // Coluna N
-        diferencaIcmsSn: resultadosFinais[14] // Coluna O
-      }
+      resultados: { icmsStTotal: icmsStTotal, diferencaIcmsSn: diferencaIcmsSn }
     };
 
   } catch (e) {
