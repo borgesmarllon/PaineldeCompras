@@ -4,7 +4,7 @@
  */
 
 
-// ===============================================
+    // ===============================================
     // FUNÇÕES PARA USUARIOS
     // ===============================================
 
@@ -17,7 +17,7 @@
      * @param {string} [perfil] Perfil do usuário ("usuario" ou "admin"). Opcional.
      * @returns {Object} Objeto status/mensagem.
      */
-    function criarUsuario(nome, usuario, senha, empresasCodigos, perfil) {
+    function criarUsuario(nome, senha, empresasCodigos, perfil) {
 
       // Validações iniciais
       if (!nome || !senha) {
@@ -32,39 +32,54 @@
       try {
         const sheet = SpreadsheetApp.getActive().getSheetByName('Usuarios');
         
-        // Pega todos os usuários existentes para a verificação de duplicidade
-        const dadosUsuariosExistentes = sheet.getRange(2, 3, sheet.getLastRow() - 1, 1).getValues().flat();
+        if (!sheet) {
+            const errorMsg = "A planilha com o nome 'Usuarios' não foi encontrada. Verifique se o nome da aba está exatamente correto (maiúsculas/minúsculas, sem acentos).";
+            Logger.log("ERRO CRÍTICO: " + errorMsg);
+            return { status: 'error', message: errorMsg };
+        }
         
-        // GERA O NOME DE USUÁRIO ÚNICO AQUI
-        const novoUsuario = _gerarUsernameUnico(nome, dadosUsuariosExistentes);
-        //const sheet = SpreadsheetApp.getActive().getSheetByName('Usuarios');
-        //const dadosUsuariosExistentes = sheet.getRange(2, 3, sheet.getLastRow() - 1, 1).getValues().flat();
-        if (dadosUsuariosExistentes.includes(usuario)) {
-          return { status: 'error', message: 'Nome de usuário já existe. Escolha outro.' };
+        const lastRow = sheet.getLastRow();
+        let dadosUsuariosExistentes = [];
+        let ids = [];
+
+        // VERIFICAÇÃO ROBUSTA: Só tenta ler os dados se houver mais do que apenas a linha do cabeçalho.
+        if (lastRow > 1) {
+            dadosUsuariosExistentes = sheet.getRange(2, 3, lastRow - 1, 1).getValues().flat();
+            ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat().map(id => parseInt(id)).filter(n => !isNaN(n));
         }
 
-      const ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat().map(id => parseInt(id)).filter(n => !isNaN(n));
-      const novoId = ids.length ? Math.max(...ids) + 1 : 1;
+        // Pega todos os usuários existentes para a verificação de duplicidade
+        //const dadosUsuariosExistentes = sheet.getRange(2, 3, sheet.getLastRow() - 1, 1).getValues().flat();
+        
+        // GERA O NOME DE USUÁRIO ÚNICO AQUI
+        // Esta função já garante que o nome de usuário não será duplicado.
+        const novoUsuario = _gerarUsernameUnico(nome, dadosUsuariosExistentes);
 
-      // GERA O HASH DA SENHA ANTES DE SALVAR
-      const senhaHash = gerarHash(senha);
+        // Pega o último ID para gerar o próximo
+        //const ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat().map(id => parseInt(id)).filter(n => !isNaN(n));
+        const novoId = ids.length ? Math.max(...ids) + 1 : 1;
 
-      sheet.appendRow([
-        novoId,
-        nome,
-        usuario,
-        senhaHash,
-        perfil || 'usuario', // Perfil padrão ou informado
-        'Inativo',           // Status padrão
-        empresasCodigos      // Novidade: códigos das empresas permitidas, ex: "1,2"
-      ]);
-      return { status: 'ok', message: `Solicitação para o usuário '${novoUsuario}' enviada. Aguarde ativação pelo Administrador.` };
+        // Gera o HASH da senha antes de salvar
+        const senhaHash = gerarHash(senha);
 
-      } catch (e) {
+        sheet.appendRow([
+            novoId,
+            nome.toUpperCase(), // Salva o nome em maiúsculas
+            novoUsuario,
+            senhaHash,
+            perfil || 'usuario', // Perfil padrão ou informado
+            'Inativo',           // Status padrão
+            empresasCodigos || '' // Garante que seja uma string vazia se nulo
+        ]);
+        SpreadsheetApp.flush();
+        return { status: 'ok', message: `Solicitação para o usuário '${novoUsuario}' enviada. Aguarde ativação pelo Administrador.` };
+
+    } catch (e) {
         Logger.log("Erro em criarUsuario: " + e.message);
         return { status: 'error', message: 'Ocorreu um erro ao criar a solicitação.' };
-      }
     }
+}
+
 
     /**
      * Gera um nome de usuário único no formato "primeiro.ultimo".
@@ -95,7 +110,23 @@
       
       return finalUsername;
     }
-
+function testarCriacaoDeUsuario() {
+  Logger.log("--- Iniciando teste de criação de usuário ---");
+  
+  const nomeTeste = "José das Couves";
+  const senhaTeste = "senha123";
+  
+  const resultado = criarUsuario(nomeTeste, senhaTeste, "", "usuario");
+  
+  Logger.log("Resultado da operação:");
+  Logger.log(resultado);
+  
+  if (resultado.status === 'ok') {
+    Logger.log("✅ TESTE BEM-SUCEDIDO: Solicitação de usuário criada.");
+  } else {
+    Logger.log("❌ TESTE FALHOU: " + resultado.message);
+  }
+}
 function validarLogin(usuario, senha, empresaSelecionada) {
         try {
         Logger.log(`[validarLogin] Tentativa de login para usuário: ${usuario}, Empresa: ${empresaSelecionada}`);
@@ -467,7 +498,33 @@ function validarLogin(usuario, senha, empresaSelecionada) {
       }
     }
 
-    /**
+  function atualizarFuncaoEPerfilDoUsuario(dados) {
+  const { usuarioId, novaFuncao, novoPerfil } = dados;
+
+  const sheet = SpreadsheetApp.getActive().getSheetByName('Usuarios');
+  if (!sheet) {
+    return { status: 'error', message: 'Planilha "Usuarios" não encontrada.' };
+  }
+
+  const lastRow = sheet.getLastRow();
+  const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+
+  for (let i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]).trim() === String(usuarioId).trim()) {
+      const row = i + 2;
+
+      // Atualiza coluna 5 (Perfil) e coluna 9 (Função)
+      sheet.getRange(row, 5).setValue(novoPerfil);
+      sheet.getRange(row, 9).setValue(novaFuncao);
+
+      return { status: 'ok', message: `Função e perfil do usuário ${usuarioId} atualizados com sucesso.` };
+    }
+  }
+
+  return { status: 'error', message: `Usuário ${usuarioId} não encontrado.` };
+}
+
+       /**
      * Altera o perfil de um usuário na planilha 'Usuarios'.
      * @param {string} userId - O ID do usuário.
      * @param {string} novoPerfil - O novo perfil (ex: 'admin', 'usuario').
@@ -1042,7 +1099,7 @@ function _getEmpresasMap() {
  */
 function resetarSenhaManualmente() {
   const usuarioParaResetar = "admin"; // Coloque aqui o nome de usuário que você quer resetar
-  const novaSenha = "----";          // Coloque aqui a nova senha temporária
+  const novaSenha = "1234";          // Coloque aqui a nova senha temporária
 
   try {
     const sheet = SpreadsheetApp.openById(ID_DA_PLANILHA).getSheetByName('Usuarios');
