@@ -6,37 +6,45 @@ function generatePdfReport(reportParams) {
      try {
         Logger.log(`[generatePdfReport] 1. Iniciando. Parâmetros: ${JSON.stringify(reportParams)}`);
         
-        if (!reportParams || !reportParams.companyId) {
-            throw new Error("Parâmetro 'companyId' é obrigatório.");
-        }
-
         const allPedidos = _getPedidosData(reportParams);
         const filteredPedidos = _filterPedidos(allPedidos, reportParams);
         const reportData = _groupAndSummarizePedidos(filteredPedidos, reportParams);
+
+        // ==========================================================
+        // ✅ 1. RAIO-X DOS DADOS (ANTES DE GERAR O HTML)
+        // ==========================================================
+        Logger.log("--- DEBUG: DADOS ANTES DE GERAR O HTML ---");
+        // Usamos JSON.stringify para ver a estrutura completa do objeto
+        Logger.log(JSON.stringify(reportData, null, 2));
+        Logger.log("-----------------------------------------");
+        // ==========================================================
+
         const htmlContent = _generatePdfHtmlContent(reportData, reportParams);
         Logger.log(`[generatePdfReport] 5. Conteúdo HTML gerado.`);
 
-        const htmlBlob = Utilities.newBlob(htmlContent, MimeType.HTML, 'Relatorio.html');
-        const pdfBlob = htmlBlob.getAs(MimeType.PDF);
-        Logger.log(`[generatePdfReport] 6. Blob PDF criado.`);
+        // ==========================================================
+        // ✅ 2. RAIO-X DO HTML (O RESULTADO FINAL)
+        // ==========================================================
+        Logger.log("--- DEBUG: CONTEÚDO HTML GERADO ---");
+        Logger.log(htmlContent);
+        Logger.log("-----------------------------------");
+        // ==========================================================
 
+        const pdfBlob = Utilities.newBlob(htmlContent, MimeType.HTML).getAs(MimeType.PDF).setName(`Relatorio.pdf`);
         const folder = _getOrCreateFolder("RelatoriosComprasTemporarios");
-        const fileName = `Relatorio_${reportParams.reportType}_${new Date().getTime()}.pdf`;
-        const pdfFile = folder.createFile(pdfBlob).setName(fileName);
-        
+        const pdfFile = folder.createFile(pdfBlob);
         pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        const fileUrl = pdfFile.getDownloadUrl();
-        Logger.log(`[generatePdfReport] 7. Sucesso! URL do PDF: ${fileUrl}`);
+        Utilities.sleep(1000); 
+        const fileUrl = `https://drive.google.com/uc?export=download&id=${pdfFile.getId()}`;
         
+        Logger.log(`[generatePdfReport] 7. Sucesso! URL do PDF: ${fileUrl}`);
         return { status: 'success', url: fileUrl };
 
     } catch (e) {
         Logger.log(`[generatePdfReport] ERRO FATAL: ${e.message}. Stack: ${e.stack}`);
-        // Retorna um objeto de erro em vez de lançar uma exceção
         return { status: 'error', message: `Erro ao gerar relatório PDF: ${e.message}` };
     }
 }
-
 function generateXlsReport(reportParams) {
     try {
         Logger.log(`[generateXlsReport] 1. Iniciando. Parâmetros: ${JSON.stringify(reportParams)}`);
@@ -145,6 +153,11 @@ function _filterPedidos(allPedidos, reportParams) {
         const selectedSupplier = reportParams.supplier.toLowerCase();
         filtered = filtered.filter(p => (p.fornecedor || '').toLowerCase() === selectedSupplier);
     }
+
+    if (reportParams.status) {
+        const selectedStatus = reportParams.status.toLowerCase();
+        filtered = filtered.filter(p => (p.status || '').toLowerCase() === selectedStatus);
+    }
     Logger.log(`[_filterPedidos] Final: ${filtered.length} pedidos.`);
     return filtered;
 }
@@ -153,32 +166,53 @@ function _groupAndSummarizePedidos(pedidos, reportParams) {
     Logger.log(`[_groupAndSummarizePedidos] 4. Agrupando ${pedidos.length} pedidos para relatório do tipo "${reportParams.reportType}".`);
     const data = {};
     if (reportParams.reportType === 'detailed') {
+      const grupos = {};
+      let valorTotalPeriodo = 0; 
+      let valorTotalIcmsPeriodo = 0;
+
         pedidos.sort((a, b) => a.data.getTime() - b.data.getTime());
+
         pedidos.forEach(pedido => {
+          valorTotalPeriodo += pedido.totalGeral;
+          valorTotalIcmsPeriodo += pedido.icmsStTotal || 0;
+
             const dateStr = Utilities.formatDate(pedido.data, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-            if (!data[dateStr]) data[dateStr] = { date: pedido.data, fornecedores: {}, totalDate: 0 };
+            if (!grupos[dateStr]) {
+              grupos[dateStr] = { date: pedido.data, fornecedores: {}, totalDate: 0 };
+            }
             const fornecedor = pedido.fornecedor || 'Desconhecido';
-            if (!data[dateStr].fornecedores[fornecedor]) data[dateStr].fornecedores[fornecedor] = { pedidos: [], totalFornecedor: 0 };
-            data[dateStr].fornecedores[fornecedor].pedidos.push(pedido);
-            data[dateStr].fornecedores[fornecedor].totalFornecedor += pedido.totalGeral;
-            data[dateStr].totalDate += pedido.totalGeral;
+            if (!grupos[dateStr].fornecedores[fornecedor]) {
+            grupos[dateStr].fornecedores[fornecedor] = { pedidos: [], totalFornecedor: 0 };
+            }
+            grupos[dateStr].fornecedores[fornecedor].pedidos.push(pedido);
+            grupos[dateStr].fornecedores[fornecedor].totalFornecedor += pedido.totalGeral;
+            grupos[dateStr].totalDate += pedido.totalGeral;
         });
-    } else if (reportParams.reportType === 'financial') {
-        data.totalGeralPedidos = 0;
-        data.numeroTotalPedidos = 0;
-        data.totalPorFornecedor = {};
-        pedidos.forEach(pedido => {
-            data.totalGeralPedidos += pedido.totalGeral;
-            data.numeroTotalPedidos++;
-            const fornecedor = pedido.fornecedor || 'Desconhecido';
-            data.totalPorFornecedor[fornecedor] = (data.totalPorFornecedor[fornecedor] || 0) + pedido.totalGeral;
-        });
-        data.listaTotalPorFornecedor = Object.keys(data.totalPorFornecedor).map(f => ({
-            fornecedor: f,
-            total: data.totalPorFornecedor[f]
-        })).sort((a, b) => b.total - a.total);
-    }
-    return data;
+        return {
+            valorTotalPeriodo: valorTotalPeriodo,
+            valorTotalIcmsPeriodo: valorTotalIcmsPeriodo,
+            grupos: grupos
+        };
+
+        } else if (reportParams.reportType === 'financial') {
+            data.totalGeralPedidos = 0;
+            data.numeroTotalPedidos = 0;
+            data.totalPorFornecedor = {};
+            pedidos.forEach(pedido => {
+                data.totalGeralPedidos += pedido.totalGeral;
+                data.numeroTotalPedidos++;
+                const fornecedor = pedido.fornecedor || 'Desconhecido';
+                data.totalPorFornecedor[fornecedor] = (data.totalPorFornecedor[fornecedor] || 0) + pedido.totalGeral;
+            });
+            data.listaTotalPorFornecedor = Object.keys(data.totalPorFornecedor).map(f => ({
+                fornecedor: f,
+                total: data.totalPorFornecedor[f]
+            })).sort((a, b) => b.total - a.total);
+        
+        return data;
+        }
+
+        return{};
 }
 
     /**
@@ -205,27 +239,63 @@ function _groupAndSummarizePedidos(pedidos, reportParams) {
     let bodyContent = '';
 
     if (reportParams.reportType === 'detailed') {
-        if (Object.keys(reportData).length === 0) {
+        if (!reportData || !reportData.grupos || Object.keys(reportData.grupos).length === 0) {
             bodyContent = '<p class="no-data">Nenhum pedido encontrado para os filtros selecionados.</p>';
         } else {
-            const sortedDates = Object.keys(reportData).sort();
+            // ✅ 1. ADICIONA A CAIXA DE RESUMO COM O VALOR TOTAL DO PERÍODO
+            if (reportData.valorTotalPeriodo) {
+                bodyContent += `
+                <div class="summary-box">                
+                  <p><strong>Valor Total do Período:</strong> <span class="total-value">R$ ${_formatCurrency(reportData.valorTotalPeriodo)}</span></p>
+                  <p><strong>Valor Total ICMS ST do Período:</strong> <span class="total-value">R$ ${_formatCurrency(reportData.valorTotalIcmsPeriodo)}</span></p>
+                </div>`;
+            }
+            const sortedDates = Object.keys(reportData.grupos).sort();
             sortedDates.forEach(dateStr => {
-                const dateGroup = reportData[dateStr];
-                bodyContent += `<div class="date-group"><h3>Data: ${Utilities.formatDate(dateGroup.date, Session.getScriptTimeZone(), 'dd/MM/yyyy')} &nbsp;&nbsp;<span class="total-day">Total do Dia: R$ ${dateGroup.totalDate.toFixed(2).replace('.', ',')}</span></h3>`;
+                const dateGroup = reportData.grupos[dateStr];
+                bodyContent += `<div class="date-group">
+                <h3>Data: ${Utilities.formatDate(dateGroup.date, Session.getScriptTimeZone(), 'dd/MM/yyyy')}</h3> &nbsp;&nbsp;<div class="total-day">Total do Dia: R$ ${_formatCurrency(dateGroup.totalDate)}</div>`;
                 const sortedSuppliers = Object.keys(dateGroup.fornecedores).sort();
                 sortedSuppliers.forEach(supplierName => {
                     const supplierGroup = dateGroup.fornecedores[supplierName];
-                    bodyContent += `<div class="supplier-group"><h4>Fornecedor: ${supplierName} &nbsp;&nbsp;<span class="total-supplier">Total: R$ ${supplierGroup.totalFornecedor.toFixed(2).replace('.', ',')}</span></h4><table><thead><tr><th>Nº Pedido</th><th>Item</th><th>Qtd.</th><th>Preço Unit.</th><th>Subtotal</th></tr></thead><tbody>`;
+                    const totalIcmsFornecedor = supplierGroup.pedidos.reduce((sum, pedido) => sum + (pedido.icmsStTotal || 0), 0);                    
+                    bodyContent += `<div class="supplier-group">
+                    <h4>Fornecedor: ${supplierName} &nbsp;&nbsp;
+                    <span class="total-supplier">Total: R$ ${_formatCurrency(supplierGroup.totalFornecedor)}</span>
+                    <span class="total-supplier">ICMS ST: R$ ${_formatCurrency(totalIcmsFornecedor)}</span>                    
+                    </h4>
+                    <table>
+                    <thead>
+                    <tr>
+                    <th>Nº Pedido</th>
+                    <th>Item</th>
+                    <th class="text-right">Qtd.</th>
+                    <th class="text-right">Preço Unit.</th>
+                    <th class="text-right">Subtotal</th>    
+                    <th class="text-right">Vlr. Icms ST</th>                
+                    </tr>
+                    </thead>
+                    <tbody>`;
                     supplierGroup.pedidos.forEach(pedido => {
+                      const icmsPedidoFormatado = `R$ ${parseFloat(pedido.icmsStTotal || 0).toFixed(2).replace('.', ',')}`;
                         pedido.itens.forEach(item => {
                             bodyContent += `<tr>
                                 <td>${pedido.numeroDoPedido || ''}</td>
                                 <td>${item.descricao || ''}</td>
                                 <td class="text-right">${item.quantidade || 0}</td>
-                                <td class="text-right">R$ ${parseFloat(item.precoUnitario || 0).toFixed(2).replace('.', ',')}</td>
-                                <td class="text-right">R$ ${parseFloat(item.totalItem || 0).toFixed(2).replace('.', ',')}</td>
+                                <td class="text-right">R$ ${_formatCurrency(item.precoUnitario)}</td>
+                                <td class="text-right">R$ ${_formatCurrency(item.totalItem)}</td>
+                                <td></td>
                             </tr>`;
                         });
+                        
+                        const subtotalCalculado = pedido.itens.reduce((sum, item) => sum + (parseFloat(item.totalItem) || 0), 0);
+                        const subtotalPedidoFormatado = `R$ ${subtotalCalculado.toFixed(2).replace('.', ',')}`;                        
+                        bodyContent += `<tr class="order-total-row">
+                            <td colspan="4"><strong>Total do Pedido ${pedido.numeroDoPedido}</strong></td>
+                            <td class="text-right"><strong>${subtotalPedidoFormatado}</strong></td>
+                            <td class="text-right"><strong>${icmsPedidoFormatado}</strong></td>
+                        </tr>`;
                     });
                     bodyContent += `</tbody></table></div>`;
                 });
@@ -240,7 +310,8 @@ function _groupAndSummarizePedidos(pedidos, reportParams) {
                 <p><strong>Total de Pedidos:</strong> ${reportData.numeroTotalPedidos}</p>
                 <p><strong>Valor Total das Compras:</strong> <span class="total-value">R$ ${reportData.totalGeralPedidos.toFixed(2).replace('.', ',')}</span></p>
             </div>`;
-            bodyContent += `<h4>Totais por Fornecedor:</h4><table><thead><tr><th>Fornecedor</th><th class="text-right">Valor Total Comprado</th></tr></thead><tbody>`;
+            bodyContent += `<h4>Totais por Fornecedor:</h4>
+            <table><thead><tr><th>Fornecedor</th><th class="text-right">Valor Total Comprado</th></tr></thead><tbody>`;
             reportData.listaTotalPorFornecedor.forEach(item => {
                 bodyContent += `<tr><td>${item.fornecedor}</td><td class="text-right">R$ ${item.total.toFixed(2).replace('.', ',')}</td></tr>`;
             });
@@ -248,8 +319,8 @@ function _groupAndSummarizePedidos(pedidos, reportParams) {
         }
     }
 
-    const html = `
-    <!DOCTYPE html><html><head><title>${reportTitle}</title>
+ const html = `
+<!DOCTYPE html><html><head><title>${reportTitle}</title>
     <style>
         @page { size: A4; margin: 1cm; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 10pt; color: #333; }
@@ -264,14 +335,39 @@ function _groupAndSummarizePedidos(pedidos, reportParams) {
         th { background-color: #f2f7fc; font-weight: bold; color: #004a99; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         .text-right { text-align: right; }
-        .date-group { margin-bottom: 25px; page-break-inside: avoid; }
-        .date-group h3 { margin-top: 0; color: #004a99; font-size: 12pt; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+        .date-group { 
+          margin-bottom: 25px; 
+          padding-top: 15px;
+          border-top: 2px solid #004a99;
+          page-break-inside: avoid; 
+          }
+        .date-group:first-child{
+          margin-top: 0;
+          padding-top: 0;
+          border-top: none;
+        }
+        .date-group h3 { 
+          margin-top: 0; 
+          color: #004a99; 
+          font-size: 12pt; 
+          border-bottom: 1px 
+          solid #ccc; 
+          padding-bottom: 5px; 
+          }
         .supplier-group { margin-left: 15px; margin-top: 15px; }
         .supplier-group h4 { margin-top: 0; color: #0056b3; font-size: 11pt; }
         .total-day, .total-supplier, .total-value { font-weight: bold; }
         .no-data { text-align: center; font-style: italic; color: #888; margin-top: 30px; }
         .summary-box { background-color: #f2f7fc; border: 1px solid #c9deff; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
         .footer { position: fixed; bottom: -20px; left: 0; right: 0; text-align: center; font-size: 8pt; color: #999; }
+        .order-total-row{
+          background-color: #e9eef5 !important; /* Usa !important para sobrescrever o nth-child(even) */
+          font-weigth: bold;
+          color: #333;
+        }
+        .order-total-row td{
+          border-top: 2px solid #ccc;
+        }
     </style></head><body>
     <div class="header">
         <div class="company-info">
@@ -288,6 +384,7 @@ function _groupAndSummarizePedidos(pedidos, reportParams) {
     <div class="content">${bodyContent}</div>
     <div class="footer"><p>Página <span class="pageNumber"></span> de <span class="totalPages"></span></p></div>
     </body></html>`;
+
     return html;
 }
 
@@ -315,17 +412,20 @@ function _populateSheetWithReportData(sheet, reportData, reportParams) {
     row++;
 
     if (reportParams.reportType === 'detailed') {
-        const headers = ['Data', 'Fornecedor', 'Nº Pedido', 'Item', 'Qtd.', 'Preço Unit.', 'Subtotal'];
+        const headers = ['Data', 'Fornecedor', 'Nº Pedido', 'Item', 'Qtd.', 'Preço Unit.', 'Subtotal', 'Valor Icms'];
         sheet.getRange(row, 1, 1, headers.length).setValues([headers]).setFontWeight('bold').setBackground('#f2f2f2');
         row++;
         
-        const sortedDates = Object.keys(reportData).sort();
+        const grupos = reportData.grupos || {};
+        const sortedDates = Object.keys(grupos).sort();
         sortedDates.forEach(dateStr => {
-            const dateGroup = reportData[dateStr];
+            const dateGroup = grupos[dateStr];
+            const fornecedores = dateGroup.fornecedores || {};
             const sortedSuppliers = Object.keys(dateGroup.fornecedores).sort();
             sortedSuppliers.forEach(supplierName => {
-                const supplierGroup = dateGroup.fornecedores[supplierName];
-                supplierGroup.pedidos.forEach(pedido => {
+                const supplierGroup = fornecedores[supplierName];
+                if (!supplierGroup || !supplierGroup.pedidos) return;
+                    supplierGroup.pedidos.forEach(pedido => {
                     pedido.itens.forEach(item => {
                         const rowData = [
                             Utilities.formatDate(pedido.data, Session.getScriptTimeZone(), 'dd/MM/yyyy'),
@@ -334,7 +434,8 @@ function _populateSheetWithReportData(sheet, reportData, reportParams) {
                             item.descricao,
                             item.quantidade,
                             item.precoUnitario,
-                            item.totalItem
+                            item.totalItem,
+                            pedido.valorIcms
                         ];
                         sheet.getRange(row, 1, 1, rowData.length).setValues([rowData]);
                         row++;
@@ -404,7 +505,13 @@ function testBackendConnection() {
     };
 }
     // ========================
-
+function _formatCurrency(value) {
+  const number = Number(value) || 0;
+  return number.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
     /**
  * Serve o conteúdo HTML da tela de Relatórios para o frontend.
  * @returns {string} Conteúdo HTML.
