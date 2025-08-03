@@ -12,6 +12,20 @@ function toCamelCase(str) {
 }
 
 /**
+ * Formata um número para o padrão numérico brasileiro.
+ * Ex: 12345.67 -> "12.345,67"
+ * @param {number} value O número a ser formatado.
+ * @return {string} O número formatado como string.
+ */
+function _formatNumberBRL(value) {
+  const number = parseFloat(value) || 0;
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(number);
+}
+
+/**
  * Retorna a classe CSS para o status do pedido.
  
 function getStatusClass(status) {
@@ -502,7 +516,7 @@ function formatGeminiSuggestionsForFrontend(markdownText) {
  * @param {Array<Object>} pTopProducts - Lista de top produtos (array de objetos).
  * @param {Array<Object>} pTopSuppliers - Lista de top fornecedores (array de objetos).
  * @returns {string} Sugestões de redução de compras (texto bruto do Gemini).
- */
+*/ 
 function generatePurchaseSuggestions(pFinancialSummary, pTopProducts, pTopSuppliers) { 
   Logger.log('[backend] generatePurchaseSuggestions: Iniciando geração de sugestões...');
   
@@ -597,6 +611,223 @@ function generatePurchaseSuggestions(pFinancialSummary, pTopProducts, pTopSuppli
   }
 }
 
+/**
+ * VERSÃO APRIMORADA: Gera uma análise estratégica completa da operação de compras nacional.
+ * Esta função é autossuficiente: ela busca os dados necessários, monta um prompt rico e chama a IA.
+ * @returns {string} O texto da análise estratégica gerado pela IA.
+ */
+function gerarAnaliseEstrategica() {
+  Logger.log('[backend] gerarAnaliseEstrategica (versão completa): Iniciando...');
+
+  try {
+    // --- ETAPA 1: COLETAR DADOS RICOS ---
+    Logger.log("Coletando dados para a análise...");
+    
+    const produtosRanqueados = getProductsRankedByValue(); // Função que já tínhamos
+    const analisePorEstado = getAnalysisByState(); // Nova função que acabamos de criar
+    
+    // (Opcional) Busca o histórico do produto mais importante
+    const produtoPrincipal = produtosRanqueados.length > 0 ? produtosRanqueados[0] : null;
+    let historicoProdutoPrincipal = {};
+    if (produtoPrincipal) {
+    historicoProdutoPrincipal = getPurchaseHistoryForItem(produtoPrincipal.descricao);  // Esta função ainda pode ser criada no futuro
+    }
+    
+    // --- ETAPA 2: MONTAR O PROMPT COMPLETO ---
+    const prompt = `
+      **PERSONA:** Você é um consultor sênior de Supply Chain e Estratégia Tributária, especializado em otimização de compras no mercado brasileiro.
+
+      **CONTEXTO:** Você está analisando os dados de compra de uma empresa com operação nacional. O objetivo é identificar oportunidades de redução de custos, otimização fiscal (ICMS ST), consolidação da base de fornecedores e mitigação da volatilidade de preços.
+
+      **TAREFA:** Com base nos dados de entrada, forneça uma análise estratégica concisa com 3 a 5 recomendações acionáveis. Organize suas sugestões nas seguintes categorias: ANÁLISE TRIBUTÁRIA E GEOGRÁFICA, ESTRATÉGIA DE FORNECEDORES, e GESTÃO DE ESTOQUE E PRODUTOS. Para cada sugestão, justifique com base nos dados e indique um próximo passo prático. Use formato Markdown para a resposta.
+
+      **DADOS DE ENTRADA:**
+      - Análise de Compras Agregada por Estado: ${JSON.stringify(analisePorEstado, null, 2)}
+      - Top 10 Produtos por Valor Total de Compra (Curva A): ${JSON.stringify(produtosRanqueados.slice(0, 10), null, 2)}
+      
+      **PLANO DE AÇÃO ESTRATÉGICO:**
+    `;
+
+    // --- ETAPA 3: CHAMAR A API GEMINI ---
+    const respostaDaIA = callGeminiAPI(prompt); // Usa a função que já criamos
+    
+    Logger.log(`[backend] Análise gerada com sucesso.`);
+    return respostaDaIA;
+
+  } catch (e) {
+    Logger.log(`[backend] Erro fatal em gerarAnaliseEstrategica: ${e.message}. Stack: ${e.stack}`);
+    return `Ocorreu um erro ao gerar a análise: ${e.message}`;
+  }
+}
+
+/**
+ * Agrega os dados de compra por estado do fornecedor.
+ * Retorna um resumo de valor total comprado, ICMS ST pago e contagem de fornecedores/pedidos.
+ * Depende que a aba 'pedidos' tenha uma coluna com o ID do Fornecedor para ligar as informações.
+ */
+function getAnalysisByState() {
+   try {
+    Logger.log("Iniciando agregação de dados por estado (usando Razão Social)...");
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheetItens = ss.getSheetByName("Itens Pedido");
+    const sheetPedidos = ss.getSheetByName("Pedidos");
+    const sheetFornecedores = ss.getSheetByName("Fornecedores");
+
+    if (!sheetItens || !sheetPedidos || !sheetFornecedores) {
+      throw new Error("Uma ou mais planilhas (itens pedido, pedidos, fornecedores) não foram encontradas.");
+    }
+
+    // ✅ MUDANÇA 1: O mapa agora usa a Razão Social (em minúsculas e sem espaços extras) como chave.
+    const razaoSocialParaEstado = {};
+    const fornecedoresData = sheetFornecedores.getDataRange().getValues();
+    const headersForn = fornecedoresData.shift();
+    const idxRazaoSocial = headersForn.indexOf('RAZAO SOCIAL'); // Ajuste se o nome da coluna for 'Razão Social', etc.
+    const idxEstado = headersForn.indexOf('ESTADO');
+    fornecedoresData.forEach(row => {
+      const razaoSocial = String(row[idxRazaoSocial]).trim().toLowerCase();
+      razaoSocialParaEstado[razaoSocial] = row[idxEstado];
+    });
+
+    // ✅ MUDANÇA 2: O mapa agora associa o Número do Pedido à Razão Social do fornecedor.
+    const pedidoParaFornecedorNome = {};
+    const pedidosData = sheetPedidos.getDataRange().getValues();
+    const headersPed = pedidosData.shift();
+    const idxNumPed = headersPed.indexOf('Número do Pedido');
+    const idxFornNomePed = headersPed.indexOf('Fornecedor'); // Usando a coluna com o nome
+    pedidosData.forEach(row => {
+      pedidoParaFornecedorNome[row[idxNumPed]] = row[idxFornNomePed];
+    });
+
+    const analise = {};
+
+    // 3. Itera sobre os itens para somar os valores
+    const itensData = sheetItens.getDataRange().getValues();
+    const headersItens = itensData.shift();
+    const idxNumPedItem = headersItens.indexOf('NUMERO PEDIDO');
+    const idxTotalItem = headersItens.indexOf('TOTAL ITEM');
+    const idxIcmsItem = headersItens.indexOf('ICMS ST TOTAL');
+    
+    itensData.forEach(row => {
+      const numPedido = row[idxNumPedItem];
+      const razaoSocial = pedidoParaFornecedorNome[numPedido];
+      
+      // ✅ MUDANÇA 3: A busca do estado é feita pelo nome (convertido para o padrão).
+      if (razaoSocial) {
+          const razaoSocialKey = String(razaoSocial).trim().toLowerCase();
+          const estado = razaoSocialParaEstado[razaoSocialKey];
+
+          if (estado) {
+            if (!analise[estado]) {
+              analise[estado] = {
+                uf: estado,
+                valorTotalComprado: 0,
+                valorTotalIcmsSt: 0,
+                pedidos: new Set(),
+                fornecedores: new Set()
+              };
+            }
+            
+            analise[estado].valorTotalComprado += (typeof row[idxTotalItem] === 'number') ? row[idxTotalItem] : 0;
+            analise[estado].valorTotalIcmsSt += (typeof row[idxIcmsItem] === 'number') ? row[idxIcmsItem] : 0;
+            analise[estado].pedidos.add(numPedido);
+            analise[estado].fornecedores.add(razaoSocial); // Agrega pelo nome
+          }
+      }
+    });
+
+    const resultadoFinal = Object.values(analise).map(res => ({
+        uf: res.uf,
+        valorTotalComprado: res.valorTotalComprado,
+        valorTotalIcmsSt: res.valorTotalIcmsSt,
+        numeroDePedidos: res.pedidos.size,
+        numeroDeFornecedores: res.fornecedores.size
+    })).sort((a,b) => b.valorTotalComprado - a.valorTotalComprado);
+
+    Logger.log("Análise por estado concluída. Estados encontrados: " + resultadoFinal.length);
+    return resultadoFinal;
+
+  } catch (e) {
+    Logger.log(`ERRO em getAnalysisByState: ${e.message}`);
+    return [];
+  }
+}
+
+/**
+ * Busca o histórico de todas as compras de um produto específico.
+ * @param {string} idProduto O ID do produto a ser pesquisado (ex: "PD_018").
+ * @returns {Array<Object>} Um array com o histórico de compras do item, ordenado por data.
+ */
+function getPurchaseHistoryForItem(idProduto) {
+  try {
+    Logger.log(`Buscando histórico para o produto ID: ${idProduto}`);
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheetItens = ss.getSheetByName("itens pedido");
+    const sheetPedidos = ss.getSheetByName("pedidos");
+
+    if (!sheetItens || !sheetPedidos) {
+      throw new Error("As abas 'itens pedido' ou 'pedidos' não foram encontradas.");
+    }
+    
+    // 1. Mapeia Número do Pedido para o Nome do Fornecedor e a Data
+    const pedidoInfo = {};
+    const pedidosData = sheetPedidos.getDataRange().getValues();
+    const headersPed = pedidosData.shift();
+    const idxNumPed = headersPed.indexOf('Número do Pedido');
+    const idxFornNome = headersPed.indexOf('Fornecedor');
+    const idxData = headersPed.indexOf('Data'); // Assumindo que a data principal está na aba 'pedidos'
+    
+    pedidosData.forEach(row => {
+      pedidoInfo[row[idxNumPed]] = {
+        fornecedor: row[idxFornNome],
+        data: row[idxData]
+      };
+    });
+
+    // 2. Filtra os itens pelo ID do produto e monta o histórico
+    const historico = [];
+    const itensData = sheetItens.getDataRange().getValues();
+    const headersItens = itensData.shift();
+    const idxIdProdItem = headersItens.indexOf('ID_PRODUTO'); // Assumindo que você tem um ID
+    const idxDescricaoItem = headersItens.indexOf('DESCRICAO'); // Usado como fallback
+    const idxNumPedItem = headersItens.indexOf('NUMERO PEDIDO');
+    const idxQtd = headersItens.indexOf('QUANTIDADE');
+    const idxPreco = headersItens.indexOf('PRECO UNITARIO');
+    
+    itensData.forEach(row => {
+      // Procura pelo ID do produto. Se não tiver, usa a descrição como fallback
+      const produtoIdentifier = row[idxIdProdItem] || row[idxDescricaoItem];
+      
+      if (produtoIdentifier === idProduto) {
+        const numPedido = row[idxNumPedItem];
+        const info = pedidoInfo[numPedido];
+        
+        if (info) {
+          historico.push({
+            data: info.data,
+            fornecedor: info.fornecedor,
+            quantidade: row[idxQtd],
+            precoUnitario: row[idxPreco]
+          });
+        }
+      }
+    });
+    
+    // 3. Ordena o histórico pela data, do mais recente para o mais antigo
+    historico.sort((a, b) => new Date(b.data) - new Date(a.data));
+    
+    Logger.log(`Histórico encontrado para ${idProduto}: ${historico.length} registros.`);
+    return historico.slice(0, 10); // Retorna os 10 registros mais recentes para não sobrecarregar o prompt
+
+  } catch (e) {
+    Logger.log(`ERRO em getPurchaseHistoryForItem: ${e.message}`);
+    return [];
+  }
+}
+
+
+
 // ===============================================
 // FUNÇÃO PRINCIPAL PARA O DASHBOARD
 // (Esta deve ser a ÚLTIMA função principal no seu arquivo antes de doGet)
@@ -646,7 +877,13 @@ function getDashboardData(filters) {
         p.status && String(p.status).trim().toUpperCase() === 'APROVADO'
     );
     Logger.log(`[backend] getDashboardData: Destes, ${pedidosParaCalculo.length} estão 'Aprovados' e serão usados para os cálculos.`);
-  
+
+      let totalIcmsSt = 0;
+    pedidosParaCalculo.forEach(p => {
+        totalIcmsSt += parseFloat(p.icmsStTotal) || 0;
+    });
+    Logger.log(`[backend] getDashboardData: Total de ICMS ST calculado: ${totalIcmsSt}`);
+
     // 3. Calcular resumos e tops com base nos 'finalFilteredPedidos'
     const financialSummary = calculateFinancialSummary(pedidosParaCalculo);
     const topSuppliers = calculateTopSuppliers(pedidosParaCalculo);
@@ -660,9 +897,10 @@ function getDashboardData(filters) {
     });
 
     const recentOrders = recentOrdersSorted.slice(0, 10).map(p => ({
-        id: p.nUmeroDoPedido || p.id || p.numeroPedido || p.númedoDoPedido || 'N/A', 
+        id: p.nUmeroDoPedido || p.id || p.numeroPedido || p.numeroDoPedido || 'N/A', 
         supplier: p.fornecedor || 'Desconhecido',
         value: 'R$ ' + (p.totalGeral || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+        icmsStTotal: p.icmsStTotal || 0, // Adicionado para a tabela
         status: p.status || 'Desconhecido',
         statusClass: getStatusClass(p.status)
     }));
@@ -679,16 +917,21 @@ function getDashboardData(filters) {
     
     // Retorna o objeto com todos os dados formatados para o frontend
     return {
-      totalGasto: 'R$ ' + (financialSummary.valorTotalPedidos || 0).toFixed(2).replace('.', ','),
+      totalGasto: 'R$ ' + _formatNumberBRL(financialSummary.valorTotalPedidos),
       totalPedidos: financialSummary.totalPedidos || 0,
-      ticketMedio: financialSummary.totalPedidos > 0 ? 'R$ ' + (financialSummary.valorTotalPedidos / financialSummary.totalPedidos).toFixed(2).replace('.', ',') : 'R$ 0,00',
-      
+      ticketMedio: 'R$ ' + _formatNumberBRL(financialSummary.valorTotalPedidos / financialSummary.totalPedidos),
+      totalIcmsSt: (totalIcmsSt || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+
       monthlyLabels: monthlyAnalysisData.labels,
       monthlyPedidosData: monthlyAnalysisData.pedidosData,
       monthlyGastosData: monthlyAnalysisData.gastosData,
       
       topSuppliersLabels: topSuppliers.slice(0,5).map(s => s.fornecedor),
       topSuppliersValues: topSuppliers.slice(0,5).map(s => s.totalComprado),
+
+      // ===== DADOS ATUALIZADOS PARA O GRÁFICO DE PRODUTOS =====
+      topProductsLabels: topProducts.slice(0, 5).map(p => p.produto),
+      topProductsValues: topProducts.slice(0, 5).map(p => p.totalQuantidade), // Usa a propriedade correta 'totalQuantidade'
 
       recentOrders: recentOrders,
       iaSuggestions: iaSuggestionsFormatted
@@ -699,6 +942,7 @@ function getDashboardData(filters) {
     return { 
         status: 'error', 
         message: `Erro ao carregar dados do Dashboard: ${e.message}`,
+        totalIcmsSt: 'Erro', // Adicionado para o caso de erro
         totalGasto: 'Erro', totalPedidos: 'Erro', ticketMedio: 'Erro',
         monthlyLabels: [], monthlyPedidosData: [], monthlyGastosData: [],
         topSuppliersLabels: [], topSuppliersValues: [],
@@ -708,37 +952,222 @@ function getDashboardData(filters) {
 }
 
 function getStatusClass(status) {
-  if (!status) return 'bg-gray-200 text-gray-800';
-  switch (status.toUpperCase()) {
-    case 'EM ABERTO':
-      return 'bg-blue-100 text-blue-800';
-    case 'APROVADO':
-      return 'bg-green-100 text-green-800';
-    case 'CANCELADO':
-      return 'bg-red-100 text-red-800';
-    default:
-      return 'bg-gray-200 text-gray-800';
+        const statusNormalizado = (status || '').toUpperCase().replace(' ', '');
+        switch (statusNormalizado) {
+            case 'APROVADO':
+                return 'bg-green-100 text-green-800';
+            case 'CANCELADO':
+                return 'bg-red-100 text-red-800';
+            case 'RASCUNHO':
+                return 'bg-yellow-100 text-yellow-800';
+            case 'AGUARDANDOAPROVACAO':
+                return 'bg-blue-100 text-blue-800';
+            case 'EMABERTO':
+                return 'bg-purple-100 text-purple-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    }
+
+    /**
+ * Analisa a planilha 'itens pedido', agrupa os itens por descrição de produto,
+ * soma o valor total comprado de cada um e retorna uma lista ranqueada.
+ * @returns {Array<Object>} Um array de objetos, cada um com {descricao, valorTotal},
+ * ordenado do maior valorTotal para o menor.
+ */
+function getProductsRankedByValue() {
+  try {
+    Logger.log("Iniciando a agregação de valores por produto...");
+
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Itens Pedido");
+    if (!sheet) {
+      throw new Error("A aba 'itens pedido' não foi encontrada.");
+    }
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data.shift(); // Pega o cabeçalho e remove do array de dados
+
+    // Encontra o índice das colunas que precisamos (mais robusto que usar números fixos)
+    const idxDescricao = headers.indexOf('DESCRICAO');
+    const idxTotalItem = headers.indexOf('TOTAL ITEM');
+
+    if (idxDescricao === -1 || idxTotalItem === -1) {
+      throw new Error("Não foi possível encontrar as colunas 'DESCRICAO' ou 'TOTAL ITEM' na aba 'itens pedido'.");
+    }
+
+    const produtosAgregados = {}; // Usaremos um objeto para facilitar a soma
+
+    // Itera sobre cada linha da planilha de itens
+    data.forEach(row => {
+      const descricao = row[idxDescricao];
+      const valor = row[idxTotalItem];
+
+      // Garante que temos uma descrição e um valor numérico válido
+      if (descricao && typeof valor === 'number' && valor > 0) {
+        if (produtosAgregados[descricao]) {
+          // Se o produto já existe no nosso objeto, apenas soma o novo valor
+          produtosAgregados[descricao] += valor;
+        } else {
+          // Se é a primeira vez que vemos este produto, o adiciona ao objeto
+          produtosAgregados[descricao] = valor;
+        }
+      }
+    });
+
+    // Converte o objeto de volta para um array no formato que queremos
+    const resultadoArray = Object.keys(produtosAgregados).map(key => {
+      return {
+        descricao: key,
+        valorTotal: produtosAgregados[key]
+      };
+    });
+
+    // Ordena o array do maior valor total para o menor
+    resultadoArray.sort((a, b) => b.valorTotal - a.valorTotal);
+    
+    Logger.log(`Agregação concluída. ${resultadoArray.length} produtos únicos encontrados e ranqueados.`);
+    
+    return resultadoArray;
+
+  } catch (e) {
+    Logger.log(`ERRO em getProductsRankedByValue: ${e.message}`);
+    return []; // Retorna um array vazio em caso de erro
   }
 }
-// ===============================================
-// FUNÇÕES DE SERVIÇO HTML (Para doGet e inclusão)
-// ===============================================
-
 /**
- * Função para servir o HTML para a interface do usuário.
- * Altere 'Dashboard' para o nome do seu arquivo HTML principal.
+ * Orquestra a criação da análise de Curva ABC.
+ * 1. Busca os dados ranqueados dos produtos.
+ * 2. Monta o prompt para a IA.
+ * 3. (Simula) a chamada à IA e retorna a resposta JSON estruturada.
+ * @returns {string} Uma string contendo o JSON da análise da IA.
  */
-function doGet() {
-  return HtmlService.createTemplateFromFile('Dashboard') // Nome do seu arquivo HTML
-      .evaluate()
-      .addMetaTag('viewport', 'width=device-width, initial-scale=1.0');
+function gerarAnaliseABC_comIA() {
+  Logger.log("Iniciando geração da análise ABC com chamada real à IA...");
+  
+  try {
+    const produtosRanqueados = getProductsRankedByValue();
+
+    if (!produtosRanqueados || produtosRanqueados.length === 0) {
+      return JSON.stringify({ insights: {ponto1: "Nenhum dado de produto para analisar."}, chartData: {} });
+    }
+
+    const promptCurvaABC = `
+      **PERSONA:** Você é um analista de dados especialista em gestão de inventário e supply chain.
+
+      **TAREFA:** A partir da lista de produtos ranqueados por valor de compra, gere uma análise completa de Curva ABC. Sua saída deve ser **exclusivamente um objeto JSON bem-formado**, sem nenhum texto ou explicação adicional antes ou depois. O objeto JSON deve ter duas chaves principais: "insights" e "chartData".
+
+      1.  **Na chave "insights"**: Forneça um objeto com três chaves ("ponto1", "ponto2", "ponto3"), cada uma contendo uma frase-chave sobre a análise. Exemplo: quantos itens são classe A e qual percentual do valor eles representam.
+      2.  **Na chave "chartData"**: Gere os dados necessários para um gráfico de Pareto (barras e linha) no formato do Chart.js. Deve conter:
+          -   "labels": Um array com a descrição dos top 15 produtos.
+          -   "datasets": Um array com dois objetos:
+              -   O primeiro objeto para as BARRAS de valor, com a chave "data" contendo o valor total de compra de cada um dos top 15 produtos.
+              -   O segundo objeto para a LINHA de percentual acumulado, com a chave "data" contendo o percentual de valor acumulado para cada um dos top 15 produtos (ex: [25, 45, 60, ...]).
+
+      **DADOS DE ENTRADA:**
+      - Lista de Produtos Ranqueados: ${JSON.stringify(produtosRanqueados)}
+
+      **SAÍDA (APENAS O OBJETO JSON):**
+    `;
+    
+    Logger.log("Chamando a IA para gerar a análise...");
+    const respostaDaIA = callGeminiAPI(promptCurvaABC);
+    
+    const jsonLimpo = respostaDaIA.replace(/```json/g, "").replace(/```/g, "").trim();
+    
+    Logger.log("Análise da IA recebida. Retornando para o frontend.");
+    return jsonLimpo;
+
+  } catch (e) {
+    Logger.log(`Erro ao chamar a IA: ${e.message}`);
+    return JSON.stringify({ 
+      insights: { ponto1: `Erro ao gerar análise: ${e.message}` },
+      chartData: {} 
+    });
+  }
 }
 
 /**
- * Inclui arquivos CSS e JS no HTML (se você usar arquivos separados).
+ * Função principal que envia um prompt para a API do Gemini.
+ * @param {string} prompt O texto do prompt a ser enviado.
+ * @returns {string} A resposta de texto da IA.
  */
-function include(filename) {
-  return HtmlService.createTemplateFromFile(filename)
-      .evaluate()
-      .getContent();
+function callGeminiAPI(prompt) {
+  const apiKey = _getGeminiApiKey();
+  // Usando um modelo poderoso e atualizado
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + apiKey;
+
+  const payload = {
+    "contents": [{
+      "parts": [{ "text": prompt }]
+    }],
+    "generationConfig": {
+        "responseMimeType": "application/json", // Força a saída em JSON
+    }
+  };
+
+  const options = {
+    'method': 'post',
+    'contentType': 'application/json',
+    'payload': JSON.stringify(payload),
+    'muteHttpExceptions': true
+  };
+
+  try {
+    Logger.log("Enviando prompt para a API do Gemini...");
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+    const responseBody = response.getContentText();
+
+    if (responseCode === 200) {
+      const jsonResponse = JSON.parse(responseBody);
+      const textResponse = jsonResponse.candidates[0].content.parts[0].text;
+      Logger.log("Resposta da IA recebida com sucesso.");
+      return textResponse;
+    } else {
+      Logger.log(`Erro da API Gemini: Status ${responseCode}, Resposta: ${responseBody}`);
+      throw new Error(`Erro na chamada da API: ${responseBody}`);
+    }
+  } catch (e) {
+    Logger.log(e);
+    throw new Error(`Falha na comunicação com a API do Gemini: ${e.message}`);
+  }
+}
+
+/**
+ * Função para testar a geração da análise ABC pela IA.
+ */
+function testarGeracaoDeAnaliseABC() {
+  const respostaJson = gerarAnaliseABC_comIA();
+  
+  Logger.log("--- RESPOSTA (SIMULADA) RECEBIDA PELA IA ---");
+  
+  // Tenta "parsear" a resposta para garantir que é um JSON válido
+  try {
+    const dados = JSON.parse(respostaJson);
+    Logger.log("JSON é válido!");
+    Logger.log("Insights: %s", dados.insights.ponto1);
+    Logger.log("Dados do Gráfico: %s", JSON.stringify(dados.chartData, null, 2));
+  } catch (e) {
+    Logger.log("ERRO: A resposta não é um JSON válido.");
+    Logger.log(respostaJson);
+  }
+}
+
+function testarAnaliseEstrategicaCompleta() {
+  const analise = gerarAnaliseEstrategica();
+  Logger.log("--- ANÁLISE COMPLETA GERADA PELA IA ---");
+  Logger.log(analise);
+}
+
+/**
+ * Função para testar a busca de histórico de um produto.
+ */
+function testarHistoricoDeProduto() {
+  // ✅ TROQUE AQUI pelo ID ou Descrição de um produto real do seu sistema
+  const produtoParaTestar = "RV EL VW CONSTELLATION LE"; 
+  
+  const historico = getPurchaseHistoryForItem(produtoParaTestar);
+  
+  Logger.log(`--- Histórico de Compras para: ${produtoParaTestar} ---`);
+  Logger.log(JSON.stringify(historico, null, 2));
 }
