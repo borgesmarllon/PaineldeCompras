@@ -56,105 +56,197 @@
       return proximoNumero.toString().padStart(6, '0');
     }
 
-
-        /**
-     * Salva um novo pedido de compra na planilha 'Pedidos'.
-     * @param {Object} pedido - Objeto contendo os detalhes do pedido (numero, data, fornecedor, itens, totalGeral, placaVeiculo, nomeVeiculo, observacoes).
-     * @returns {Object} Um objeto com status e mensagem.
-     */
-    function salvarPedido(pedido, usuarioLogado) {
-      console.log('📋 === INÍCIO salvarPedido ===');
-      console.log('📋 Objeto pedido recebido:', JSON.stringify(pedido, null, 2));
-      
-      const sheet = SpreadsheetApp.getActive().getSheetByName('Pedidos');
-      if (!sheet) {
-        return { status: 'error', message: 'Planilha "Pedidos" não encontrada. Contate o administrador.' };
-      }
-
-      // Normalizar o número do pedido - aceitar tanto 'numeroPedido' quanto 'numero'
-      const numeroPedido = pedido.numeroPedido || pedido.numero;
-      console.log('📋 Número do pedido normalizado:', numeroPedido);
-      
-      if (!numeroPedido) {
-        console.error('❌ Número do pedido não encontrado em:', pedido);
-        return { status: 'error', message: 'Número do pedido é obrigatório.' };
-      }
-
-      // Normalizar empresa (aceitar empresaId ou empresa)
-      const empresaId = pedido.empresaId || pedido.empresa;
-      console.log('📋 ID da empresa normalizado:', empresaId);
-      
-      console.log('📋 Total geral recebido:', pedido.totalGeral);
-      console.log('📋 Itens recebidos:', pedido.itens ? pedido.itens.length : 0, 'itens');
-
-      const itensJSON = JSON.stringify(pedido.itens);
-
-      const fornecedoresSheet = SpreadsheetApp.getActive().getSheetByName('Fornecedores');
-      let fornecedorCnpj = '';
-      let fornecedorEndereco = '';
-      let condicaoPagamentoFornecedor = '';
-      let formaPagamentoFornecedor = '';
-      let estadoFornecedor = '';
-      let cidadeFornecedor = '';
-
-      if (fornecedoresSheet) {
-        const fornecedoresData = fornecedoresSheet.getRange(2, 1, fornecedoresSheet.getLastRow() - 1, fornecedoresSheet.getLastColumn()).getValues();
-        const foundFornecedor = fornecedoresData.find(row => String(row[0]) === pedido.fornecedorId); 
-        if (foundFornecedor) {
-          fornecedorCnpj = String(foundFornecedor[3] || '');
-          fornecedorEndereco = String(foundFornecedor[4] || '');
-          condicaoPagamentoFornecedor = String(foundFornecedor[5] || '');
-          formaPagamentoFornecedor = String(foundFornecedor[6] || '');
-          estadoFornecedor = String(foundFornecedor[10] || ''); // Coluna 11 (índice 10) = Estado
-          cidadeFornecedor = String(foundFornecedor[11] || '');
-        }
-      }
-
-      const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-      const colunaUsuarioCriador = headers.indexOf("Usuario Criador");
-      if (colunaUsuarioCriador === -1) {
-        throw new Error("A coluna 'Usuario Criador' não foi encontrada na planilha de Pedidos.");
+/**
+ * Retorna o objeto de configuração principal do sistema.
+ * Colocada neste arquivo para garantir 100% de visibilidade.
+ * @returns {Object} O objeto de configuração.
+ */
+function getConfig() {
+  return {
+    sheets: {
+      pedidos: 'Pedidos',
+      fornecedores: 'Fornecedores'
+    },
+    status: {
+      aguardandoAprovacao: 'AGUARDANDO APROVACAO'
     }
-      const rowData = new Array(headers.length).fill('');
+  };
+}
 
-      const dataToSave = {
-        'Número do Pedido': "'" + numeroPedido, // Adiciona o apóstrofo
-        'Empresa': "'" + empresaId,     // Usar o mesmo nome que está em getProximoNumeroPedido
-        'Data': pedido.data,
-        'Fornecedor': pedido.fornecedor,
-        'CNPJ Fornecedor': fornecedorCnpj,
-        'Endereço Fornecedor': fornecedorEndereco,
-        'Estado Fornecedor': estadoFornecedor,
-        'Condição Pagamento Fornecedor': condicaoPagamentoFornecedor,
-        'Forma Pagamento Fornecedor': formaPagamentoFornecedor,
-        'Placa Veiculo': pedido.placaVeiculo,
-        'Nome Veiculo': pedido.nomeVeiculo,
-        'Observacoes': pedido.observacoes,
-        'Total Geral': parseFloat(pedido.totalGeral) || 0, // Garantir que é um número
-        'ICMS ST Total': parseFloat(pedido.valorIcms) || 0,
-        'Status': 'AGUARDANDO APROVACAO',
-        'Itens': itensJSON,
-        'Data Criacao': formatarDataParaISO(new Date()), // Timestamp de criação padronizado
-        'Produto Fornecedor': pedido.produtoFornecedor,
-        'Usuario Criador': pedido.usuarioLogado
-      };
+function normalizarDataPedido(data) {
+    if (!data) return new Date();
+    if (data instanceof Date) return data;
+    // Tenta converter string para data
+    try {
+        return new Date(data.replace(' ', 'T'));
+    } catch (e) {
+        return new Date();
+    }
+}
+/**
+ * Cria um mapa de fornecedores para busca otimizada.
+ * Colocada neste arquivo para garantir visibilidade.
+ * @returns {Map<string, Object>} Um mapa onde a chave é o ID do fornecedor.
+ */
+function criarMapaDeFornecedores() {
+  const config = getConfig(); // Usa a função local
+  const fornecedoresSheet = SpreadsheetApp.getActive().getSheetByName(config.sheets.fornecedores);
+  if (!fornecedoresSheet) return null;
 
+  const fornecedoresData = fornecedoresSheet.getRange(2, 1, fornecedoresSheet.getLastRow() - 1, fornecedoresSheet.getLastColumn()).getValues();
+  const mapa = new Map();
 
-
-      headers.forEach((header, index) => {
-        if (dataToSave.hasOwnProperty(header)) {
-          rowData[index] = dataToSave[header];
-          console.log(`📋 Mapeando coluna "${header}":`, dataToSave[header]);
-        }
+  fornecedoresData.forEach(row => {
+    const fornecedorId = String(row[0]);
+    if (fornecedorId) {
+      mapa.set(fornecedorId, {
+        nome: String(row[1] || ''),     // Supondo que o nome está na coluna B
+        cnpj: String(row[3] || ''),     // Supondo que o CNPJ está na coluna D
+        endereco: String(row[4] || ''), // E assim por diante...
+        condicaoPagamento: String(row[5] || ''),
+        formaPagamento: String(row[6] || ''),
+        estado: String(row[10] || ''),
+        cidade: String(row[11] || '')
       });
-
-      console.log('📋 Dados finais para salvar:', rowData);
-      sheet.appendRow(rowData);
-
-      console.log('✅ Pedido salvo com sucesso:', numeroPedido);
-      console.log('📋 === FIM salvarPedido ===');
-      return { status: 'ok', message: `Pedido ${numeroPedido} salvo com sucesso!` };
     }
+  });
+  return mapa;
+}
+
+/**
+ * Salva um objeto de pedido em uma linha na planilha "Pedidos".
+ * @param {Object} pedido O objeto contendo os detalhes do pedido.
+ * @param {string} usuarioLogado O email do usuário que está realizando a ação.
+ * @returns {{status: string, message: string}} Um objeto com o resultado da operação.
+ */
+function salvarPedido(pedido, usuarioLogado) {
+  console.log('📋 === INÍCIO salvarPedido ===');
+  console.log('📋 Objeto pedido recebido:', JSON.stringify(pedido, null, 2));
+
+  try {
+    const config = getConfig();
+    const sheet = SpreadsheetApp.getActive().getSheetByName(config.sheets.pedidos);
+    if (!sheet) {
+      throw new Error('Planilha "Pedidos" não encontrada. Verifique o nome na função getConfig().');
+    }
+
+  const numeroPedido = pedido.numeroPedido || pedido.numero;
+  const empresaId = pedido.empresaId || pedido.empresa;
+  const idFornecedorParaBusca = String(pedido.fornecedorId || pedido.fornecedor);
+  const dataObj = normalizarDataPedido(pedido.data);
+  //const dataFinalParaFormatar = dataObj || new Date();
+
+  const dataFormatada = Utilities.formatDate(
+    dataObj,
+    "America/Sao_Paulo",    // O fuso horário de referência
+    "dd/MM/yyyy HH:mm:ss"   // O formato de texto que você quer na planilha
+  );
+
+
+  const mapaFornecedores = criarMapaDeFornecedores();
+  let dadosFornecedor = {}; 
+
+  if (mapaFornecedores && mapaFornecedores.has(idFornecedorParaBusca)) {
+      dadosFornecedor = mapaFornecedores.get(idFornecedorParaBusca);
+      console.log(`✅ Fornecedor encontrado: [ID: ${idFornecedorParaBusca}, Nome: ${dadosFornecedor.nome}]`);
+  } else {
+      console.warn(`⚠️ Aviso: Fornecedor com ID "${idFornecedorParaBusca}" não encontrado.`);
+  }
+  const cidadeFornecedor = (dadosFornecedor.cidade || '').toUpperCase();
+  let statusFinal = config.status.aguardandoAprovacao;
+
+  if (cidadeFornecedor.includes("VITORIA DA CONQUISTA")) {
+    statusFinal = "Aprovado"; // Sobreescreve para fornecedor local
+    Logger.log('APROVAÇÃO AUTOMATICA: Fornecedor de Vitória da Conquista.');
+  } else {
+    Logger.log(`APROVAÇÃO MANUAL: Fornecedor de '${cidadeFornecedor}'. Status definido como '${statusFinal}'.`);
+  }
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  
+  const dataToSave = {
+    'Número do Pedido': `'${numeroPedido}`,
+    'Empresa': `'${empresaId}`,
+    'Data': dataFormatada,
+    'Fornecedor': dadosFornecedor.nome || pedido.fornecedor,
+    'CNPJ Fornecedor': dadosFornecedor.cnpj || '',
+    'Endereço Fornecedor': dadosFornecedor.endereco || '',
+    'Estado Fornecedor': dadosFornecedor.estado || '',
+    'Cidade Fornecedor': dadosFornecedor.cidade || '',
+    'Condição Pagamento Fornecedor': dadosFornecedor.condicaoPagamento || '',
+    'Forma Pagamento Fornecedor': dadosFornecedor.formaPagamento || '',
+    'Placa Veiculo': pedido.placaVeiculo,
+    'Nome Veiculo': pedido.nomeVeiculo,
+    'Observacoes': pedido.observacoes,
+    'Total Geral': parseFloat(pedido.totalGeral) || 0,
+    'ICMS ST Total': parseFloat(pedido.valorIcms) || 0,
+    'Status': statusFinal,
+    'Itens': JSON.stringify(pedido.itens || []),
+    'Data Criacao': new Date().toISOString(), 
+    'Produto Fornecedor': pedido.produtoFornecedor,
+    'Usuario Criador': usuarioLogado,
+    'Aliquota imposto': parseFloat(pedido.aliquotaImposto) || 0
+  };
+
+  const rowData = headers.map(header => dataToSave.hasOwnProperty(header) ? dataToSave[header] : '');
+  sheet.appendRow(rowData);
+  
+  // ===== LOG DE DEPURAÇÃO ADICIONADO =====
+    Logger.log("--- PREPARANDO PARA CHAMAR desmembrarJsonDeItens ---");
+
+  // Após salvar o pedido principal, chama a função para desmembrar os itens.
+    desmembrarJsonDeItens(
+        numeroPedido, 
+        empresaId, 
+        dataToSave['Itens'],
+        dataToSave['Estado Fornecedor'],
+        dataToSave['Aliquota imposto'],
+        dataToSave['ICMS ST Total']
+    );
+
+    Logger.log("--- RETORNOU DE desmembrarJsonDeItens ---");
+    
+  return { status: 'ok', message: `Pedido ${numeroPedido} salvo com sucesso com status '${statusFinal}'!` };
+
+  } catch (e) {
+      Logger.log(`ERRO em salvarPedido: ${e.message}\nStack: ${e.stack}`);
+      return { status: 'error', message: `Ocorreu um erro no servidor: ${e.message}` };
+  }
+}
+
+/**
+ * Função dedicada para testar a função 'salvarPedido' diretamente do editor.
+ */
+function executarTesteSalvarPedido() {
+  console.log('🚀 INICIANDO TESTE CONSOLIDADO 🚀');
+
+  const pedidoDeTeste = {
+    numeroPedido: `TESTE-${new Date().getTime()}`,
+    data: new Date().toLocaleString('pt-BR'),
+    fornecedor: "28",
+    fornecedorId: "28",
+    nomeVeiculo: "Veículo de Teste",
+    placaVeiculo: "TST-1234",
+    observacoes: "Pedido gerado pela função de teste consolidada.",
+    produtoFornecedor: "Peças Diversas",
+    empresaId: "001",
+    totalGeral: 250.75,
+    valorIcms: 30.50,
+    itens: [{ descricao: "Produto Teste", quantidade: 10, unidade: "UN", precoUnitario: 25.075, totalItem: 250.75 }]
+  };
+
+  const usuarioDeTeste = 'admin';
+
+  try {
+    const resultado = salvarPedido(pedidoDeTeste, usuarioDeTeste);
+    console.log('✅ TESTE FINALIZADO COM SUCESSO ✅');
+    console.log('↪️ Resultado:', resultado);
+  } catch (error) {
+    console.error('❌ OCORREU UM ERRO CRÍTICO DURANTE A EXECUÇÃO DO TESTE ❌');
+    console.error('Mensagem do Erro:', error.message);
+    console.error('Pilha de execução:', error.stack);
+  }
+}
+
 
 /**
  * Busca todos os dados de um pedido específico para exibição na tela de impressão.
@@ -254,6 +346,32 @@ function buscarPedidosv2(params) {
       usuarioCriador: headers.findIndex(h => h.toUpperCase().includes('USUARIO CRIADOR'))
     };
 
+    // Define os status que não devem aparecer na busca
+    const statusExcluidos = ['RASCUNHO', 'AGUARDANDO APROVACAO'];
+    
+     // --- LÓGICA DE PRÉ-BUSCA PARA AVISO (MUDANÇA MÍNIMA) ---
+    if (params.mainSearch && params.perfil !== 'admin') {
+        const termoBusca = String(params.mainSearch).trim().toLowerCase();
+        const empresaFiltro = String(params.empresaId).trim();
+
+        // ===== CORREÇÃO APLICADA AQUI =====
+        // A busca agora usa .includes() para ser consistente com o filtro principal.
+        const pedidoOculto = data.find(row => 
+            String(row[colunas.numeroDoPedido]).toLowerCase().trim().includes(termoBusca) && 
+            String(row[colunas.empresa]).trim() === empresaFiltro
+        );
+
+        if (pedidoOculto) {
+            const statusDoPedido = (pedidoOculto[colunas.status] || '').trim().toUpperCase();
+            if (statusExcluidos.includes(statusDoPedido)) {
+                const numeroDoPedidoEncontrado = pedidoOculto[colunas.numeroDoPedido];
+                const mensagem = `O pedido #${numeroDoPedidoEncontrado} foi encontrado, mas está com o status "${pedidoOculto[colunas.status]}" e não pode ser exibido na busca.`;
+                Logger.log(`[backend] Pedido oculto encontrado: ${mensagem}`);
+                return { status: 'found_but_hidden', message: mensagem };
+            }
+        }
+    }
+    
     // Validação para garantir que colunas essenciais foram encontradas
     for (const key in colunas) {
         if (colunas[key] === -1) {
@@ -262,11 +380,6 @@ function buscarPedidosv2(params) {
     }
 
     const pedidosEncontrados = data.filter(row => {
-      // O filtro de empresa é o primeiro e obrigatório
-      const statusDoPedido = row[colunas.status];
-      if (!statusDoPedido || String(statusDoPedido).trim() === '') {
-        return false; //
-      }
 
       const empresaPlanilha = String(row[colunas.empresa]).trim();
       const empresaFiltro = String(params.empresaId).trim();
@@ -276,7 +389,7 @@ function buscarPedidosv2(params) {
       
       let match = true;
 
-      // --- Filtro por Empresa (SEMPRE APLICADO) ---
+      // --- Filtro 1. por Empresa (SEMPRE APLICADO) ---
       if (params.empresaId && match) {
           const empresaPlanilha = String(row[colunas.empresa]).trim();
           const empresaFiltro = String(params.empresaId).trim();
@@ -287,7 +400,20 @@ function buscarPedidosv2(params) {
           return false;
       }
       
-      // Filtro Principal (Nº Pedido ou Fornecedor)
+      // --- Filtro 2: Status ---
+      // Primeiro, verifica se o status está vazio.
+      if (!params.bypassStatusFilter){
+      const statusDoPedido = (row[colunas.status] || '').trim().toUpperCase();
+      if (statusDoPedido === '') {
+          return false;
+      }
+      // Depois, verifica se o status está na lista de exclusão.
+      if (statusExcluidos.includes(statusDoPedido)) {
+          return false;
+      }
+      }
+
+      // Filtro 3: Principal (Nº Pedido ou Fornecedor)
       if (params.mainSearch && match) {
         const termo = params.mainSearch.toLowerCase().trim();
         const numPedido = String(row[colunas.numeroDoPedido]).toLowerCase();
@@ -297,7 +423,7 @@ function buscarPedidosv2(params) {
         }
       }
 
-      // Filtro por Data
+      // Filtro 4: por Data
       if (params.dateStart && params.dateEnd && match) {
         const dataPedido = new Date(row[colunas.data]);
         const dataInicio = new Date(params.dateStart + 'T00:00:00');
@@ -307,7 +433,7 @@ function buscarPedidosv2(params) {
         }
       }
       
-      // Filtro por Placa
+      // Filtro 5: por Placa
       if (params.plateSearch && match && colunas.placaVeiculo !== -1) {
           const placaPlanilha = String(row[colunas.placaVeiculo]).toLowerCase().trim();
           const placaFiltro = params.plateSearch.toLowerCase().trim();
@@ -317,7 +443,7 @@ function buscarPedidosv2(params) {
           }
       }
 
-      // Filtro por Usuário Criador
+      // Filtro 6: por Usuário Criador
       if (params.usuarioCriador && match && colunas.usuarioCriador !== -1) {
           const criadorPlanilha = String(row[colunas.usuarioCriador]).toLowerCase().trim();
           const criadorFiltro = params.usuarioCriador.toLowerCase().trim();
@@ -331,6 +457,7 @@ function buscarPedidosv2(params) {
     }).map(row => {
       // Mapeia a linha para um objeto, garantindo que a data seja serializável
       const dataDoPedido = row[colunas.data];
+      //const dataCriacao = row[colunas.dataCriacao];
 
         const pedido ={
         numeroDoPedido: row[colunas.numeroDoPedido],
@@ -375,7 +502,7 @@ function buscarPedidosv2(params) {
 
 function testarBuscarPedidos() {
   const paramsTeste = {
-    empresaId: "001", mainSearch: "001", dateStart: "", dateEnd: "", plateSearch: "", usuarioCriador: ""
+    empresaId: "001", mainSearch: "1352", dateStart: "", dateEnd: "", plateSearch: "", usuarioCriador: ""
   };
   Logger.log(`--- INICIANDO TESTE para a função buscarPedidos ---`);
   const resultado = buscarPedidosv2(paramsTeste);
@@ -653,7 +780,19 @@ function testarBuscarPedidos() {
     function salvarRascunho(dadosRascunho) {
       try {
         console.log('📝 Salvando rascunho:', dadosRascunho);
-        
+        const idDaPlanilha = '1xVLFSqL5SVT6cmZ_9foOkKxJIHqHeCGHLcyryBJ44g0'; // Coloque o ID aqui
+        const colunas = mapearCabecalhoPedidos(idDaPlanilha);
+        // Se o mapa não for criado, pare a execução
+        if (!colunas) {
+            return { status: 'error', message: 'Não foi possível ler a estrutura da planilha.' };
+        }
+        // Obter a planilha
+        const planilha = SpreadsheetApp.openById('1xVLFSqL5SVT6cmZ_9foOkKxJIHqHeCGHLcyryBJ44g0');
+        const aba = planilha.getSheetByName('Pedidos') || planilha.insertSheet('Pedidos');
+        const agora = new Date();
+
+        //const indiceDaAliquota = colunas.aliquotaImposto; // Vai retornar 19
+        //const indiceDataCriacao = colunas.dataCriacao; // Vai retornar 15
         // Validações básicas
         if (!dadosRascunho.fornecedor || !dadosRascunho.fornecedor.trim()) {
           return {
@@ -677,13 +816,9 @@ function testarBuscarPedidos() {
             message: 'Pelo menos um item deve ter uma descrição.'
           };
         }
-        
-        // Obter a planilha
-        const planilha = SpreadsheetApp.openById(PLANILHA_ID);
-        const aba = planilha.getSheetByName('Pedidos') || planilha.insertSheet('Pedidos');
-        
+                
         // Gerar ID único para o rascunho
-        const agora = new Date();
+        
         const ano = agora.getFullYear();
         const mes = String(agora.getMonth() + 1).padStart(2, '0');
         const dia = String(agora.getDate()).padStart(2, '0');
@@ -701,8 +836,9 @@ function testarBuscarPedidos() {
 
         if (fornecedoresSheet) {
           const fornecedoresData = fornecedoresSheet.getRange(2, 1, fornecedoresSheet.getLastRow() - 1, fornecedoresSheet.getLastColumn()).getValues();
-          const foundFornecedor = fornecedoresData.find(row => String(row[1]) === dadosRascunho.fornecedor); 
+          const foundFornecedor = fornecedoresData.find(row => String(row[0]) === dadosRascunho.fornecedor); 
           if (foundFornecedor) {
+            razaoSocialFornecedor = String(foundFornecedor[1] || '');
             fornecedorCnpj = String(foundFornecedor[3] || '');
             fornecedorEndereco = String(foundFornecedor[4] || '');
             condicaoPagamentoFornecedor = String(foundFornecedor[5] || '');
@@ -717,7 +853,7 @@ function testarBuscarPedidos() {
           'Número do Pedido': "'" + rascunhoId, // Usando ID do rascunho como número
           'Empresa': "'" + (dadosRascunho.empresa || Session.getActiveUser().getEmail()),
           'Data': dadosRascunho.data ? formatarDataParaISO(dadosRascunho.data) : formatarDataParaISO(agora),
-          'Fornecedor': dadosRascunho.fornecedor.trim(),
+          'Fornecedor': razaoSocialFornecedor || dadosRascunho.fornecedor.trim(),
           'CNPJ Fornecedor': fornecedorCnpj,
           'Endereço Fornecedor': fornecedorEndereco,
           'Estado Fornecedor': estadoFornecedor,
@@ -729,59 +865,118 @@ function testarBuscarPedidos() {
           'Total Geral': dadosRascunho.totalGeral || 0,
           'Status': 'RASCUNHO', // Diferença principal: status RASCUNHO em vez de "Em Aberto"
           'Itens': JSON.stringify(dadosRascunho.itens),
+          'ICMS ST Total': dadosRascunho.valorIcms || 0,
           'Data Ultima Edicao': formatarDataParaISO(agora), // Sempre usar data/hora atual padronizada
-          'Produto Fornecedor': dadosRascunho.produtoFornecedor
+          'Aliquota Imposto': dadosRascunho.aliquotaImposto || 0,
+          'Usuario Criador': dadosRascunho.usuarioCriador
+          
         };
+        
         
         // Verificar se é uma atualização de rascunho existente
-        if (dadosRascunho.rascunhoId) {
-          const linhaExistente = encontrarLinhaRascunho(aba, dadosRascunho.rascunhoId);
-          if (linhaExistente > 0) {
-            // Atualizar rascunho existente usando a mesma estrutura
-            dadosParaSalvar['Número do Pedido'] = "'" + dadosRascunho.rascunhoId;
-            salvarDadosNaPlanilha(aba, dadosParaSalvar, linhaExistente);
-            
-            console.log('✅ Rascunho atualizado com sucesso:', dadosRascunho.rascunhoId);
-            return {
-              status: 'success',
-              message: 'Rascunho atualizado com sucesso!',
-              rascunhoId: dadosRascunho.rascunhoId
-            };
+          if (dadosRascunho.rascunhoId) {
+              const linhaExistente = encontrarLinhaRascunho(aba, dadosRascunho.rascunhoId, colunas);
+
+              if (linhaExistente > 0) {
+                  // --- MODO ATUALIZAÇÃO "À PROVA DE BALAS" ---
+
+                  // 1. Preserva a Data de Criação lendo o valor antigo (seu código, que está correto)
+                  const indiceDataCriacao = colunas.dataCriacao;
+                  if (indiceDataCriacao !== -1) {
+                      const dataCriacaoAntiga = aba.getRange(linhaExistente, indiceDataCriacao + 1).getValue();
+                      if (dataCriacaoAntiga) {
+                          dadosLimpos.dataCriacao = dataCriacaoAntiga; 
+                      }
+                  }
+
+                  // Garante que o ID do Pedido está nos dados a serem salvos
+                  dadosLimpos.numeroDoPedido = "'" + dadosRascunho.rascunhoId;
+
+                  // 2. Este loop SUBSTITUI a 'salvarDadosNaPlanilha'
+                  // Ele atualiza cada célula individualmente, de forma segura.
+                  console.log(`Atualizando rascunho na linha ${linhaExistente}.`);
+                  for (const chave in dadosLimpos) {
+                      const indiceColuna = colunas[chave]; // Pega o índice (ex: aliquotaImposto -> 19)
+                      if (indiceColuna !== -1 && indiceColuna !== undefined) {
+                          // Escreve o valor na célula exata (linha 12, coluna 20, por exemplo)
+                          aba.getRange(linhaExistente, indiceColuna + 1).setValue(dadosLimpos[chave]);
+                      }
+                  }
+
+                  // 3. Força a sincronização DEPOIS de dar os comandos .setValue()
+                  SpreadsheetApp.flush();
+
+                  Logger.log(`✅ Alterações salvas e sincronizadas na planilha para a linha ${linhaExistente}.`);
+                  return { status: 'success', message: 'Rascunho atualizado com sucesso!', rascunhoId: dadosRascunho.rascunhoId };
+              } else {
+                  // Se não encontrou a linha, retorna um erro claro
+                  return { status: 'error', message: `Rascunho ${dadosRascunho.rascunhoId} não encontrado para atualizar.` };
+              }
           }
-        }
+          
+        /// ---------- É UM NOVO RASCUNHO ----------
+        //const timestamp = agora.getTime();
+        //const rascunhoId = `RASC-${agora.getFullYear()}${(agora.getMonth() + 1).toString().padStart(2, '0')}${agora.getDate().toString().padStart(2, '0')}-${timestamp}`;
+        dadosParaSalvar['Número do Pedido'] = "'" + rascunhoId;
         
-        // Salvar novo rascunho usando a mesma estrutura da função salvarPedido
+        // Adicionamos a 'Data Criacao' e o 'Usuario Criador' apenas para rascunhos novos
+        dadosParaSalvar['Data Criacao'] = formatarDataParaISO(agora);
+        dadosParaSalvar['Usuario Criador'] = dadosRascunho.usuarioCriador || Session.getActiveUser().getEmail();
+
         salvarDadosNaPlanilha(aba, dadosParaSalvar);
+        return { status: 'success', message: 'Rascunho salvo!', rascunhoId: rascunhoId };
         
-        console.log('✅ Rascunho salvo com sucesso:', rascunhoId);
-        return {
-          status: 'success',
-          message: 'Rascunho salvo com sucesso!',
-          rascunhoId: rascunhoId
-        };
-        
-      } catch (error) {
+    } catch (error) {
         console.error('❌ Erro ao salvar rascunho:', error);
-        return {
-          status: 'error',
-          message: 'Erro interno ao salvar rascunho: ' + error.message
-        };
+        return { status: 'error', message: 'Erro interno ao salvar rascunho: ' + error.message };
+    }
+}
+
+function encontrarLinhaRascunho(aba, rascunhoId, colunas) {
+  try {
+    const indiceId = colunas.numeroDoPedido;
+    if (indiceId === -1) {
+      Logger.log("Erro em encontrarLinhaRascunho: a coluna 'Número do Pedido' não foi encontrada.");
+      return 0;
+    }
+
+    const valoresId = aba.getRange(2, indiceId + 1, aba.getLastRow() - 1, 1).getValues();
+    Logger.log(`Procurando pelo rascunhoId: "${rascunhoId}"`);
+
+    for (let i = 0; i < valoresId.length; i++) {
+      // ✅ A CORREÇÃO FINAL ESTÁ AQUI: Adicionamos .trim() para limpar a célula
+      const valorCelula = String(valoresId[i][0]).trim();
+
+      // A lógica de comparação robusta que já tínhamos
+      if (valorCelula === rascunhoId || valorCelula === "'" + rascunhoId) {
+        const numeroLinha = i + 2;
+        Logger.log(`✅ Rascunho encontrado! ID "${rascunhoId}" corresponde ao valor da célula "${valorCelula}" na linha ${numeroLinha}.`);
+        return numeroLinha;
       }
     }
+
+    Logger.log(`❌ Rascunho com ID "${rascunhoId}" não foi encontrado na planilha.`);
+    return 0;
+
+  } catch (e) {
+    Logger.log('Erro crítico na função encontrarLinhaRascunho: ' + e.stack);
+    return 0;
+  }
+}
 
     /**
      * Busca todos os rascunhos de uma empresa
      * @param {string} empresaId - ID da empresa
      * @returns {Object} - Lista de rascunhos
      */
-    function buscarRascunhos(empresaId) {
+    function buscarRascunhosv2(empresaId) {
       console.log('🔍 [BACKEND] === INÍCIO buscarRascunhos ===');
       console.log('🔍 [BACKEND] Parâmetro empresaId:', empresaId);
       console.log('🔍 [BACKEND] Tipo do empresaId:', typeof empresaId);
       
       try {
         // ID da planilha definido localmente
-        var planilhaId = '1J7CE_BZ8eUsXhjkmgxAIIWjMTOr2FfSfIMONqE4UpHA';
+        var planilhaId = '1xVLFSqL5SVT6cmZ_9foOkKxJIHqHeCGHLcyryBJ44g0';
         
         // Validação básica
         if (!empresaId) {
@@ -847,7 +1042,10 @@ function testarBuscarPedidos() {
           observacoes: cabecalhos.indexOf('Observacoes'),
           itens: cabecalhos.indexOf('Itens'),
           totalGeral: cabecalhos.indexOf('Total Geral'),
-          produtoFornecedor: cabecalhos.indexOf('Produto Fornecedor')
+          produtoFornecedor: cabecalhos.indexOf('Produto Fornecedor'),
+          icmsSTTotal: cabecalhos.indexOf('ICMS ST Total'),
+          //dataUltimaCriacao: cabecalhos.indexOf('Data Ultima Edicao'),
+          //usuarioCriador: cabecalhos.indexOf('Usuario Criador')
         };
         
         console.log('📊 [BACKEND] Índices encontrados:', indices);
@@ -925,7 +1123,10 @@ function testarBuscarPedidos() {
                 observacoes: linha[indices.observacoes] || '',
                 itens: itensArray,
                 totalGeral: Number(linha[indices.totalGeral]) || 0,
-                produtoFornecedor: linha[indices.produtoFornecedor] || ''
+                produtoFornecedor: linha[indices.produtoFornecedor] || '',
+                icmsStTotal: linha[indices.icmsSTTotal] || '',
+                //dataUltimaCriacao: linha[indices.dataUltimaCriacao] || '',
+                //usuarioCriador: linha[indices.usuarioCriador] || ''
               };
               
               rascunhos.push(rascunho);
@@ -979,7 +1180,7 @@ function testarBuscarPedidos() {
         console.log('🔍 [BUSCAR ID] Buscando rascunho por ID:', rascunhoId);
         
         // ID da planilha definido localmente
-        var planilhaId = '1J7CE_BZ8eUsXhjkmgxAIIWjMTOr2FfSfIMONqE4UpHA';
+        var planilhaId = '1xVLFSqL5SVT6cmZ_9foOkKxJIHqHeCGHLcyryBJ44g0';
         var planilha = SpreadsheetApp.openById(planilhaId);
         var aba = planilha.getSheetByName('Pedidos');
         
@@ -1019,7 +1220,8 @@ function testarBuscarPedidos() {
           itens: cabecalhos.indexOf('Itens'),
           totalGeral: cabecalhos.indexOf('Total Geral'),
           dataUltimaEdicao: indiceDataUltimaEdicao,
-          produtoFornecedor: cabecalhos.indexOf('produtoFornecedor')
+          produtoFornecedor: cabecalhos.indexOf('produtoFornecedor'),
+          icmsStTotal: cabecalhos.indexOf('ICMS ST Total')
         };
         
         console.log('🔍 [BUSCAR ID] Processando ' + (dados.length - 1) + ' linhas...');
@@ -1051,7 +1253,8 @@ function testarBuscarPedidos() {
               itens: itensArray,
               totalGeral: Number(linha[indices.totalGeral]) || 0,
               dataUltimaEdicao: (indices.dataUltimaEdicao !== -1 && linha[indices.dataUltimaEdicao]) ? String(linha[indices.dataUltimaEdicao]) : '',
-              produtoFornecedor: linha[indices.produtoFornecedor] || ''
+              produtoFornecedor: linha[indices.produtoFornecedor] || '',
+              icmsStTotal: linha[indices.icmsStTotal] || ''
             };
             
             console.log('✅ [BUSCAR ID] Rascunho encontrado:', rascunhoId);
@@ -1137,6 +1340,7 @@ function testarBuscarPedidos() {
           itens: dadosRascunho.itens || [],
           totalGeral: dadosRascunho.totalGeral || 0,
           produtoFornecedor: dadosRascunho.produtoFornecedor || '',
+          icmsStTtotal: dadosRascunho.icmsStTotal || '',
           empresa: empresaCodigo
         };
         
@@ -1302,6 +1506,7 @@ function editarPedido(pedidoObject) {
             'Data Ultima Edicao': formatarDataParaISO(new Date()), // Sempre atualiza a data de edição
             'Usuario_Criador': pedidoObject.usuarioCriador || originalRowData[headerMap['Usuario_Criador']],
             'Produto Fornecedor': pedidoObject.produtoFornecedor,
+            'Icms St Total': pedidoObject.icmsStTotal
         };
 
         // Cria a linha de dados na ordem exata dos cabeçalhos da planilha
@@ -1390,26 +1595,132 @@ function getMeusPedidosAprovados(usuarioLogado) {
   }
 }     
 
-function testarGetMeusPedidosAprovados() {
-  // --- CONFIGURE AQUI ---
-  // Coloque o nome de um usuário que você sabe que tem pedidos aprovados na planilha.
-  const usuarioTeste = "admin"; 
-  const empresa = "002";
+/**
+ * Altera o status de um pedido para "Cancelado" na planilha 'Pedidos'.
+ * @param {string} numeroPedido - O número do pedido a ser cancelado.
+ * @param {string} empresaId - O ID da empresa do pedido.
+ * @returns {object} Um objeto com o status da operação.
+ */
+function cancelarPedidoBackend(numeroPedido, empresaId) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Pedidos");
+    if (!sheet) {
+      throw new Error("Planilha 'Pedidos' não encontrada.");
+    }
+
+    const dataRange = sheet.getDataRange();
+    const values = dataRange.getValues();
+    const headers = values.shift();
+
+    // Encontra os índices das colunas necessárias
+    const colNumero = headers.indexOf("Número do Pedido");
+    const colEmpresa = headers.indexOf("Empresa");
+    const colStatus = headers.indexOf("Status");
+
+    if (colNumero === -1 || colEmpresa === -1 || colStatus === -1) {
+      throw new Error("Não foi possível encontrar as colunas 'Número do Pedido', 'Empresa' ou 'Status'.");
+    }
+
+    // Procura pela linha correspondente ao pedido
+    let rowIndex = -1;
+    for (let i = 0; i < values.length; i++) {
+      if (String(values[i][colNumero]).trim() === String(numeroPedido).trim() && String(values[i][colEmpresa]).trim() === String(empresaId).trim()) {
+        rowIndex = i;
+        break;
+      }
+    }
+
+    if (rowIndex === -1) {
+      return { status: 'error', message: 'Pedido não encontrado para cancelamento.' };
+    }
+
+    // Atualiza o status na planilha. A linha no array 'values' é 'rowIndex',
+    // mas na planilha é 'rowIndex + 2' (porque o array começa em 0 e removemos o cabeçalho).
+    const rowToUpdate = rowIndex + 2;
+    sheet.getRange(rowToUpdate, colStatus + 1).setValue("CANCELADO");
+    
+    Logger.log(`Pedido #${numeroPedido} da empresa #${empresaId} foi cancelado com sucesso.`);
+    return { status: 'ok', message: `Pedido #${numeroPedido} foi cancelado com sucesso.` };
+
+  } catch (e) {
+    Logger.log(`ERRO em cancelarPedidoBackend: ${e.message}`);
+    return { status: 'error', message: `Ocorreu um erro no servidor: ${e.message}` };
+  }
+}
+
+function mapearCabecalhoPedidos(idDaPlanilha) {
+  try {
+    const planilha = SpreadsheetApp.openById(idDaPlanilha);
+    const aba = planilha.getSheetByName('Pedidos');
+
+    if (!aba) {
+      Logger.log('Erro: A aba "Pedidos" não foi encontrada na planilha.');
+      return null;
+    }
+
+    // Pega todos os valores da primeira linha (cabeçalho)
+    const cabecalhos = aba.getRange(1, 1, 1, aba.getLastColumn()).getValues()[0];
+
+    // Define um "esquema" com os nomes que queremos usar no código e suas possíveis variações na planilha
+    const schema = {
+      numeroDoPedido: ['NUMERO DO PEDIDO', 'NÚMERO DO PEDIDO'],
+      empresa: ['EMPRESA'],
+      data: ['DATA'],
+      fornecedor: ['FORNECEDOR'],
+      status: ['STATUS'],
+      itens: ['ITENS'],
+      totalGeral: ['TOTAL GERAL'],
+      dataCriacao: ['DATA CRIACAO', 'DATA CRIAÇÃO'],
+      dataUltimaEdicao: ['DATA ULTIMA EDICAO', 'DATA ÚLTIMA EDIÇÃO'],
+      aliquotaImposto: ['ALIQUOTA IMPOSTO', 'ALÍQUOTA IMPOSTO'],
+      usuarioCriador: ['USUARIO CRIADOR', 'USUÁRIO CRIADOR'],
+      // Adicione outros campos que você precisar aqui...
+    };
+
+    const mapaDeColunas = {};
+
+    // Normaliza os cabeçalhos da planilha para comparação (converte para maiúsculas e remove espaços)
+    const cabecalhosNormalizados = cabecalhos.map(h => String(h).toUpperCase().trim());
+
+    // Itera sobre o nosso esquema para encontrar o índice de cada campo
+    for (const chave in schema) {
+      mapaDeColunas[chave] = -1; // Valor padrão caso não encontre
+      const nomesPossiveis = schema[chave];
+      
+      for (const nome of nomesPossiveis) {
+        const index = cabecalhosNormalizados.indexOf(nome);
+        if (index !== -1) {
+          mapaDeColunas[chave] = index;
+          break; // Encontrou, pode parar de procurar por este campo
+        }
+      }
+    }
+
+    Logger.log('Mapeamento de cabeçalho criado com sucesso: ' + JSON.stringify(mapaDeColunas));
+    return mapaDeColunas;
+
+  } catch (e) {
+    Logger.log('Erro crítico ao tentar mapear o cabeçalho: ' + e.toString());
+    return null;
+  }
+}
+
+/**
+ * FUNÇÃO DE TESTE:
+ * Você pode executar esta função diretamente no editor do Apps Script para ver o resultado.
+ * Lembre-se de substituir 'SEU_ID_DA_PLANILHA_AQUI' pelo ID real.
+ */
+function testarMapeamentoDeCabecalho() {
+  const idDaPlanilha = '1xVLFSqL5SVT6cmZ_9foOkKxJIHqHeCGHLcyryBJ44g0'; // <-- COLOQUE O ID DA SUA PLANILHA AQUI
+  const mapa = mapearCabecalhoPedidos(idDaPlanilha);
   
-  Logger.log(`--- INICIANDO TESTE para a função getMeusPedidosAprovados ---`);
-  Logger.log(`Procurando pedidos aprovados para o usuário: "${usuarioTeste}"`);
-  
-  // Chama a função principal com os dados de teste
-  const resultado = getMeusPedidosAprovados(usuarioTeste, empresa);
-  
-  // Mostra o resultado completo no log
-  Logger.log("--- RESULTADO DO TESTE ---");
-  Logger.log(JSON.stringify(resultado, null, 2)); // Usamos JSON.stringify para ver o objeto de forma clara
-  Logger.log("--------------------------");
-  
-  if (resultado.status === 'success') {
-    Logger.log(`✅ Teste bem-sucedido! Encontrados ${resultado.data.length} pedidos.`);
+  if (mapa) {
+    console.log("Teste bem-sucedido! Mapa de colunas:");
+    console.log(mapa);
+    // Exemplo de como usar:
+     console.log("A coluna de Status está no índice: " + mapa.status);
+    console.log("A coluna de Alíquota está no índice: " + mapa.aliquotaImposto);
   } else {
-    Logger.log(`❌ Teste falhou! Mensagem de erro: ${resultado.message}`);
+    console.log("Teste falhou. Verifique os logs para mais detalhes.");
   }
 }
