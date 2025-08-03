@@ -489,7 +489,7 @@ function testarGetEstados() {
       .filter(row => String(row[indexStatus]).trim().toUpperCase() === 'ATIVO')
       // Mapeia para um objeto, pegando os dados da coluna correta pelo índice
       .map(row => ({
-        codigo: row[indexCodigo],
+        id: row[indexCodigo],
         razaoSocial: row[indexRazao], // Usando 'razaoSocial' para manter o padrão
         nomeFantasia: row[indexFantasia], // Usando 'nomeFantasia' para manter o padrão
         cnpj: row[indexCnpj],
