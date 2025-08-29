@@ -4,11 +4,31 @@
  */
 
 function doGet() {
-  // O nome do arquivo HTML principal (página de login) deve estar aqui.
-  return HtmlService.createHtmlOutputFromFile('Login')
-    .setTitle('Portal de Compras')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  try {
+    // Este método é o mais recomendado, pois lida com todos os tipos de arquivo HTML.
+    return HtmlService.createTemplateFromFile('Login')
+      .evaluate() // O .evaluate() processa o arquivo e o prepara para ser enviado
+      .setTitle('Portal de Compras')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+
+  } catch (e) {
+    // Este bloco de 'catch' nos dará um erro claro se o arquivo estiver realmente com problemas
+    Logger.log("ERRO FATAL NO doGet: " + e.message);
+    const errorMessage = `
+      <h1>Erro Crítico ao Carregar a Interface</h1>
+      <p>O aplicativo não pôde ser iniciado.</p>
+      <p><strong>Causa Provável:</strong> O arquivo 'Login.html' pode conter um erro de sintaxe ou não foi encontrado.</p>
+      <p><strong>Ação:</strong> Confirme que o arquivo existe e que seu conteúdo HTML é válido.</p>
+      <hr>
+      <p><em>Detalhes técnicos do erro: ${e.message}</em></p>
+    `;
+    return HtmlService.createHtmlOutput(errorMessage).setTitle('Erro na Aplicação');
+  }
 }
+
+/**function doGet() {
+  return HtmlService.createHtmlOutput('<h1>✅ Seu Web App está funcionando!</h1>');
+}*/
 
 function incluir(pagina) {
   return HtmlService.createTemplateFromFile(pagina).evaluate().getContent();
@@ -169,3 +189,4 @@ function incluir(pagina) {
       
       return `PED-${ano}${mes}${dia}-${timestamp}`;
     }
+
