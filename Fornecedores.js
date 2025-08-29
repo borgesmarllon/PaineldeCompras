@@ -238,7 +238,17 @@ function adicionarOuAtualizarFornecedorv2(fornecedorObject) {
             newRowData[indexCondicao] = fornecedorObject.condicaoPagamento;
             newRowData[indexForma] = fornecedorObject.formaPagamento;
             newRowData[indexGrupo] = fornecedorObject.grupo || ''; // Garante que não seja undefined
-            newRowData[indexStatus] = 'INATIVO'; // Ou 'INATIVO' se preferir um fluxo de aprovação
+            //newRowData[indexStatus] = 'INATIVO'; // Ou 'INATIVO' se preferir um fluxo de aprovação
+            const estado = (fornecedorObject.estado || '').toUpperCase();
+            const cidade = (fornecedorObject.cidade || '').toUpperCase();
+
+            if (estado === 'BA' && cidade === 'VITORIA DA CONQUISTA') {
+                newRowData[indexStatus] = 'INATIVO';
+                newRowData[indexGrupo] = fornecedorObject.grupo || '';
+            } else {
+                newRowData[indexStatus] = 'ATIVO';
+                newRowData[indexGrupo] = 'EXTERNO';
+            }
             newRowData[indexRegime] = fornecedorObject.regimeTributario;
 
             sheet.appendRow(newRowData);
@@ -517,14 +527,18 @@ function testarGetEstados() {
  * @returns {Array<Object>} Uma lista de objetos de fornecedor.
  */
 function getFornecedoresParaGerenciamento() {
+  Logger.log("--- Iniciando getFornecedoresParaGerenciamento ---");
   try {
     const sheet = SpreadsheetApp.getActive().getSheetByName('Fornecedores');
     if (!sheet || sheet.getLastRow() < 2) {
+      Logger.log("AVISO: Aba 'Fornecedores' não encontrada ou vazia. Retornando array vazio.");
+
       return [];
     }
+    Logger.log("Aba 'Fornecedores' encontrada com sucesso.");
 
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).toUpperCase().trim());
-    
+    Logger.log("Cabeçalhos encontrados e padronizados: " + JSON.stringify(headers));
     const indexCodigo = headers.indexOf('ID');
     const indexRazao = headers.indexOf('RAZAO SOCIAL');
     const indexFantasia = headers.indexOf('NOME FANTASIA');
@@ -535,9 +549,11 @@ function getFornecedoresParaGerenciamento() {
 
     if (indexCodigo === -1 || indexStatus === -1) {
       throw new Error("Coluna 'CÓDIGO' ou 'STATUS' não encontrada para a tela de gerenciamento.");
+      Logger.log(`ERRO: ${erroMsg}`);
     }
 
     const allData = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues();
+    Logger.log(`${allData.length} linhas de dados encontradas para processar.`);
 
     // Nota: Removi o filtro de 'ATIVO' daqui para que a tela de gerenciamento
     // possa mostrar TODOS os fornecedores e permitir ativar/desativar.
@@ -553,6 +569,11 @@ function getFornecedoresParaGerenciamento() {
       };
     });
 
+    Logger.log(`Índice da coluna 'ID': ${indexCodigo}`);
+    Logger.log(`Índice da coluna 'RAZAO SOCIAL': ${indexRazao}`);
+    Logger.log(`Índice da coluna 'STATUS': ${indexStatus}`);
+
+    Logger.log(`Processamento concluído. Retornando ${fornecedores.length} fornecedores.`);
     return fornecedores;
 
   } catch (e) {
@@ -739,4 +760,20 @@ function lerCabecalhoEDadosComLogFornecedores() {
     headers: headers,
     rows: rows
   };
+}
+
+function testarGetFornecedoresParaGerenciamento() {
+  Logger.log("--- INICIANDO TESTE da função 'getFornecedoresParaGerenciamento' ---");
+  
+  const resultado = getFornecedoresParaGerenciamento();
+  
+  if (resultado && resultado.length > 0) {
+    Logger.log(`✅ SUCESSO! A função retornou ${resultado.length} fornecedores.`);
+    Logger.log("Amostra dos primeiros 2 fornecedores: " + JSON.stringify(resultado.slice(0, 2), null, 2));
+  } else {
+    Logger.log("⚠️ ATENÇÃO: A função retornou um array vazio.");
+    Logger.log("Verifique os logs acima para entender o motivo. As causas mais comuns são:");
+    Logger.log("1. A aba 'Fornecedores' está vazia ou não foi encontrada.");
+    Logger.log("2. Os nomes dos cabeçalhos 'ID' ou 'STATUS' na planilha não correspondem exatamente ao esperado.");
+  }
 }
