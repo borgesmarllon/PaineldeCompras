@@ -110,23 +110,7 @@
       
       return finalUsername;
     }
-function testarCriacaoDeUsuario() {
-  Logger.log("--- Iniciando teste de criação de usuário ---");
-  
-  const nomeTeste = "José das Couves";
-  const senhaTeste = "senha123";
-  
-  const resultado = criarUsuario(nomeTeste, senhaTeste, "", "usuario");
-  
-  Logger.log("Resultado da operação:");
-  Logger.log(resultado);
-  
-  if (resultado.status === 'ok') {
-    Logger.log("✅ TESTE BEM-SUCEDIDO: Solicitação de usuário criada.");
-  } else {
-    Logger.log("❌ TESTE FALHOU: " + resultado.message);
-  }
-}
+
 function validarLogin(usuario, senha, empresaSelecionada) {
         try {
         Logger.log(`[validarLogin] Tentativa de login para usuário: ${usuario}, Empresa: ${empresaSelecionada}`);
@@ -169,9 +153,20 @@ function validarLogin(usuario, senha, empresaSelecionada) {
           return { status: 'erro', message: `Os dados para a empresa ID ${empresaSelecionada} não foram encontrados.` };
         }
         
+        // NOVO: 1. Pega o nome de usuário verificado para usar no cache.
+        const nomeUsuarioVerificado = String(usuarioRow[colunas.usuario]).toLowerCase();
+
+        // NOVO: 2. Gera um token (uma "pulseira de acesso") único e secreto para esta sessão.
+        const token = Utilities.getUuid();
+
+        // NOVO: 3. Armazena o token no CacheService, associando-o ao nome de usuário.
+        // A "pulseira" é válida por 2 horas (7200 segundos).
+        CacheService.getScriptCache().put('token_' + token, nomeUsuarioVerificado, 3600);
+
         Logger.log(`[validarLogin] Login bem-sucedido para ${usuario}.`);
         return {
           status: 'ok',
+          token: token,
           usuario: String(usuario).toLowerCase(), 
           idUsuario: usuarioRow[colunas.id],
           nome: usuarioRow[colunas.nome],
@@ -685,7 +680,7 @@ function validarLogin(usuario, senha, empresaSelecionada) {
         // Verificar a senha atual (Atenção: simples, para produção use hash)
         var senhaAtualArmazenada = dados[rowIdx][idxSenha];
         var hashInformado = gerarHash(senhaAtual);
-        if (senhaAtualArmazenada !== senhaAtual) {
+        if (senhaAtualArmazenada !== hashInformado) {
           return {status: 'error', message: 'Senha atual incorreta.'};
         }
 
@@ -703,7 +698,7 @@ function gerarHash(senha) {
       return Utilities.base64Encode(digest);
     }
 
-    /**
+/**
  * Permite que um administrador redefina a senha de qualquer usuário.
  * Inclui verificação de segurança para garantir que o autor da chamada é um admin.
  * @param {string} usuarioAlvo - O nome de usuário cuja senha será redefinida.
@@ -716,6 +711,10 @@ function adminRedefinirSenha(usuario, novaSenha) {
       var idxUsuario = dados[0].indexOf('USUARIO');
       var idxSenha = dados[0].indexOf('SENHA');
       var linha = -1;
+
+      if (!novaSenha || novaSenha.trim() === '') {
+        return { status: 'error', message: 'Senha inválida.' };
+      }
 
       for (var i = 1; i < dados.length; i++) {
         if (String(dados[i][idxUsuario]).toLowerCase().trim() === usuario.toLowerCase().trim()) {
@@ -780,74 +779,187 @@ function adminRedefinirSenha(usuario, novaSenha) {
       }
     }
 
-    /**
-     * Obter dados de auditoria de um usuário
-     * @param {string} userId - ID do usuário
-     * @returns {Object} Dados de auditoria
-     */
-    function obterDadosAuditoria(userId) {
-      try {
-        const result = {
-          lastLogin: null,
-          lastOrder: null,
-          lastPrint: null
-        };
+/**
+* Obter dados de auditoria de um usuário
+* @param {string} userId - ID do usuário
+* @returns {Object} Dados de auditoria
+ */
+function obterDadosAuditoria(userId) {
+  try {
+    const result = { lastLogin: null, lastOrder: null, lastPrint: null };
+    if (!userId) {
+      throw new Error("ID do usuário não foi fornecido.");
+    }
 
-        // 1. Último login
-        const loginSheet = SpreadsheetApp.getActive().getSheetByName('usuario_logado');
-        if (loginSheet && loginSheet.getLastRow() > 1) {
-          const loginData = loginSheet.getDataRange().getValues();
-          const loginEntries = loginData.slice(1).filter(row => String(row[0]).replace("'", "") === String(userId));
-          if (loginEntries.length > 0) {
-            // Pegar o mais recente
-            const lastLoginEntry = loginEntries.sort((a, b) => new Date(b[4]) - new Date(a[4]))[0];
-            result.lastLogin = {
-              date: lastLoginEntry[4].toISOString(),
-              ip: '192.168.1.100' // IP simulado - você pode implementar captura real
-            };
-          }
+    Logger.log(`Iniciando auditoria para o ID de usuário: ${userId}`);
+    const normalize = v => String(v || "").trim().toLowerCase();
+
+    // --- PASSO 1: TRADUZIR O ID PARA NOME ---
+    let usuarioNome = null;
+    const usuariosSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("usuarios"); // Usa o nome da sua planilha
+    if (usuariosSheet) {
+      const usuariosData = usuariosSheet.getDataRange().getValues();
+      const headers = usuariosData.shift();
+      const idIndex = headers.indexOf("ID");
+      const nomeIndex = headers.indexOf("NOME");
+
+      if (idIndex > -1 && nomeIndex > -1) {
+        const userRow = usuariosData.find(row => String(row[idIndex]).trim() === String(userId).trim());
+        if (userRow) {
+          usuarioNome = userRow[nomeIndex];
+          Logger.log(`Nome encontrado para o ID ${userId}: ${usuarioNome}`);
         }
-
-        // 2. Último pedido criado
-        const pedidosSheet = SpreadsheetApp.getActive().getSheetByName('Pedidos');
-        if (pedidosSheet && pedidosSheet.getLastRow() > 1) {
-          const pedidosData = pedidosSheet.getDataRange().getValues();
-          const headers = pedidosData[0];
-          const numeroIdx = headers.findIndex(h => String(h).toUpperCase().includes('NÚMERO') || String(h).toUpperCase().includes('NUMERO'));
-          const dataIdx = headers.findIndex(h => String(h).toUpperCase().includes('DATA'));
-          
-          if (numeroIdx > -1 && dataIdx > -1) {
-            const userPedidos = pedidosData.slice(1).filter(row => {
-              // Aqui você pode ajustar a lógica para identificar pedidos do usuário
-              // Por exemplo, se há uma coluna "USUARIO_CRIADOR" ou similar
-              return true; // Temporário - implementar lógica específica
-            });
-            
-            if (userPedidos.length > 0) {
-              const lastPedido = userPedidos.sort((a, b) => new Date(b[dataIdx]) - new Date(a[dataIdx]))[0];
-              result.lastOrder = {
-                id: String(lastPedido[numeroIdx]),
-                date: lastPedido[dataIdx].toISOString()
-              };
-            }
-          }
-        }
-
-        // 3. Última impressão - dados simulados
-        // Você pode implementar um log de impressões se necessário
-        if (Math.random() > 0.5) { // Simular alguns usuários com impressões
-          result.lastPrint = {
-            id: 'PC-2025-0789',
-            date: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString()
-          };
-        }
-
-        return result;
-      } catch (error) {
-        Logger.log('Erro em obterDadosAuditoria: ' + error.message);
-        return { lastLogin: null, lastOrder: null, lastPrint: null };
       }
     }
+    if (!usuarioNome) {
+      Logger.log(`Não foi possível encontrar um nome para o ID de usuário: ${userId}`);
+    }
+    
+    // --- PASSO 2: BUSCAR ÚLTIMO LOGIN (usando o ID) ---
+    const loginSheet = SpreadsheetApp.getActive().getSheetByName('usuario_logado');
+    if (loginSheet && loginSheet.getLastRow() > 1) {
+      const loginData = loginSheet.getDataRange().getValues();
+      const loginEntries = loginData.slice(1).filter(row => String(row[0]).trim() === String(userId).trim());
+      
+      Logger.log(`Login entries encontradas para o ID ${userId}: ${loginEntries.length}`);
+      if (loginEntries.length > 0) {
+        const lastLoginEntry = loginEntries.sort((a, b) => new Date(b[4]) - new Date(a[4]))[0];
+        const date = parseDateSafe(lastLoginEntry[4]);
+        result.lastLogin = {
+          date: date ? Utilities.formatDate(date, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm") : "Inválido",
+          ip: lastLoginEntry[5] || 'N/A'
+        };
+      }
+    }
+
+    // --- PASSO 3: BUSCAR PEDIDOS E IMPRESSÕES (usando o NOME) ---
+    // Esta parte só roda se tivermos encontrado um nome para o usuário.
+    if (usuarioNome) {
+      // Bloco "Último Pedido"
+      const pedidosSheet = SpreadsheetApp.getActive().getSheetByName('Pedidos');
+      if (pedidosSheet && pedidosSheet.getLastRow() > 1) {
+          const pedidosData = pedidosSheet.getDataRange().getValues();
+          const headers = pedidosData[0];
+          const numeroIdx = headers.findIndex(h => normalize(h).includes('pedido'));
+          const dataIdx = headers.findIndex(h => normalize(h).includes('data'));
+          const usuarioIdx = headers.findIndex(h => normalize(h).includes('usuario criador'));
+
+          if (usuarioIdx > -1) {
+              const userPedidos = pedidosData.slice(1).filter(row => normalize(row[usuarioIdx]) === normalize(usuarioNome));
+              if (userPedidos.length > 0) {
+                  const lastPedido = userPedidos.sort((a, b) => new Date(b[dataIdx]) - new Date(a[dataIdx]))[0];
+                  const date = parseDateSafe(lastPedido[dataIdx]);
+                  result.lastOrder = {
+                      id: String(lastPedido[numeroIdx]),
+                      date: date ? Utilities.formatDate(date, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm") : "Inválido"
+                  };
+              }
+          }
+      }
+
+      // Bloco "Última Impressão"
+      const impressaoSheet = SpreadsheetApp.getActive().getSheetByName('Log Impressoes');
+      if (impressaoSheet && impressaoSheet.getLastRow() > 1) {
+          const impressaoData = impressaoSheet.getDataRange().getValues();
+          const headers = impressaoData[0];
+          const usuarioIdx = headers.findIndex(h => normalize(h).includes('usuario'));
+          const pedidoIdx = headers.findIndex(h => normalize(h).includes('pedido'));
+          const dataIdx = headers.findIndex(h => normalize(h).includes('data'));
+
+          if (usuarioIdx > -1) {
+              const userImpressao = impressaoData.slice(1).filter(row => normalize(row[usuarioIdx]) === normalize(usuarioNome));
+              if (userImpressao.length > 0) {
+                  const lastImpressao = userImpressao.sort((a, b) => new Date(b[dataIdx]) - new Date(a[dataIdx]))[0];
+                  const date = parseDateSafe(lastImpressao[dataIdx]);
+                  result.lastPrint = {
+                      id: String(lastImpressao[pedidoIdx]),
+                      date: date ? Utilities.formatDate(date, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm") : "Inválido"
+                  };
+              }
+          }
+      }
+    } else {
+        Logger.log("Busca de Pedidos e Impressões pulada pois o nome do usuário não foi encontrado.");
+    }
+
+    Logger.log("Resultado final da auditoria: " + JSON.stringify(result));
+    return result;
+
+  } catch (error) {
+    Logger.log('Erro em obterDadosAuditoria: ' + error.message);
+    return { lastLogin: null, lastOrder: null, lastPrint: null };
+  }
+}
+
+/**
+ * VERSÃO FINAL E ROBUSTA
+ * Converte um valor para um objeto de data de forma segura, agora com suporte
+ * para múltiplos formatos, incluindo o formato completo do JavaScript e o brasileiro.
+ * @param {*} value O valor a ser convertido.
+ * @returns {Date | null} O objeto de data válido ou null se a conversão falhar.
+ */
+function parseDateSafe(value) {
+  try {
+    // 1. Se já for um objeto de data válido, retorna imediatamente.
+    if (value instanceof Date && !isNaN(value)) {
+      return value;
+    }
+
+    // 2. Se for um texto, tenta a conversão direta primeiro.
+    // Isso funciona para o formato ISO (YYYY-MM-DD) e o formato completo (Fri Aug 22...).
+    if (typeof value === 'string') {
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) {
+        return d;
+      }
+
+      // 3. Se a conversão direta falhou, tenta a análise manual do formato brasileiro (DD/MM/YYYY).
+      if (value.includes('/')) {
+        const parts = value.split(' ');
+        const dateParts = parts[0].split('/');
+        
+        if (dateParts.length === 3) {
+          const day = parseInt(dateParts[0], 10);
+          const month = parseInt(dateParts[1], 10) - 1; // Mês é base 0 em JS
+          const year = parseInt(dateParts[2], 10);
+          
+          let hour = 0, minute = 0;
+          if (parts.length > 1 && parts[1].includes(':')) {
+            const timeParts = parts[1].split(':');
+            hour = parseInt(timeParts[0], 10) || 0;
+            minute = parseInt(timeParts[1], 10) || 0;
+          }
+          
+          const manualDate = new Date(year, month, day, hour, minute);
+          if (!isNaN(manualDate.getTime())) {
+            return manualDate;
+          }
+        }
+      }
+    }
+
+    // 4. Se nada funcionou, retorna null.
+    return null;
+
+  } catch (e) {
+    Logger.log(`Erro em parseDateSafe ao tentar converter o valor "${value}": ${e.message}`);
+    return null;
+  }
+}
+
+function testar_Auditoria_ComNomeDeUsuario() {
+  Logger.log("--- INICIANDO TESTE DE AUDITORIA POR NOME ---");
+
+  // <<< MUDANÇA AQUI >>>
+  // Em vez de um ID, use o NOME COMPLETO de um usuário que você sabe que criou pedidos.
+  // O nome deve ser exatamente como está na coluna "Usuario Criador" da planilha "Pedidos".
+  const nomeDoUsuarioParaTestar = "1"; // Exemplo, use um nome real dos seus dados
+
+  const resultado = obterDadosAuditoria(nomeDoUsuarioParaTestar);
+  
+  Logger.log("--- RESULTADO DO TESTE ---");
+  Logger.log(JSON.stringify(resultado, null, 2));
+}
 
     /**
      * Alternar status de usuário (Ativo/Inativo)
