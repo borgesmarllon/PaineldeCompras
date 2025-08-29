@@ -291,7 +291,7 @@ function levenshteinDistance(a, b) {
 }
 
 // ID DA PASTA DO DRIVE QUE SALVA O ARQUIVO PDF
-const ID_PASTA_PDFS = '1uEVTlFi0W2ZyvzA-w_DTjRvxyRM0B5x2'
+const ID_PASTA_PDFS = '1t7mQk5pY1g-Gxl4kFT_1sy-R0RYty6Do'
 // ====================================================
 /**
  * FUNÇÃO PRINCIPAL DA IMPRESSÃO
@@ -300,10 +300,14 @@ const ID_PASTA_PDFS = '1uEVTlFi0W2ZyvzA-w_DTjRvxyRM0B5x2'
  * @param {string} empresaId - O ID da empresa do pedido.
  * @returns {object} Um objeto com o status e a URL do PDF gerado.
  */
-function gerarPdfPedido(numeroPedido, empresaId) {
+function gerarPdfPedido(numeroPedido, empresaId, usuarioLogado, nomeUsuario) {
   try {
     Logger.log(`Iniciando geração de PDF para pedido ${numeroPedido}, empresa ${empresaId}`);
-    
+     Logger.log("Parâmetros recebidos:");
+  Logger.log("Número do Pedido: " + numeroPedido);
+  Logger.log("Empresa: " + empresaId);
+  Logger.log("Usuário logado: " + usuarioLogado);
+  Logger.log("Nome do usuário: " + nomeUsuario);
     // 1. Obtem os dados completos do pedido para saber seu status
     const pedidoCompleto = getPedidoCompletoPorId(numeroPedido, empresaId);
     if (!pedidoCompleto) {
@@ -315,20 +319,27 @@ function gerarPdfPedido(numeroPedido, empresaId) {
     const arquivosExistentes = pastaDestino.getFilesByName(nomeArquivo);
     const statusPedido = (pedidoCompleto.status || '').toUpperCase();
 
+    let pdfFile, fileId;
+
     // 2. Verifica se o arquivo já existe para evitar recriação
     if (statusPedido === 'Cancelado' || statusPedido === 'RASCUNHO') {
       if (arquivosExistentes.hasNext()) {
-        const arquivoAntigo = arquivosExistentes.netx();
+        const arquivoAntigo = arquivosExistentes.next();
         Logger.log(`Pedido com status '${statusPedido}'. Removendo PDF antigo para gerar um novo com marca d'água.`);
         arquivoAntigo.setTrashed(true); // Envia para lixeira, mais seguro que exclusão permanente.
       }
     } else {
     if (arquivosExistentes.hasNext()) {
-      const arquivoExistente = arquivosExistentes.next();
-      Logger.log(`PDF já existe. Retornando URL para reimpressão: ${arquivoExistente.getUrl()}`);
-      return { status: 'ok', pdfUrl: arquivoExistente.getUrl() };
-    }
-  } 
+       pdfFile = arquivosExistentes.next();
+      fileId = pdfFile.getId();
+      Logger.log(`PDF já existe. Retornando URLs: download=${fileId}, visualização=${pdfFile.getUrl()}`);
+      return { 
+      status: 'ok', 
+      pdfUrl: `https://drive.google.com/uc?export=download&id=${fileId}`, // Para Telegram
+      pdfViewUrl: pdfFile.getUrl() // Para web
+    };
+  }
+} 
 
     // Se não existir, prossegue com a criação
     Logger.log("Nenhum PDF existente encontrado. Gerando um novo arquivo.");
@@ -342,16 +353,24 @@ function gerarPdfPedido(numeroPedido, empresaId) {
     pdfBlob.setName(nomeArquivo);
 
     // 4. Salvar o PDF na pasta do Google Drive
-    const pdfFile = pastaDestino.createFile(pdfBlob);
+    pdfFile = pastaDestino.createFile(pdfBlob);
 
+    pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    fileId = pdfFile.getId();
+
+    registrarImpressao(usuarioLogado, nomeUsuario, numeroPedido, 'Impressora1');
     // 5. Retornar a URL do arquivo para o front-end
         Logger.log(`PDF do pedido ${numeroPedido} gerado com sucesso: ${pdfFile.getUrl()}`);
-        return { status: 'ok', pdfUrl: pdfFile.getUrl() };
+        return {status: 'ok',
+          pdfUrl: `https://drive.google.com/uc?export=download&id=${fileId}`, // Para Telegram
+          pdfViewUrl: pdfFile.getUrl() // Para web
+        };
 
       } catch (error) {
         Logger.log(`ERRO ao gerar PDF para o pedido ${numeroPedido}: ${error.message}\nStack: ${error.stack}`);
         return { status: 'error', message: error.message };
       }
+      
 }
 
 /**
@@ -368,7 +387,7 @@ function getPedidoCompletoPorId(numeroPedido, empresaId) {
 
     // 1. Criar os mapas de busca para performance
     const mapaEmpresas = _criarMapaDeEmpresas();
-    const mapaFornecedores = criarMapaDeFornecedores();
+    const mapaFornecedores = criarMapaDeFornecedoresv2();    
     const mapaDeUsuarios = _criarMapaDeUsuarios();
 
     // 2. Encontrar a linha do pedido
@@ -388,12 +407,6 @@ function getPedidoCompletoPorId(numeroPedido, empresaId) {
     if (colunas.numero === -1 || colunas.empresa === -1) {
         throw new Error("Não foi possível encontrar as colunas 'Número do Pedido' e/ou 'Empresa' na planilha. Verifique os nomes dos cabeçalhos.");
     }
-
-
-    //const pedidoRow = pedidosData.find(row => 
-  //  String(row[colunas.numero]) === String(numeroPedido) && 
-   //     String(row[colunas.empresa]) === String(empresaId)
-    //);
 
     let logCount = 0;
     const pedidoRow = pedidosData.find(row => {
@@ -422,7 +435,8 @@ function getPedidoCompletoPorId(numeroPedido, empresaId) {
         const key = header.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_').toLowerCase();
         pedidoCompleto[key] = pedidoRow[index];
     });
-
+    Logger.log(`[DEPURAÇÃO] Chaves criadas para o objeto pedidoCompleto: ${Object.keys(pedidoCompleto).join(', ')}`);
+    pedidoCompleto.empresaId = pedidoCompleto.empresa;
     // 4. Anexar informações da empresa e fornecedor usando os mapas
     pedidoCompleto.empresaInfo = mapaEmpresas[pedidoCompleto.empresa] || {};
     
@@ -438,8 +452,9 @@ function getPedidoCompletoPorId(numeroPedido, empresaId) {
     } catch(e) {
       pedidoCompleto.itens = [];
     }
-    
+   
     Logger.log("Pedido completo encontrado e montado com sucesso.");
+    Logger.log(`[DEPURAÇÃO FINAL] Objeto 'pedidoCompleto' final: ${JSON.stringify(pedidoCompleto, null, 2)}`);
     return pedidoCompleto;
 
   } catch (e) {
@@ -448,7 +463,34 @@ function getPedidoCompletoPorId(numeroPedido, empresaId) {
   }
 }
 
+function testarGetPedidoCompleto() {
+  Logger.log("--- INICIANDO TESTE: getPedidoCompletoPorId ---");
 
+  // 1. Defina os parâmetros de um pedido que você sabe que existe.
+  const numeroPedidoTeste = "001422"; // <-- COLOQUE UM NÚMERO DE PEDIDO REAL AQUI
+  const empresaIdTeste = "001";      // <-- COLOQUE O ID DA EMPRESA CORRETO AQUI
+
+  try {
+    // ==========================================================
+    // <<< A CORREÇÃO ESTÁ AQUI >>>
+    // Garantimos que estamos passando as variáveis corretas para a função.
+    // ==========================================================
+    const pedidoCompleto = getPedidoCompletoPorId(numeroPedidoTeste, empresaIdTeste);
+    
+    if (pedidoCompleto) {
+      Logger.log("✅ Pedido encontrado! Verificando as propriedades do objeto...");
+      Logger.log(`[DEPURAÇÃO] Chaves criadas: ${Object.keys(pedidoCompleto).join(', ')}`);
+    } else {
+      Logger.log("❌ Pedido não encontrado. Verifique se o número e o ID da empresa estão corretos no teste E na planilha.");
+    }
+
+    Logger.log("--- FIM DO TESTE ---");
+    
+  } catch (e) {
+    Logger.log("!!! O TESTE FALHOU COM UM ERRO CRÍTICO !!!");
+    Logger.log("Erro: " + e.message);
+  }
+}
 /**
  * FUNÇÃO AUXILIAR
  * Cria um mapa de busca rápida para todas as empresas.
@@ -496,6 +538,78 @@ function _criarMapaDeUsuarios() {
 }
 
 /**
+ * Cria um mapa de fornecedores usando a RAZÃO SOCIAL (NOME) como chave.
+ * Esta versão é compatível com o resto do sistema que busca pelo nome.
+ */
+function criarMapaDeFornecedoresv2() {
+    try {
+        const config = getConfig();
+        const fornecedoresSheet = SpreadsheetApp.getActive().getSheetByName(config.sheets.fornecedores);
+        if (!fornecedoresSheet) {
+            Logger.log("ERRO CRÍTICO: A aba de fornecedores não foi encontrada.");
+            return {}; // Retorna um objeto vazio para segurança.
+        }
+
+        const data = fornecedoresSheet.getDataRange().getValues();
+        const headers = data.shift(); // Pega a primeira linha (cabeçalhos) para referência
+
+        // Encontra o índice das colunas dinamicamente (muito mais seguro que números fixos)
+        // **Atenção:** Adapte os nomes "Nome" e "Cidade" se os cabeçalhos na sua planilha forem diferentes.
+        const nomeIndex = headers.indexOf("RAZAO SOCIAL"); 
+        const cidadeIndex = headers.indexOf("CIDADE");
+        const cnpjIndex = headers.indexOf("CNPJ");
+        const enderecoIndex = headers.indexOf("ENDERECO"); // Exemplo
+        const grupoIndex = headers.indexOf("GRUPO");
+        const condicaoIndex = headers.indexOf("CONDICAO DE PAGAMENTO");
+        const formaIndex = headers.indexOf("FORMA DE PAGAMENTO");
+        const estadoIndex = headers.indexOf("ESTADO");
+
+        const statusIndex = headers.indexOf("STATUS");
+        if (nomeIndex === -1) {
+            Logger.log("ERRO CRÍTICO: Não foi possível encontrar a coluna 'Nome' na aba 'Fornecedores'.");
+            return {};
+        }
+
+        const mapa = {}; // <-- Usamos um objeto simples {}, não new Map()
+
+        data.forEach(row => {
+          const status = (statusIndex !== -1) ? String(row[statusIndex] || '').toUpperCase().trim() : 'ATIVO';
+            
+            // --- PASSO 3: Crie o mapa APENAS SE o status for 'ATIVO' ---
+            if (status === 'ATIVO') {
+            // A CHAVE do mapa será o nome do fornecedor, normalizado para evitar erros.
+            const nomeFornecedor = String(row[nomeIndex] || '').trim().toUpperCase();
+
+            // Só adiciona ao mapa se a linha tiver um nome válido.
+            if (nomeFornecedor) {
+                // O VALOR do mapa é um objeto com todos os dados do fornecedor.
+                mapa[nomeFornecedor] = {
+                    nome: row[nomeIndex], // Guardamos o nome original
+                    cidade: row[cidadeIndex] || '',
+                    cnpj: row[cnpjIndex] || '',
+                    endereco: row[enderecoIndex] || '',
+                    grupo: row[grupoIndex] || '',
+                    condicao: row[condicaoIndex] || '',
+                    forma: row[formaIndex] || '',
+                    estado: row[estadoIndex] || '',
+                    // Adicione aqui os outros campos que você precisar, usando os índices.
+                };
+            }
+            }
+        });
+        
+        Logger.log(`Mapa de fornecedores (por NOME) criado com sucesso. Total de entradas: ${Object.keys(mapa).length}`);
+        Logger.log("Dados completos do mapa:");
+        Logger.log(JSON.stringify(mapa, null, 2)); // Mostra o objeto em formato legível
+        return mapa;
+
+    } catch (e) {
+        Logger.log(`ERRO FATAL em criarMapaDeFornecedoresv2: ${e.message}`);
+        return {}; // Retorna um objeto vazio em caso de erro.
+    }
+}
+
+/**
  * FUNÇÃO DE LAYOUT
  * Constrói a string HTML para o documento de impressão, imitando o seu layout.
  * @param {object} pedidoCompleto - O objeto completo do pedido.
@@ -533,7 +647,9 @@ function construirHtmlParaPdf(pedidoCompleto) {
             pedido: {
               numero: pedidoCompleto.numero_do_pedido || '',
               data: new Date(pedidoCompleto.data || Date.now()),
-              observacoes: pedidoCompleto.observacoes || 'Sem observações.'
+              observacoes: pedidoCompleto.observacoes || 'Sem observações.',
+              placaVeiculo: pedidoCompleto.placa_veiculo || '',
+              nomeVeiculo: pedidoCompleto.nome_veiculo || ''
             },
             financeiro: {
               subtotal: parseFloat(pedidoCompleto.total_geral || 0),
@@ -544,7 +660,12 @@ function construirHtmlParaPdf(pedidoCompleto) {
               funcao: (pedidoCompleto.usuarioCriadorInfo || {}).funcao || 'Função não informada'
             }
           };
-          dados.financeiro.totalFinal = dados.financeiro.subtotal + dados.financeiro.imposto;
+          // --- 2. VERIFICAR A CONDIÇÃO DA CIDADE ---
+          const cidadeFornecedor = (fornecedor.cidade || '').trim().toLowerCase();
+          const isFornecedorLocal = cidadeFornecedor.includes('vitoria da conquista');
+          Logger.log(`Fornecedor: '${fornecedor.nome}', Cidade: '${cidadeFornecedor}', É Local? ${isFornecedorLocal}`);
+          
+          dados.financeiro.totalFinal = dados.financeiro.subtotal + (isFornecedorLocal ? 0 : dados.financeiro.imposto);
 
           const formatarMoeda = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
           const dataFormatada = isNaN(dados.pedido.data.getTime()) ? 'Data Inválida' : dados.pedido.data.toLocaleDateString('pt-BR');
@@ -555,7 +676,7 @@ function construirHtmlParaPdf(pedidoCompleto) {
             const totalItem = parseFloat(item.totalItem) || 0;
             const quantidade = Number(item.quantidade) || 0;
             return `
-              <tr class="item-row ${index % 2 === 0 ? 'row-even' : 'row-odd'}">
+               <tr>
                 <td class="text-left">${item.descricao || ''}${produtoForn ? `<br><span class="produto-fornecedor">${produtoForn}</span>` : ''}</td>
                 <td class="text-center">${quantidade.toLocaleString('pt-BR')}</td>
                 <td class="text-center">${item.unidade || ''}</td>
@@ -563,43 +684,11 @@ function construirHtmlParaPdf(pedidoCompleto) {
                 <td class="text-right">${formatarMoeda(totalItem)}</td>
               </tr>`;
           }).join('');
-
-          // --- 2. Montagem Final do HTML ---
-          return `
-          <!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Pedido de Compra - ${dados.pedido.numero}</title><style>
-              body { font-family: Arial, sans-serif; font-size: 9pt; color: #333; } .page { position: relative; width: 100%; max-width: 800px; margin: auto; padding: 20px; background: white; border: 1px solid #555; box-sizing: border-box;}
-              table { width: 100%; border-collapse: collapse; } strong { font-weight: bold; } hr { border: none; margin: 10px 0; } hr.separador-forte { border-top: 2px solid #000; } hr.separador-suave { border-top: 1px solid #000; }
-              .text-left { text-align: left; } .text-center { text-align: center; } .text-right { text-align: right; }
-              /* CORREÇÃO DE ALINHAMENTO: Layout de tabela para o cabeçalho */
-              .header-table td { vertical-align: top; padding: 0; }
-              .header-info { width: 65%; }
-              .header-pedido { width: 35%; text-align: right; }
-              .titulo-pedido { font-size: 12pt; } .subtitulo-pedido { font-size: 8pt; color: #555; }
-              .info-section { margin-top: 15px; } .info-section td { padding: 2px 0; vertical-align: top; } .info-section .titulo-secao { font-size: 10pt; padding-bottom: 5px; }
-              .items-table { margin-top: 15px; } .items-table th, .items-table td { border: 1px solid #333; padding: 5px 6px; } .items-table th { background-color: #e0e0e0; font-weight: bold; } .item-row.row-odd { background-color: #f9f9f9; }
-              .produto-fornecedor { font-size: 8px; color: #c00; }
-              .total-items-label { text-align: right; margin-top: 5px; font-size: 10pt; } .footer-section { margin-top: 15px; }
-              .observacoes { font-size: 9pt; } .aviso { color: #c00; font-weight: bold; }
-              .bloco-totais p { margin: 2px 0; } .total-geral { font-size: 11pt; border-top: 1px solid #000; padding-top: 5px; }
-              .assinatura { text-align: center; margin-top: 70px; } .linha-assinatura { border-top: 1px solid #000; display: inline-block; padding: 5px 60px 0 60px; margin: 0; }
-              .funcao-assinatura { font-size: 8pt; color: #555; }
-              .marca-dagua {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%) rotate(-45deg);
-                font-size: 100px;
-                font-weight: bold;
-                color: rgba(0, 0, 0, 0.1);
-                z-index: 1;
-                pointer-events: none;
-                text-align: center;
-                width: 100%;
-              }
-            </style></head><body>            
-            <div class="page">
-            ${marcaDaguaHtml}
-              <!-- CORREÇÃO DE ALINHAMENTO: Estrutura de tabela robusta -->
+         
+          // --- 3. CRIAR O "COMPONENTE" DE UMA VIA COMPLETA ---
+          const umaViaCompletaHtml = `
+          <div class="via-impressao">
+              ${marcaDaguaHtml}
               <table class="header-table">
                   <tr>
                       <td class="header-info">
@@ -620,33 +709,164 @@ function construirHtmlParaPdf(pedidoCompleto) {
               <table class="info-section">
                   <tr><td colspan="2" class="titulo-secao"><strong>INFORMAÇÕES DO FORNECEDOR</strong></td></tr>
                   <tr>
-                    <td style="width: 60%;"><strong>Razão Social:</strong> ${dados.fornecedor.nome}<br><strong>Endereço:</strong> ${dados.fornecedor.endereco}<br><strong>CNPJ:</strong> ${dados.fornecedor.cnpj}</td>
-                    <td style="width: 40%;"><strong>CONDIÇÕES DE PAGAMENTO</strong><br><strong>Forma:</strong> ${dados.fornecedor.formaPagamento}<br><strong>Condição:</strong> ${dados.fornecedor.condicaoPagamento}</td>
+                      <td style="width: 60%;"><strong>Razão Social:</strong> ${dados.fornecedor.nome}<br><strong>Endereço:</strong> ${dados.fornecedor.endereco}<br><strong>CNPJ:</strong> ${dados.fornecedor.cnpj}</td>
+                      <td style="width: 40%;"><strong>CONDIÇÕES DE PAGAMENTO</strong><br><strong>Forma:</strong> ${dados.fornecedor.formaPagamento}<br><strong>Condição:</strong> ${dados.fornecedor.condicaoPagamento}</td>
                   </tr>
               </table>
               <hr class="separador-suave">
-              <table class="items-table"><thead><tr>
-                    <th style="width: 50%; text-align: left;">Item</th><th style="width: 10%;">Qtd.</th><th style="width: 10%;">Unid.</th>
-                    <th style="width: 15%; text-align: right;">Vl. Unitário</th><th style="width: 15%; text-align: right;">Subtotal</th>
-              </tr></thead><tbody>${itensHtml}</tbody></table>
+              <table class="info-section">
+                  <tr><td colspan="2" class="titulo-secao"><strong>INFORMAÇÕES DO VEÍCULO</strong></td></tr>
+                  <tr>
+                      <td style="width: 60%;"><strong>Modelo:</strong> ${dados.pedido.nomeVeiculo}</td>
+                      <td style="width: 40%;"><strong>Placa:</strong> ${dados.pedido.placaVeiculo}</td>
+                  </tr>
+              </table>
+              <hr class="separador-suave">
+              <table class="items-table">
+                  <thead><tr>
+                      <th style="width: 50%; text-align: left;">Item</th><th style="width: 10%;">Qtd.</th><th style="width: 10%;">Unid.</th>
+                      <th style="width: 15%; text-align: right;">Vl. Unitário</th><th style="width: 15%; text-align: right;">Subtotal</th>
+                  </tr></thead>
+                  <tbody>${itensHtml}</tbody>
+              </table>
               <p class="total-items-label"><strong>Total dos Itens: ${formatarMoeda(dados.financeiro.subtotal)}</strong></p>
-              <table class="footer-section"><tr>
-                  <td style="width: 60%; vertical-align: top;"><strong>OBSERVAÇÕES</strong><br><p class="observacoes">${dados.pedido.observacoes}</p><p class="aviso">Atenção: Qualquer alteração só pode ser realizada mediante autorização prévia, sob risco de não pagamento.</p></td>
-                  <td style="width: 40%; text-align: right; vertical-align: bottom;" class="bloco-totais">
-                    <p>Soma dos Itens &nbsp; <strong>${formatarMoeda(dados.financeiro.subtotal)}</strong></p><p>Impostos (ICMS ST) &nbsp; <strong>${formatarMoeda(dados.financeiro.imposto)}</strong></p>
-                    <p class="total-geral">TOTAL GERAL &nbsp; <strong>${formatarMoeda(dados.financeiro.totalFinal)}</strong></p>
-                  </td>
-              </tr></table>
-              <div class="assinatura"><p class="linha-assinatura">${dados.usuario.nome}<br><span class="funcao-assinatura">${dados.usuario.funcao}</span></p></div>
-            </div></body></html>`;
-        }
+              <table class="footer-section">
+                  <tr>
+                      <td style="width: 60%; vertical-align: top;"><strong>OBSERVAÇÕES</strong><br><p class="observacoes">${dados.pedido.observacoes}</p><p class="aviso">Atenção: Qualquer alteração só pode ser realizada mediante autorização prévia, sob pena de não pagamento.</p></td>
+                      <td style="width: 40%; text-align: right; vertical-align: bottom;" class="bloco-totais">
+                          <p>Soma dos Itens &nbsp; <strong>${formatarMoeda(dados.financeiro.subtotal)}</strong></p>
+                          ${!isFornecedorLocal ? ` <p>Impostos (ICMS ST) &nbsp; <strong>${formatarMoeda(dados.financeiro.imposto)}</strong></p>` : ''}
+                          <p class="total-geral">TOTAL GERAL &nbsp; <strong>${formatarMoeda(dados.financeiro.totalFinal)}</strong></p>
+                      </td>
+                  </tr>
+              </table>
+              <div class="assinatura">
+                  <p class="linha-assinatura">${dados.usuario.nome}<br><span class="funcao-assinatura">${dados.usuario.funcao}</span></p>
+              </div>
+          </div>
+      `;
+
+          // --- 4. MONTAR O CORPO FINAL COM O LAYOUT DE TABELA PARA DUPLICAÇÃO ---
+          let corpoHtmlFinal = '';
+          if (isFornecedorLocal) {
+              corpoHtmlFinal = `
+                  <table class="container-tabela-duas-vias">
+                      <tr>
+                          <td class="coluna-via">${umaViaCompletaHtml}</td>
+                          <td class="coluna-via">${umaViaCompletaHtml}</td>
+                      </tr>
+                  </table>
+              `;
+          } else {
+              corpoHtmlFinal = umaViaCompletaHtml;
+          }
+
+          // --- 5. MONTAR E RETORNAR O DOCUMENTO COMPLETO ---
+          return `<!DOCTYPE html>
+          <html lang="pt-BR">
+          <head>
+              <meta charset="UTF-8">
+              <title>Pedido de Compra - ${dados.pedido.numero}</title>
+              <style>
+                  body{font-family:Arial,sans-serif;font-size:9pt;color:#333;margin:0}
+                  table{width:100%;border-collapse:collapse}
+                  strong{font-weight:bold}
+                  hr{border:none;margin:10px 0}
+                  hr.separador-forte{border-top:2px solid #000}
+                  hr.separador-suave{border-top:1px solid #000}
+                  .text-left{text-align:left}
+                  .text-center{text-align:center}
+                  .text-right{text-align:right}
+                  .via-impressao{position:relative;width:100%;width: 100%;margin:auto;padding:20px;background:white;border:1px solid #555;box-sizing:border-box}
+                  .header-table td{vertical-align:top;padding:0}
+                  .header-info{width:65%}
+                  .header-pedido{width:35%;text-align:right}
+                  .titulo-pedido{font-size:12pt}
+                  .subtitulo-pedido{font-size:8pt;color:#555}
+                  .info-section{margin-top:15px}
+                  .info-section td{padding:2px 0;vertical-align:top}
+                  .info-section .titulo-secao{font-size:10pt;padding-bottom:5px}
+                  .items-table{margin-top:15px}
+                  .items-table th,.items-table td{border:1px solid #333;padding:5px 6px}
+                  .items-table th{background-color:#e0e0e0;font-weight:bold}
+                  .items-table tbody tr:nth-child(even){background-color:#f9f9f9}
+                  .produto-fornecedor{font-size:8px;color:#c00}
+                  .total-items-label{text-align:right;margin-top:5px;font-size:10pt}
+                  .footer-section{margin-top:15px}
+                  .observacoes{font-size:9pt}
+                  .aviso{color:#c00;font-weight:bold}
+                  .bloco-totais p{margin:2px 0}
+                  .total-geral{font-size:11pt;border-top:1px solid #000;padding-top:5px}
+                  .assinatura{text-align:center;margin-top:70px}
+                  .linha-assinatura{border-top:1px solid #000;display:inline-block;padding:5px 60px 0 60px;margin:0}
+                  .funcao-assinatura{font-size:8pt;color:#555}
+                  .marca-dagua{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-45deg);font-size:100px;font-weight:bold;color:rgba(0,0,0,0.1);z-index:1;pointer-events:none;text-align:center;width:100%}
+
+                  @media print {
+                      @page { size: A4 landscape; margin: 5mm; }
+                      body { width: 100%; margin: 0; }
+                      
+                      /* Padrão para via única: ocupa a página inteira deitada */
+                      .via-impressao { width: 100%; box-sizing: border-box; border: none; padding: 10mm;}
+                      
+                      /* Container da via dupla (a tabela) */
+                      .container-tabela-duas-vias { width: 100%; border-spacing: 5mm 0; border-collapse: separate; }
+                      
+                      /* Colunas da via dupla */
+                      .coluna-via { width: 50%; vertical-align: top; }
+                      
+                      /* Borda para as vias quando estão duplicadas */
+                      .coluna-via .via-impressao { border: 1px dashed #999; padding: 10px; }
+
+                      .rodape-pedido {
+                      page-break-inside: avoid !important; /* Tenta não quebrar este bloco */
+                      }
+                      .assinatura {
+                      margin-top: 40px !important; /* Reduz a margem apenas na impressão */
+                      }
+                  }
+              </style>
+          </head>
+          <body>
+              ${corpoHtmlFinal}
+          </body>
+          </html>`;
+}
+
+function registrarImpressao(usuarioLogado, nomeUsuario, pedido, impressora) {
+  const sheet = SpreadsheetApp.getActive().getSheetByName('Log Impressoes');
+  sheet.appendRow([usuarioLogado, nomeUsuario, pedido, new Date(), impressora || '', '']);
+}
+
+function getDadosParaImpressao(numeroPedido, empresaId) {
+  try {
+    const pedidoCompleto = getPedidoCompletoPorId(numeroPedido, empresaId);
+    
+    if (!pedidoCompleto) {
+      return null;
+    }
+
+    // "Sanitiza" o objeto: converte o campo de data para uma string no formato ISO.
+    // O JavaScript no frontend saberá como ler isso.
+    if (pedidoCompleto.data && typeof pedidoCompleto.data.toISOString === 'function') {
+      pedidoCompleto.data = pedidoCompleto.data.toISOString();
+    }
+    // Faça o mesmo para outros campos de data, se houver.
+
+    return pedidoCompleto; // Retorna o objeto "seguro" para transporte.
+
+  } catch (e) {
+    Logger.log(`Erro em getDadosParaImpressao: ${e.stack}`);
+    return null;
+  }
+}
 
 /**
  * Função de teste para verificar a 'getPedidoCompletoPorId'.
  * Ela busca um pedido específico e exibe o objeto completo nos logs.
  */
 function testarGeracaoDePdf() {
-  const numeroPedidoTeste = '001351'; 
+  const numeroPedidoTeste = '001404'; 
   const empresaIdTeste = '001';
 
   Logger.log(`--- INICIANDO TESTE DE GERAÇÃO DE PDF para Pedido Nº ${numeroPedidoTeste} ---`);
@@ -711,7 +931,7 @@ function testeMapas() {
     Logger.log(JSON.stringify(mapaUsuarios, null, 2));
 
     Logger.log("========== Testando criarMapaDeFornecedores ==========");
-    const mapaFornecedores = criarMapaDeFornecedores();
+    const mapaFornecedores = criarMapaDeFornecedoresv2();
     Logger.log("Fornecedores encontrados: " + (mapaFornecedores?.size || 0));
 
     if (mapaFornecedores instanceof Map) {
