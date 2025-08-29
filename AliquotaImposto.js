@@ -223,3 +223,108 @@ function getAliquotasConfig() {
     return {};
   }
 }
+
+/**
+ * Calcula o imposto usando uma cópia temporária da planilha 'CalculoICMS'.
+ * É seguro para múltiplos usuários e mantém a lógica complexa da sua planilha.
+ */
+function calcularStModal(params) {
+    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const planilhaMestre = spreadsheet.getSheetByName('CalculoICMS');
+    let tempSheet = null; // Inicializa a variável da planilha temporária
+
+    if (!planilhaMestre) {
+        return { status: 'error', message: "Planilha mestre 'CalculoICMS' não encontrada." };
+    }
+
+    try {
+        // 1. CRIA A CÓPIA TEMPORÁRIA (A "FOTOCÓPIA")
+        const tempSheetName = `TempCalc_${new Date().getTime()}`; // Nome único
+        tempSheet = planilhaMestre.copyTo(spreadsheet).setName(tempSheetName);
+        spreadsheet.setActiveSheet(tempSheet); // Ativa a nova aba
+
+        Logger.log(`Cópia temporária '${tempSheetName}' criada.`);
+
+        // 2. ESCREVE OS DADOS DE ENTRADA NA CÓPIA
+        // Supondo que a entrada do modal seja para uma única linha de cálculo.
+        // A entrada de valor vai na coluna F, linha 2.
+        // A entrada de estado vai na coluna C, linha 2.
+        tempSheet.getRange("F2").setValue(params.valor);
+        tempSheet.getRange("C2").setValue(params.estado);
+        // Se precisar de mais algum dado de entrada, como regime, coloque aqui.
+        tempSheet.getRange("D2").setValue(2);
+
+        // 3. FORÇA O RECÁLCULO E LÊ O RESULTADO
+        SpreadsheetApp.flush();
+        Utilities.sleep(500); // Uma pausa menor pode ser suficiente para um cálculo simples
+
+        // Lê o resultado da célula de total (Ex: Coluna N, Linha de Total)       
+        const valorCalculado = tempSheet.getRange("N2").getValue();
+        
+        // Exemplo de como ler uma alíquota que a planilha calculou
+        const aliquotaUsada = tempSheet.getRange("I2").getValue();
+
+
+        Logger.log(`Cálculo na cópia temporária concluído. Resultado: ${valorCalculado}`);
+
+        // 4. RETORNA O SUCESSO
+        return {
+            status: 'success',
+            valorCalculado: valorCalculado || 0,
+            aliquotaUsada: aliquotaUsada || 0
+        };
+
+    } catch (e) {
+        Logger.log(`Erro durante o cálculo na planilha temporária: ${e.stack}`);
+        return { status: 'error', message: `Erro no cálculo: ${e.message}` };
+    } finally {
+        // 5. ESSENCIAL: DELETA A CÓPIA, MESMO SE OCORRER UM ERRO
+        if (tempSheet) {
+            spreadsheet.deleteSheet(tempSheet);
+            Logger.log(`Cópia temporária deletada.`);
+        }
+    }
+}
+
+
+function testarModalDeCalculoSt() {
+  Logger.log("--- INICIANDO TESTE DO MODAL DE CÁLCULO ST ---");
+
+  // --- CONFIGURE SEUS DADOS DE TESTE AQUI ---
+  const valorParaTestar = 1500.75; // Valor do produto que você quer simular
+  const estadoParaTestar = "SP";   // Sigla do estado de destino (em maiúsculas)
+  // -----------------------------------------
+
+  Logger.log(`Simulando cálculo para: Valor R$ ${valorParaTestar}, Estado: ${estadoParaTestar}`);
+
+  // 1. Monta o objeto de parâmetros, como o frontend faria
+  const paramsDeTeste = {
+    valor: valorParaTestar,
+    estado: estadoParaTestar
+    // Note que não precisamos enviar o regime, pois ele está fixo no backend.
+  };
+
+  // 2. Chama a sua função real diretamente
+  try {
+    const resultado = calcularStModal(paramsDeTeste);
+
+    // 3. Mostra o resultado completo no log de forma organizada
+    Logger.log("--- RESULTADO RECEBIDO DA FUNÇÃO ---");
+    Logger.log(JSON.stringify(resultado, null, 2)); // O '2' formata o JSON para fácil leitura
+
+    // 4. Analisa o resultado para dar um feedback claro
+    if (resultado && resultado.status === 'success') {
+      const valorFormatado = (resultado.valorCalculado || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      Logger.log(`✅ SUCESSO: O cálculo foi concluído.`);
+      Logger.log(`   - Alíquota (Exemplo): ${resultado.aliquotaUsada}%`);
+      Logger.log(`   - Valor do Imposto: ${valorFormatado}`);
+    } else {
+      Logger.log(`❌ FALHA: A função retornou um erro. Mensagem: ${resultado ? resultado.message : 'Sem mensagem.'}`);
+    }
+
+  } catch (e) {
+    Logger.log(`❌ ERRO CRÍTICO: Ocorreu um erro ao executar a função de teste: ${e.message}`);
+    Logger.log(e.stack);
+  }
+  Logger.log("--- FIM DO TESTE ---");
+}
