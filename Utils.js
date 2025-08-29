@@ -15,6 +15,7 @@ function toCamelCase(str) {
   return String(str)
     .toLowerCase()
     .normalize('NFD')
+    // CORREÇÃO AQUI: \u0300 em vez de \u0030
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, ' ')
     .replace(/ (\w)/g, (match, p1) => p1.toUpperCase());
@@ -97,4 +98,55 @@ function levenshteinDistance(a, b) {
   }
 
   return matrix[b.length][a.length];
+}
+
+function mapearColunas(headers) {
+  const colunas = {};
+  headers.forEach((header, index) => {
+    // Garante que só mapeia se o cabeçalho não for vazio
+    if (header) {
+      colunas[toCamelCase(header)] = index;
+    }
+  });
+  return colunas;
+}
+
+function loggersheet(message) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName("DebugLog");  // A aba onde os logs serão registrados
+
+    if (!sheet) {
+      // Se a aba "Logs" não existir, cria uma nova aba
+      sheet = ss.insertSheet("DebugLog");
+      sheet.appendRow(["Timestamp", "Mensagem"]);
+    }
+
+    // Adiciona uma nova linha com a hora atual e a mensagem
+    const timestamp = new Date();
+    sheet.appendRow([timestamp, message]);
+    
+  } catch (error) {
+    Logger.log("Erro ao registrar log na planilha: " + error.message);
+  }
+}
+
+
+/**
+ * Esta função força o Apps Script a solicitar todas as permissões
+ * necessárias para os serviços que estamos usando no projeto.
+ */
+function _forcarPermissoes() {
+   // Força a permissão para planilhas
+  SpreadsheetApp.getActiveSpreadsheet();
+  // Força a permissão para serviços externos
+  UrlFetchApp.fetch("https://www.google.com");
+  // Força a permissão para cache
+  CacheService.getScriptCache().put('test', 'ok', 60);
+  // Força a permissão para propriedades de script
+  PropertiesService.getScriptProperties().getProperty('TELEGRAM_BOT_TOKEN');
+  // Força a permissão para o serviço de bloqueio (LockService)
+  LockService.getScriptLock(); // <-- LINHA ADICIONADA
+  
+  Logger.log("Verificação de permissões concluída com sucesso.");
 }
