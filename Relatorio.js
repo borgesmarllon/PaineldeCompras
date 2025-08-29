@@ -530,3 +530,17 @@ function doGet() {
       .evaluate() // ESSENCIAL aqui para que google.script.run funcione em TODO o seu SPA
       .addMetaTag('viewport', 'width=device-width, initial-scale=1.0');
 }
+
+function testRelatorioPdf() {
+  // Parâmetros de teste
+  const params = {
+    companyId: "001",           // Altere conforme necessário
+    startDate: "2025-08-01",    // Altere conforme necessário
+    endDate: "2025-08-12",      // Altere conforme necessário
+    reportType: "detailed"      // Ou "financial"
+  };
+  const resultado = generatePdfReport(params);
+  Logger.log("Retorno da função generatePdfReport:");
+  Logger.log(JSON.stringify(resultado, null, 2));
+  return resultado;
+}
