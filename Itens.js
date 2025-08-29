@@ -8,7 +8,7 @@
 function getConfig() {
     // Objeto de configuração integrado com os nomes das suas planilhas
     const CONFIG = {
-        PLANILHA_ID: '1xVLFSqL5SVT6cmZ_9foOkKxJIHqHeCGHLcyryBJ44g0',
+        PLANILHA_ID: '1M0GTX9WmnggiNnDynU0kC457yoy0iRHcRJ39d_B109o',
         sheets: {
             pedidos: 'Pedidos',
             usuarios: 'Usuarios',
