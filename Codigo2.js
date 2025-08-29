@@ -4,15 +4,20 @@
  */
 
 const CONFIG = {
-  PLANILHA_ID: '1J7CE_BZ8eUsXhjkmgxAIIWjMTOr2FfSfIMONqE4UpHA',
+  PLANILHA_ID: '1M0GTX9WmnggiNnDynU0kC457yoy0iRHcRJ39d_B109o',
   SHEETS: {
-    PEDIDOS: 'Pedidos',
-    USUARIOS: 'Usuarios',
-    FORNECEDORES: 'Fornecedores',
-    CONFIG: 'Config',
-    EMPRESAS: 'Empresas',
-    USUARIO_LOGADO: 'usuario_logado',
+    pedidos: 'Pedidos',
+    usuarios: 'Usuarios',
+    fornecedores: 'Fornecedores',
+    config: 'Config',
+    empresas: 'Empresas',
+    usuario_logado: 'usuario_logado',
+    itens: 'Itens',
+    calculoIcms: 'Calculo ICMS',
+    aviso: 'Aviso',
+    itens: 'Itens Pedido'
   },
   GEMINI_API_KEY_PROPERTY: 'GEMINI_API_KEY',
-  DRIVE_FOLDER_REPORTS: "RelatoriosComprasTemporarios"
+  DRIVE_FOLDER_REPORTS: "RelatoriosComprasTemporarios",
+  
 };
