@@ -2400,10 +2400,11 @@
 				            if (perfil === "admin") {
 				                createMenuButton('Dashboard Completo', () => loadPageContent('Dashboard', setupDashboardScreen), menuOptionsGroup);
 				                createMenuButton('Relatórios', () => loadPageContent('Relatorios', setupRelatoriosScreen), menuOptionsGroup);
+                        createMenuButton('Gerenciar Usuários', () => loadPageContent('GerenciarUsuarios', setupGerenciarUsuariosScreen), menuOptionsGroup);
 				            } 
                     
                     if (usuarioLogado === "admin") {
-                      createMenuButton('Gerenciar Usuários', () => loadPageContent('GerenciarUsuarios', setupGerenciarUsuariosScreen), menuOptionsGroup);
+                      
 				              createMenuButton('Gerenciar Fornecedores', () => loadPageContent('GerenciarFornecedores', setupGerenciarFornecedoresScreen), menuOptionsGroup);
 
                     }
@@ -2447,7 +2448,7 @@
                             container.innerHTML = '<p class="text-sm text-gray-500">Nenhuma aprovação pendente no momento. ✨</p>';
                             const elementoTitulo = document.getElementById('titulo-aprovacoes')
                             if (elementoTitulo) {
-                              elementoTItulo.textContent = 'Aprovações Pendentes';
+                              elementoTitulo.textContent = 'Aprovações Pendentes';
                             }
                             return;
                         }
@@ -2475,7 +2476,7 @@
                             // HTML FINAL E CORRIGIDO
                             // =========================================================
                             html += `
-                                <div id="approval-card-${numeroPedido}" class="flex-shrink-0 min-w-[300px] p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                                <div id="approval-card-${numeroPedido}" data-empresa-id="${empresaId}"class="flex-shrink-0 min-w-[300px] p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
                                     <div class="flex justify-between items-start mb-1">
                                         <p class="font-bold text-gray-800 truncate">Pedido #${numeroPedido}</p>
                                         <span class="text-xs font-semibold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full truncate" title="${empresaNome}">${empresaNome}</span>
@@ -2484,8 +2485,8 @@
                                     <p class="text-lg font-bold text-yellow-800 mt-1">${valorFormatado}</p>
                                     <div class="flex space-x-2 mt-3">
                                         <button onclick="visualizarPedidoExistente('${numeroPedido}', '${empresaId}', '${empresaNome}', '${perfil}')" class="w-full py-1 text-xs bg-gray-500 text-white rounded-md hover:bg-gray-600">Visualizar</button>
-                                        <button onclick="processarAprovacao('${numeroPedido}', 'Rejeitado')" class="w-full py-1 text-xs bg-red-500 text-white rounded-md hover:bg-red-600">Rejeitar</button>
-                                        <button onclick="processarAprovacao('${numeroPedido}', 'Aprovado')" class="w-full py-1 text-xs bg-green-500 text-white rounded-md hover:bg-green-600">Aprovar</button>
+                                        <button onclick="processarAprovacao('${numeroPedido}','${empresaId}', 'Rejeitado')" class="w-full py-1 text-xs bg-red-500 text-white rounded-md hover:bg-red-600">Rejeitar</button>
+                                        <button onclick="processarAprovacao('${numeroPedido}','${empresaId}', 'Aprovado')" class="w-full py-1 text-xs bg-green-500 text-white rounded-md hover:bg-green-600">Aprovar</button>
                                     </div>
                                 </div>
                             `;
@@ -2506,8 +2507,8 @@
 				           * @param {string} numeroPedido O número do pedido a ser processado.
 				           * @param {string} novoStatus O novo status ("Aprovado" ou "Rejeitado").
 				           */
-				          function processarAprovacao(numeroPedido, novoStatus) {
-                     pedidoParaProcessar = numeroPedido;
+				          function processarAprovacao(numeroPedido, empresaId, novoStatus) {
+                     pedidoParaProcessar = { numero: numeroPedido, empresa: empresaId };
 
                     if (novoStatus === 'Rejeitado') {
                             // Abre o modal para pedir o motivo
@@ -2523,8 +2524,8 @@
 				              function enviarAprovacaoParaBackend(novoStatus, motivo) {
                         if (!pedidoParaProcessar) return;
 
-                        const numeroPedido = pedidoParaProcessar;
-                        const cardElement = document.getElementById(`approval-card-${numeroPedido}`);
+                        const { numero, empresa } = pedidoParaProcessar;
+                        const cardElement = document.getElementById(`approval-card-${numero}`);
                         if (!cardElement) return;
 
                         // Feedback visual imediato
@@ -2558,7 +2559,7 @@
                                 cardElement.style.opacity = '1';
                                 cardElement.querySelectorAll('button').forEach(b => b.disabled = false);
                             })
-                            .atualizarStatusPedido(numeroPedido, novoStatus, motivo);
+                            .atualizarStatusPedido(numero, novoStatus, motivo, null, empresa);
 
                         fecharModalRejeicao();
                         pedidoParaProcessar = null;
@@ -3062,7 +3063,7 @@
                         <p><i class="fas fa-percentage fa-fw text-red-500 mr-2"></i><span class ="font-semibold">${valorIcms}</span></p>
 				            </div>
 				            <div class="flex gap-2 pt-3 border-t border-gray-200">
-				                <button onclick="visualizarPedidoExistente('${numeroPedido}', '${empresa.id}', '${empresa.nome}')" class="flex-1 text-xs px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md">
+				                <button onclick="visualizarPedidoExistente(this, '${numeroPedido}', '${empresa.id}', '${empresa.nome}')" class="flex-1 text-xs px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md">
 				                    Visualizar
 				                </button>
 				                <button onclick="iniciarImpressao(this, '${numeroPedido}', '${empresa.id}')" class="flex-1 text-xs px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors">
@@ -3208,7 +3209,10 @@
 				        // VISUALIZAR PEDIDO USANDO TELA EXISTENTE
 				        // ===============================================
 
-				        function visualizarPedidoExistente(numeroPedido, empresaId, nomeEmpresa, origem = 'menu-principal') {
+				        function visualizarPedidoExistente(buttonElement, numeroPedido, empresaId, nomeEmpresa, origem = 'menu-principal') {
+                    buttonElement.disabled = true;
+                    buttonElement.innerHTML = '<i class="fas fa-spinner spinner mr-1"></i> Carregando...';
+
 				            localStorage.setItem('modoVisualizacao', 'true');
 				            localStorage.setItem('origemVisualizacao', origem);
 				            localStorage.setItem('numeroPedidoVisualizacao', numeroPedido);
@@ -3228,9 +3232,13 @@
 				                    } else {
 				                        showGlobalModal("Erro", "Pedido não encontrado ou falha na busca.");
 				                    }
+                            buttonElement.disabled = false;
+                            buttonElement.innerHTML = 'Visualizar';
 				                })
 				                .withFailureHandler(error => {
 				                    showGlobalModal("Erro", "Erro ao carregar pedido: " + error.message);
+                            buttonElement.disabled = false;
+                            buttonElement.innerHTML = 'Visualizar';
 				                })
 				                .buscarPedidosv2(params);
 				        }
@@ -6112,7 +6120,7 @@
                   
                   const aliquotaTexto = document.getElementById('aliquota-display')?.textContent || '0%';
                   const aliquotaImposto = parseFloat(aliquotaTexto.replace('%', '').trim()) || 0;
-                  const precoUnitario = parseFloat(item.precoUnitario.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
+                  //const precoUnitario = parseFloat(item.precoUnitario.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
 
 
                   const dados = {
@@ -6136,7 +6144,7 @@
                               'ESTADO FORNECEDOR': estadoFornecedor,
                               'ALIQUOTA IMPOSTO': aliquotaImposto,
                               'ICMS ST TOTAL': valorImpostoNumerico
-                              // Adicione outras colunas aqui se existirem na folha de cálculo
+                              
                           };
                       })
                   };
@@ -6463,174 +6471,164 @@
 				        // ===============================================
 				        // FUNÇÃO PARA SALVAR RASCUNHO
 				        // ===============================================
-				        function salvarRascunho() {
+				        function salvarRascunho() {                 
+                  // Declarações de variáveis movidas para o topo da função para evitar ReferenceError.
+                  const fornecedorSelect = document.getElementById('fornecedorPedido');
+                  const rascunhoButton = document.getElementById('salvarRascunhoButton');
+                  const aliquotaDisplay = document.getElementById('aliquota-display');
+                  const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
+                  const empresaId = empresaAtual.id || empresaAtual.codigo;
+                  
+                  // Coleta dos dados dos itens, que são usados para calcular os totais
+                  const itens = window.itensAdicionados.map(item => ({
+                      descricao: item.descricao,
+                      produtoFornecedor: item.produtoFornecedor,
+                      quantidade: item.quantidade,
+                      unidade: item.unidade,
+                      precoUnitario: item.precoUnitario,
+                      totalItem: item.subtotal,
+                      icmsSt: item.icmsSt || 0
+                  }));
+
+                  // Coleta o total geral e valor de imposto
+                  const totalGeral = window.itensAdicionados ?
+                      window.itensAdicionados.reduce((total, item) => total + item.subtotal, 0) : 0;
+                  const valorImpostoTexto = document.getElementById('valor-imposto')?.textContent || 'R$ 0,00';
+                  const valorImpostoNumerico = parseFloat(valorImpostoTexto.replace('R$', '').replace(/\./g, '').replace(',', '.')) || 0;
+
+                  let aliquotaValor = 0;
+                  if (aliquotaDisplay) {
+                      // Converte "18,00%" para 0.18
+                      const textoAliquota = aliquotaDisplay.textContent.replace('%', '').replace(',', '.').trim();
+                      aliquotaValor = parseFloat(textoAliquota) / 100;
+                      if (isNaN(aliquotaValor)) {
+                          aliquotaValor = 0;
+                      }
+                  }
+
+                  const editandoRascunho = localStorage.getItem('editandoRascunho') === 'true';
+                  const rascunhoId = localStorage.getItem('rascunhoId');
+                  let usuarioCriadorOriginal = '';
+
+                  if (editandoRascunho) {
+                      const dadosOriginais = JSON.parse(localStorage.getItem('dadosRascunho') || '{}');
+                      usuarioCriadorOriginal = dadosOriginais.usuarioCriador || localStorage.getItem('usuarioLogado');
+                  } else {
+                      usuarioCriadorOriginal = localStorage.getItem('usuarioLogado');
+                  }
+
+                  // Criação do objeto de dados do rascunho com todos os valores já definidos
+                  const dadosRascunho = {
+                      data: document.getElementById('dataPedido')?.value || '',
+                      fornecedor: fornecedorSelect.value,
+                      nomeVeiculo: document.getElementById('nomeVeiculo')?.value || '',
+                      placaVeiculo: document.getElementById('placaVeiculo')?.value || '',
+                      observacoes: document.getElementById('observacoesPedido')?.value || '',
+                      empresa: empresaId,
+                      itens: itens,
+                      totalGeral: totalGeral,
+                      valorIcms: valorImpostoNumerico,
+                      aliquotaImposto: aliquotaValor,
+                      status: 'RASCUNHO',
+                      dataUltimaEdicao: obterDataHoraLocal(),
+                      usuarioCriador: usuarioCriadorOriginal
+                  };
+
+                  // --- Início das validações e outras lógicas ---
+
+                  if (!empresaId) {
+                      showToast('Erro: Não foi possível identificar a empresa. Faça login novamente.', 'error');
+                      return;
+                  }
 
                   if (isCalculatingTotals) {
-                        showToast("Por favor, aguarde o cálculo de impostos terminar.", "info");
-                        return;
-                    }
+                      showToast("Por favor, aguarde o cálculo de impostos terminar.", "info");
+                      return;
+                  }
 
-				            // Validações mínimas para rascunho (apenas fornecedor e pelo menos 1 item)
-				            const fornecedorSelect = document.getElementById('fornecedorPedido');
+                  if (!fornecedorSelect.value) {
+                      showToast('Selecione um fornecedor para salvar o rascunho.', 'warning', 'Validação');
+                      fornecedorSelect.focus();
+                      return;
+                  }
 
-				            if (!fornecedorSelect.value) {
-				                showToast('Selecione um fornecedor para salvar o rascunho.', 'warning', 'Validação');
-				                fornecedorSelect.focus();
-				                return;
-				            }
-
-				            // Verificar se há pelo menos um item adicionado
-				            if (!window.itensAdicionados || window.itensAdicionados.length === 0) {
-				                showToast('Adicione pelo menos um item com descrição para salvar o rascunho.', 'warning', 'Validação');
-				                return;
-				            }
-
-                    const itensRascunho = dadosRascunho.itens || [];
-                    for (let i = 0; i < itensRascunho.length; i++) {
-                      const item = itensRascunho[i];
+                  if (!window.itensAdicionados || window.itensAdicionados.length === 0) {
+                      showToast('Adicione pelo menos um item com descrição para salvar o rascunho.', 'warning', 'Validação');
+                      return;
+                  }
+                  
+                  // O loop agora pode acessar 'itens' sem erro, pois ele foi declarado no topo
+                  for (let i = 0; i < itens.length; i++) {
+                      const item = itens[i];
                       if (item.quantidade <= 0) {
-                        throw new Error(`Item inválido: a quantidade do item "${item.descricao}" deve ser maior que zero.`);
+                          throw new Error(`Item inválido: a quantidade do item "${item.descricao}" deve ser maior que zero.`);
                       }
-                    }
+                  }
 
-				            // Desabilitar botão para evitar duplo clique
-				            const rascunhoButton = document.getElementById('salvarRascunhoButton');
-				            if (rascunhoButton) {
-				                rascunhoButton.disabled = true;
-				                rascunhoButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Salvando...';
-				            }
+                  if (rascunhoButton) {
+                      rascunhoButton.disabled = true;
+                      rascunhoButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Salvando...';
+                  }
 
-                    const aliquotaDisplay = document.getElementById('aliquota-display');
-                      let aliquotaValor = 0;
-                      if (aliquotaDisplay) {
-                          // Converte "18,00%" para 0.18
-                          const textoAliquota = aliquotaDisplay.textContent.replace('%', '').replace(',', '.').trim();
-                          aliquotaValor = parseFloat(textoAliquota) / 100;
-                          if (isNaN(aliquotaValor)) {
-                              aliquotaValor = 0;
+                  if (editandoRascunho && rascunhoId) {
+                      dadosRascunho.rascunhoId = rascunhoId;
+                  }
+
+                  google.script.run
+                      .withSuccessHandler(response => {
+                          if (response.status === 'success') {
+                              const isEdicao = editandoRascunho && rascunhoId;
+                              const mensagem = isEdicao ?
+                                  `Rascunho atualizado com sucesso! ID: ${rascunhoId}` :
+                                  `Rascunho salvo com sucesso! ID: ${response.rascunhoId}`;
+
+                              showToast(mensagem, 'success', 'Rascunho Salvo');
+
+                              const draftStatus = document.getElementById('draft-status');
+                              if (draftStatus) {
+                                  draftStatus.classList.remove('hidden');
+                                  const idFinal = isEdicao ? rascunhoId : response.rascunhoId;
+                                  draftStatus.innerHTML = `<i class="fas fa-edit mr-2"></i>Rascunho - ID: ${idFinal}`;
+                              }
+                              const idParaSalvar = isEdicao ? rascunhoId : response.rascunhoId;
+                              localStorage.setItem('rascunhoAtual', idParaSalvar);
+
+                              if (!isEdicao) {
+                                  localStorage.setItem('editandoRascunho', 'true');
+                                  localStorage.setItem('rascunhoId', response.rascunhoId);
+                              }
+
+                              loadPageContent('menu-screen');
+
+                          } else {
+                              showToast('Erro ao salvar rascunho: ' + response.message, 'error', 'Falha no Salvamento');
                           }
-                      }
 
-				            // Coletar dados do rascunho usando o array de itens
-				            const itens = window.itensAdicionados.map(item => ({
-				                descricao: item.descricao,
-				                produtoFornecedor: item.produtoFornecedor,
-				                quantidade: item.quantidade,
-				                unidade: item.unidade,
-				                precoUnitario: item.precoUnitario,
-				                totalItem: item.subtotal,
-                        icmsSt: item.icmsSt || 0 
-				            }));
+                          if (rascunhoButton) {
+                              rascunhoButton.disabled = false;
+                              rascunhoButton.innerHTML = '<i class="fas fa-save mr-2"></i>Salvar Rascunho';
+                          }
+                      })
+                      .withFailureHandler(err => {
+                          console.error('❌ Erro detalhado ao salvar rascunho:', err);
+                          console.error('❌ Tipo do erro:', typeof err);
+                          console.error('❌ Erro stringify:', JSON.stringify(err));
 
-				            const empresaAtual = JSON.parse(localStorage.getItem('empresaSelecionada') || '{}');
-				            // Usar id ou codigo como fallback
-				            const empresaId = empresaAtual.id || empresaAtual.codigo;
-				            if (!empresaId) {
-				                showToast('Erro: Não foi possível identificar a empresa. Faça login novamente.', 'error');
-				                return;
-				            }
-				            // Calcular total geral dos itens
-				            const totalGeral = window.itensAdicionados ?
-				                window.itensAdicionados.reduce((total, item) => total + item.subtotal, 0) : 0;
-				            const valorImpostoTexto = document.getElementById('valor-imposto')?.textContent || 'R$ 0,00';
-				            const valorImpostoNumerico = parseFloat(valorImpostoTexto.replace('R$', '').replace (/\./g, '').replace(',', '.')) || 0;
+                          const errorMessage = err.message || err.toString() || 'Erro desconhecido';
+                          showToast('Erro ao salvar rascunho: ' + errorMessage, 'error', 'Falha no Salvamento');
 
-				            // Verificar se estamos editando um rascunho existente
-				            const editandoRascunho = localStorage.getItem('editandoRascunho') === 'true';
-				            const rascunhoId = localStorage.getItem('rascunhoId');
-                    let usuarioCriadorOriginal = '';
-
-                    if (editandoRascunho) {
-                        const dadosOriginais = JSON.parse(localStorage.getItem('dadosRascunho') || '{}');
-                        // Se houver um criador original, guarde-o. Se não, use o usuário logado como fallback.
-                        usuarioCriadorOriginal = dadosOriginais.usuarioCriador || localStorage.getItem('usuarioLogado'); 
-                    } else {
-                        usuarioCriadorOriginal = localStorage.getItem('usuarioLogado'); // Para rascunhos novos
-                    }
-				            // Dados do rascunho
-				            const dadosRascunho = {
-				                data: document.getElementById('dataPedido')?.value || '',
-				                fornecedor: fornecedorSelect.value,
-				                nomeVeiculo: document.getElementById('nomeVeiculo')?.value || '',
-				                placaVeiculo: document.getElementById('placaVeiculo')?.value || '',
-				                observacoes: document.getElementById('observacoesPedido')?.value || '',
-				                empresa: empresaId,
-				                itens: itens,
-				                totalGeral : totalGeral,
-				                valorIcms: valorImpostoNumerico,
-                        aliquotaImposto: aliquotaValor,
-				                status: 'RASCUNHO',
-				                dataUltimaEdicao: obterDataHoraLocal(),
-                        usuarioCriador: usuarioCriadorOriginal
-
-				            };
-
-				            // Se estiver editando, incluir o ID do rascunho
-				            if (editandoRascunho && rascunhoId) {
-				                dadosRascunho.rascunhoId = rascunhoId;  // Usar 'rascunhoId' em vez de 'id'
-				            } else {
-				            }
-
-				            // Salvar rascunho no backend
-				            google.script.run
-				                .withSuccessHandler(response => {
-				                    if (response.status === 'success') {
-				                        const isEdicao = editandoRascunho && rascunhoId;
-				                        const mensagem = isEdicao ?
-				                            `Rascunho atualizado com sucesso! ID: ${rascunhoId}` :
-				                            `Rascunho salvo com sucesso! ID: ${response.rascunhoId}`;
-
-				                        showToast(mensagem, 'success', 'Rascunho Salvo');
-
-				                        // Mostrar indicador de rascunho na tela
-				                        const draftStatus = document.getElementById('draft-status');
-				                        if (draftStatus) {
-				                            draftStatus.classList.remove('hidden');
-				                            const idFinal = isEdicao ? rascunhoId : response.rascunhoId;
-				                            draftStatus.innerHTML = `<i class="fas fa-edit mr-2"></i>Rascunho - ID: ${idFinal}`;
-				                        }
-
-				                        // Salvar ID do rascunho para futuras edições
-				                        const idParaSalvar = isEdicao ? rascunhoId : response.rascunhoId;
-				                        localStorage.setItem('rascunhoAtual', idParaSalvar);
-
-				                        // Marcar que agora está em modo de edição
-				                        if (!isEdicao) {
-				                            localStorage.setItem('editandoRascunho', 'true');
-				                            localStorage.setItem('rascunhoId', response.rascunhoId);
-				                        }
-
-				                    } else {
-				                        showToast('Erro ao salvar rascunho: ' + response.message, 'error', 'Falha no Salvamento');
-				                    }
-
-				                    // Reabilitar botão
-				                    if (rascunhoButton) {
-				                        rascunhoButton.disabled = false;
-				                        rascunhoButton.innerHTML = '<i class="fas fa-save mr-2"></i>Salvar Rascunho';
-				                    }
-				                })
-				                .withFailureHandler(err => {
-				                    console.error('❌ Erro detalhado ao salvar rascunho:', err);
-				                    console.error('❌ Tipo do erro:', typeof err);
-				                    console.error('❌ Erro stringify:', JSON.stringify(err));
-
-				                    // Tentar extrair mais informações do erro
-				                    const errorMessage = err.message || err.toString() || 'Erro desconhecido';
-				                    showToast('Erro ao salvar rascunho: ' + errorMessage, 'error', 'Falha no Salvamento');
-
-				                    if (rascunhoButton) {
-				                        rascunhoButton.disabled = false;
-				                        rascunhoButton.innerHTML = '<i class="fas fa-save mr-2"></i>Salvar Rascunho';
-				                    }
-				                })
-				                .salvarRascunho(dadosRascunho);
+                          if (rascunhoButton) {
+                              rascunhoButton.disabled = false;
+                              rascunhoButton.innerHTML = '<i class="fas fa-save mr-2"></i>Salvar Rascunho';
+                          }
+                      })
+                      .salvarRascunho(dadosRascunho);
 				        }
                       
 				        // ===============================================
 				        // LÓGICA DA PÁGINA MEUS PEDIDOS
-				         // ===============================================
-				         function setupMeusPedidosScreen() {
+				        // ===============================================
+				        function setupMeusPedidosScreen() {
 				        const tabelaBody = document.getElementById('tabela-meus-pedidos');
 				        const usuarioLogado = localStorage.getItem('usuarioLogado');
 
@@ -7669,9 +7667,9 @@
 				        generatePdfButton.parentNode.replaceChild(newBtn, generatePdfButton);
 
 				       newBtn.addEventListener('click', () => {
-				            console.log("--- CLIQUE no botão PDF detectado! ---");
+				            //console.log("--- CLIQUE no botão PDF detectado! ---");
 				            //const message = "SUCESSO! O clique no botão PDF está funcionando e executando o código.";
-				            console.log(message);
+				            //console.log(message);
 				            //showToast(message, 'success');
 				            // Se esta notificação aparecer, o próximo passo é descomentar a linha abaixo
 				            // e comentar as 3 linhas acima.
@@ -10074,14 +10072,8 @@ function baixarPedidoHTML(pedidoCompleto, numeroPedido) {
 				        }
 
 				        function preencherFormularioComRascunho(dadosRascunho) {
-				            console.log('📝 Preenchendo formulário com dados do rascunho:', dadosRascunho);
-                    console.log("--- 📝 DENTRO DE preencherFormularioComRascunho ---");
-                    console.log("Dados completos recebidos do backend:", dadosRascunho);
-                    console.log("Analisando especificamente a propriedade 'itens':", dadosRascunho.itens);
                     
                     if (Array.isArray(dadosRascunho.itens) && dadosRascunho.itens.length > 0) {
-                        console.log("✅ O array de itens é válido e tem " + dadosRascunho.itens.length + " item(s).");
-                        console.log("Primeiro item:", dadosRascunho.itens[0]);
                     } else {
                         console.error("❌ O array de itens está vazio ou não é um array!");
                     }
@@ -10097,7 +10089,6 @@ function baixarPedidoHTML(pedidoCompleto, numeroPedido) {
 				                            fornecedorSelect.options[i].textContent === dadosRascunho.fornecedor) {
 				                            fornecedorSelect.selectedIndex = i;
 				                            encontrou = true;
-				                            console.log('✅ Fornecedor selecionado:', dadosRascunho.fornecedor);
 
 				                            // Disparar evento de mudança para atualizar o estado
 				                            const evento = new Event('change', { bubbles: true });
@@ -10131,7 +10122,6 @@ function baixarPedidoHTML(pedidoCompleto, numeroPedido) {
 				                            veiculoSelect.options[i].textContent === dadosRascunho.nomeVeiculo) {
 				                            veiculoSelect.selectedIndex = i;
 				                            encontrou = true;
-				                            console.log('✅ Veículo selecionado:', dadosRascunho.nomeVeiculo);
 				                            break;
 				                        }
 				                    }
