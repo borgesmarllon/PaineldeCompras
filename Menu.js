@@ -296,11 +296,14 @@ function alterarStatusAviso(rowNumber, novoStatus) {
  * @param {string} novoStatus O novo status a ser definido (ex: "Aprovado", "Rejeitado").
  * @returns {object} Um objeto indicando o sucesso ou falha da operação.
  */
-function atualizarStatusPedido(numeroPedido, novoStatus, motivo, infoAprovador) {
+function atualizarStatusPedido(numeroPedido, novoStatus, motivo, infoAprovador, empresaId) {
   try {
+    Logger.log("--- 🔬 INÍCIO DA ANÁLISE FORENSE em atualizarStatusPedido ---");
+    Logger.log(`Procurando por Pedido: '${numeroPedido}', Empresa: '${empresaId}'`);
+
     // Validação básica de entrada
-    if (!numeroPedido || !novoStatus) {
-      throw new Error("Número do pedido e novo status são obrigatórios.");
+    if (!numeroPedido || !novoStatus || !empresaId) {
+      throw new Error("Número do pedido, novo status e ID da empresa são obrigatórios.");
     }
 
     const sheet = SpreadsheetApp.openById(ID_DA_PLANILHA).getSheetByName(NOME_DA_ABA_DE_PEDIDOS);
@@ -310,6 +313,7 @@ function atualizarStatusPedido(numeroPedido, novoStatus, motivo, infoAprovador) 
     const headers = data[0]; // Pega apenas os cabeçalhos
 
     const colunaNumeroPedido = headers.indexOf("Número do Pedido");
+    const colunaEmpresa = headers.indexOf("Empresa");
     const colunaStatus = headers.indexOf("Status");
     const colunaMotivo = headers.indexOf("Motivo Rejeição");
     const colunaNotificacao = headers.indexOf("NotificacaoAprovadoVisto");
@@ -319,8 +323,8 @@ function atualizarStatusPedido(numeroPedido, novoStatus, motivo, infoAprovador) 
       throw new Error("Coluna 'Usuário Criador' não foi encontrada na planilha de Pedidos.");
     }
 
-    if (colunaNumeroPedido === -1 || colunaStatus === -1) {
-      throw new Error("Não foi possível encontrar as colunas 'Número do Pedido' ou 'Status' na planilha.");
+    if (colunaNumeroPedido === -1 || colunaStatus === -1 || colunaEmpresa === -1) {
+      throw new Error("Não foi possível encontrar as colunas 'Número do Pedido', 'Status' ou 'Empresa' na planilha.");
     }
     if (novoStatus === 'Rejeitado' && colunaMotivo === -1) {
         throw new Error("A coluna 'Motivo Rejeição' é necessária para rejeitar um pedido, mas não foi encontrada.");
@@ -328,7 +332,7 @@ function atualizarStatusPedido(numeroPedido, novoStatus, motivo, infoAprovador) 
     if (novoStatus === 'Aprovado' && colunaNotificacao === -1) {
       throw new Error("A coluna 'NotificacaoAprovadoVisto' é necessária para notificar o pedido.");
     }
-
+    Logger.log("\n--- INSPECIONANDO AS 5 PRIMEIRAS LINHAS DA PLANILHA ---");
     // Encontra a linha correspondente ao pedido (começando da linha 2 da planilha, que é o índice 1 nos dados)
     for (let i = 1; i < data.length; i++) {
       const cellPedido = String(data[i][colunaNumeroPedido]).replace(/^'/, '').trim();
@@ -352,10 +356,11 @@ function atualizarStatusPedido(numeroPedido, novoStatus, motivo, infoAprovador) 
 
         // 1. Pega o NOME DE USUÁRIO do criador do pedido
                 const usernameDoCriador = linhaDoPedido[colCriadorUsername];
-                
+                loggersheet(`[DEPURAÇÃO] Pedido encontrado! Criador na planilha 'Pedidos': '${usernameDoCriador}'`);
                 // 2. Usa o NOME DE USUÁRIO para encontrar o Chat ID do Telegram
                 const chatIdDoCriador = _getChatIdPorUsername(usernameDoCriador);
-                
+                 loggersheet(`[DEPURAÇÃO] Resultado da busca por Chat ID para '${usernameDoCriador}': ${chatIdDoCriador}`);
+                 
                 let mensagem = "";
                 if (novoStatus === 'Aprovado') {
                     mensagem = `✅ <b>Pedido Aprovado!</b>\n\nSeu pedido <b>Nº ${numeroPedido}</b> foi aprovado.`;
@@ -375,7 +380,7 @@ function atualizarStatusPedido(numeroPedido, novoStatus, motivo, infoAprovador) 
     }
 
     // Se o loop terminar e não encontrar o pedido
-    throw new Error(`Pedido #${numeroPedido} não encontrado.`);
+    throw new Error(`Pedido #${numeroPedido} da empresa ${empresaId} não foi encontrado.`);
 
   } catch (e) {
     console.error(`Erro em atualizarStatusPedido: ${e.message}`);
@@ -860,6 +865,8 @@ function reenviarPedidoCorrigido(dadosPedido) {
             case 'Nome Veiculo': return dadosPedido.nomeVeiculo;
             case 'Total Geral': return dadosPedido.totalGeral;
             case 'ICMS ST Total': return dadosPedido.valorIcms;
+            case 'Número do Pedido':
+            return "'" + dadosPedido.numeroPedido;
             // Para todas as outras colunas (Data, Empresa, etc.), mantém o valor antigo
             case 'Empresa':
                 const empresaId = oldRowData[index];
@@ -883,8 +890,10 @@ function reenviarPedidoCorrigido(dadosPedido) {
     // 5. Atualiza os itens (remove os antigos e adiciona os novos)
     Logger.log("A iniciar a atualização dos itens...");
     const itensData = sheetItens.getDataRange().getValues();
+    const headersItens = itensData.shift();
     const idxNumPedItem = itensData[0].indexOf('NUMERO PEDIDO');
     const numeroPedidoAlvo = parseInt(dadosPedido.numeroPedido, 10);
+
     let itensRemovidos = 0;
 
     for (let i = itensData.length - 1; i > 0; i--) {
