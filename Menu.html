@@ -1,0 +1,57 @@
+<div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+				                <!-- Coluna da Esquerda: Ações e Menu -->
+				                <div class="lg:col-span-1 space-y-8">
+				                    <div class="bg-white p-6 rounded-xl shadow-lg">
+				                        <h3 class="text-xl font-bold text-gray-800 mb-4">Ações da Empresa</h3>
+				                        <div class="space-y-4">
+				                            <div>
+				                                <label for="selectEmpresa" class="block text-sm font-medium text-gray-700 mb-1">Trocar de Empresa:</label>
+				                                <select id="selectEmpresa" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></select>
+				                            </div>
+				                            <button id="btnSelecionarEmpresa" class="w-full text-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700">Confirmar Troca</button>
+				                        </div>
+				                    </div>
+                            <div class="bg-white p-6 rounded-xl shadow-lg relative"> 
+                            <button id="refreshMenuButton" title="Atualizar dados do menu" class="absolute top-4 right-4 p-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-colors">
+                              <i class="fas fa-sync-alt"></i>
+                          </button>	
+                          <button id="btnAbrirModalSt" class="px-4 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium rounded-lg flex items-center space-x-3 transition-colors">
+                                <i class="fas fa-calculator fa-fw text-gray-400"></i>
+                                <span>Cálculo Rápido de ST</span>
+                            </button>			                    
+				                        <h3 class="text-xl font-bold text-gray-800 mb-4">Menu Principal</h3>
+				                        <div id="menuOptionsGroup" class="space-y-3"></div>
+				                    </div>
+                                                     
+				                </div>
+
+				                <!-- Coluna da Direita: Dashboard -->
+				                <div id="company-dashboard-container" class="lg:col-span-2 space-y-8">
+				                    <div id="approval-card-wrapper" class="bg-white p-6 rounded-xl shadow-lg">
+				                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+				                            <i class="fas fa-check-double text-green-500 mr-3"></i>
+                                    <span id="titulo-aprovacoes">Aprovações Pendentes</span>
+				                        </h3>
+				                        <div id="approval-queue-container" class="flex space-x-4 overflow-x-auto py-2">
+				                            <p class="text-sm text-gray-500">A carregar...</p>
+				                        </div>
+				                    </div>
+				                    <div class="bg-white p-6 rounded-xl shadow-lg">
+				                        <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+				                            <i class="fas fa-bullhorn mr-3 text-orange-500"></i> Mural de Avisos
+				                        </h3>
+				                        <div id="notice-board-content" class="text-sm text-gray-600 space-y-3 p-3 bg-slate-50 rounded-md border border-slate-200 max-h-48 overflow-y-auto">
+				                            <p class="text-sm text-gray-500">A carregar...</p>
+				                        </div>
+				                    </div>
+				                    <div class="bg-white p-6 rounded-xl shadow-lg">
+				                        <h3 class="text-xl font-bold text-gray-800 mb-4">Ultimos Pedidos Aprovados</h3>
+				                        <div id="dashboard-content-area">
+				                            <div class="text-center py-10 text-gray-500">
+				                                <div class="spinner mx-auto"></div>
+				                                <p class="mt-4">A carregar...</p>
+				                            </div>
+				                        </div>
+				                    </div>
+				                </div>
+				            </div>`
