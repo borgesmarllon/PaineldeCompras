@@ -1,0 +1,122 @@
+<script>
+  const api = {
+    /**
+     * Função interna (privada) que transforma as chamadas do Apps Script em Promises.
+     * Isso nos permite usar a sintaxe moderna async/await.
+     * @param {string} functionName - O nome da função a ser chamada no Code.gs.
+     * @param {...*} args - Os argumentos para a função.
+     * @returns {Promise<any>}
+     */
+    _call(functionName, ...args) {
+      return new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          [functionName](...args);
+      });
+    },
+
+    // ===============================================
+    // AUTENTICAÇÃO E USUÁRIOS
+    // ===============================================
+    validarLogin(username, password, empresaId) {
+      return this._call('validarLogin', username, password, empresaId);
+    },
+    obterEmpresasDoUsuario(username) {
+      return this._call('obterEmpresasDoUsuario', username);
+    },
+    criarUsuario(nome, senha) {
+      return this._call('criarUsuario', nome, senha);
+    },
+    alterarSenha(senhaAtual, novaSenha) {
+      // Assumindo que a função no backend pode identificar o usuário logado
+      return this._call('alterarSenhaUsuario', senhaAtual, novaSenha);
+    },
+    
+    // ===============================================
+    // PEDIDOS
+    // ===============================================
+    salvarPedido(dadosPedido) {
+      return this._call('salvarPedido', dadosPedido);
+    },
+    editarPedido(dadosEdicao) {
+        return this._call('editarPedido', dadosEdicao);
+    },
+    buscarPedidos(params) {
+        return this._call('buscarPedidosv2', params);
+    },
+    cancelarPedido(numeroPedido, empresaId) {
+        // A função no backend precisa receber o usuário/data do cancelamento
+        return this._call('cancelarPedidoBackend', numeroPedido, empresaId);
+    },
+    getPedidoCompleto(numeroPedido) {
+        return this._call('getDadosCompletosDoPedido', numeroPedido);
+    },
+    getProximoNumeroPedido(empresaId) {
+        return this._call('getProximoNumeroPedido', empresaId);
+    },
+    getUltimosPedidosUsuario(params) {
+        return this._call('buscarUltimosPedidosDoUsuario', params);
+    },
+
+    // ===============================================
+    // DADOS GERAIS (Fornecedores, Veículos, etc.)
+    // ===============================================
+    getFornecedores() {
+      return this._call('getFornecedoresListv2');
+    },
+    getVeiculos() {
+      return this._call('getVeiculosList');
+    },
+    getEstados() {
+      return this._call('getEstadosv2');
+    },
+    adicionarVeiculo(nome) {
+        return this._call('adicionarNovoVeiculo', nome);
+    },
+    consultarCnpj(cnpj) {
+        return this._call('consultarCnpj_V2', cnpj);
+    },
+    salvarFornecedor(dadosFornecedor) {
+        return this._call('adicionarOuAtualizarFornecedorv2', dadosFornecedor);
+    },
+
+    // ===============================================
+    // DASHBOARD E RELATÓRIOS
+    // ===============================================
+    getDashboardData(filters) {
+        return this._call('getDashboardData', filters);
+    },
+    gerarRelatorioPdf(params) {
+        return this._call('generatePdfReport', params);
+    },
+    gerarRelatorioXls(params) {
+        return this._call('generateXlsReport', params);
+    },
+
+    // ===============================================
+    // ADMIN (Gerenciamento de Usuários, etc.)
+    // ===============================================
+    getUsuarios() {
+        return this._call('listarUsuariosCompleto');
+    },
+    alternarStatusUsuario(userId) {
+        return this._call('alternarStatusUsuario', userId);
+    },
+    salvarPermissoesUsuario(userId, empresas, padrao) {
+        return this._call('salvarPermissoesEmpresaUsuario', userId, empresas, padrao);
+    },
+    adminRedefinirSenha(username, novaSenha) {
+        return this._call('adminRedefinirSenha', username, novaSenha);
+    },
+    getPedidosPendentesAprovacao() {
+        return this._call('getPendingApprovals');
+    },
+    atualizarStatusPedido(numeroPedido, empresaId, novoStatus, motivo) {
+        // A função no backend precisa receber o usuário que aprovou/rejeitou
+        return this._call('atualizarStatusPedido', numeroPedido, novoStatus, motivo, null, empresaId);
+    }
+
+    // Adicione aqui qualquer outra função do Code.gs que você precise chamar
+  };
+</script>
