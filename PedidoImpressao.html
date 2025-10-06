@@ -1,0 +1,73 @@
+<div>
+				                        <style>
+				                            body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background-color: #fff; -webkit-print-color-adjust: exact; color-adjust: exact; }
+				                            .print-container { width: 210mm; min-height: 297mm; margin: 10mm auto; border: 1px solid #ccc; box-shadow: 0 0 5px rgba(0,0,0,0.1); background-color: #fff; padding: 15mm; box-sizing: border-box; }
+				                            .header-section { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
+				                            .company-info { display: flex; align-items: flex-start; flex: 2; text-align: left; }
+				                            .company-logo { width: 60px; height: 60px; margin-right: 15px; border: 1px solid #eee; padding: 5px; }
+				                            .company-details { font-size: 0.8em; line-height: 1.2; }
+				                            .company-details strong { font-size: 1.2em; display: block; margin-bottom: 3px; }
+				                            .company-details p { margin: 0; }
+				                            .order-info { flex: 1; display: flex; flex-direction: column; align-items: flex-end; font-size: 0.9em; gap: 5px; }
+				                            .info-box { border: 1px solid #000; padding: 5px 10px; text-align: center; width: 100%; box-sizing: border-box; background-color: #f0f0f0; }
+				                            .info-box span:first-child { display: block; font-weight: bold; margin-bottom: 2px; font-size: 0.9em; }
+				                            .info-box span:last-child { font-size: 1.1em; font-weight: bold; color: #0056b3; }
+				                            .supplier-section { display: flex; justify-content: space-between; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px; font-size: 0.85em; }
+				                            .supplier-details, .supplier-meta { flex: 1; text-align: left; }
+				                            .supplier-section p { margin: 2px 0; }
+				                            .supplier-details { padding-right: 15px; }
+				                            .vehicle-section { border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px; font-size: 0.85em; text-align: left; }
+				                            .vehicle-section p { margin: 2px 0; display: inline-block; margin-right: 20px; }
+				                            .items-table-section { margin-bottom: 15px; }
+				                            table { width: 100%; border-collapse: collapse; font-size: 0.8em; }
+				                            th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; vertical-align: top; }
+				                            th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
+				                            td { white-space: normal; word-wrap: break-word; }
+				                            .total-notes-section { border: 1px solid #000; padding: 10px; margin-top: 20px; margin-bottom: 20px; background-color: #f5f5f5; }
+				                            .total-value { font-size: 1.1em; font-weight: bold; text-align: right; margin-bottom: 10px; }
+				                            .notes { font-size: 0.8em; text-align: center; line-height: 1.3; }
+				                            .attention-text { font-weight: bold; color: #dc3545; }
+				                            .signature-section { text-align: center; margin-top: 30px; font-size: 0.9em; font-weight: bold; }
+				                            .signature-section p { margin: 2px 0; }
+				                            @media print { .print-container { border: none; box-shadow: none; margin: 0; width: 100%; min-height: auto; padding: 0; } body { margin: 0; padding: 0; } }
+				                        </style>
+				                        <div class="print-container">
+				                            <div class="header-section">
+				                                <div class="company-info">
+				                                    <img src="https://placehold.co/100x100/eeeeee/black?text=LOGO" alt="Logo da Empresa" class="company-logo">
+				                                    <div class="company-details">
+				                                        <strong id="empresaNomePrint"></strong><p id="empresaEnderecoPrint"></p><p id="empresaCidadeUfPrint"></p>
+				                                        <p>CNPJ: <span id="empresaCnpjPrint"></span></p><p id="empresaEmailPrint"></p><p id="empresaTelefonePrint"></p>
+				                                    </div>
+				                                </div>
+				                                <div class="order-info">
+				                                    <div class="info-box date-box"><span>DATA DA EMISSÃO</span><span id="dataEmissaoPrint"></span></div>
+				                                    <div class="info-box order-number-box"><span>NÚMERO DO PEDIDO</span><span id="numeroPedidoPrint"></span></div>
+				                                </div>
+				                            </div>
+				                            <div class="supplier-section">
+				                                <div class="supplier-details">
+				                                    <p><strong>FORNECEDOR:</strong> <span id="fornecedorPrint"></span></p><p><strong>ENDEREÇO:</strong> <span id="enderecoFornecedorPrint"></span></p><p><strong>FORMA PGTO:</strong> <span id="formaPagamentoPrint"></span></p>
+				                                </div>
+				                                <div class="supplier-meta">
+				                                    <p><strong>CNPJ:</strong> <span id="cnpjFornecedorPrint"></span></p><p><strong>CONDIÇÃO PGTO:</strong> <span id="condicaoPagamentoPrint"></span></p>
+				                                </div>
+				                            </div>
+				                            <div class="vehicle-section">
+				                                <p><strong>PLACA:</strong> <span id="placaVeiculoPrint"></span></p><p><strong>VEÍCULO:</strong> <span id="nomeVeiculoPrint"></span></p>
+				                            </div>
+				                            <div class="items-table-section">
+				                                <table>
+				                                    <thead><tr><th style="width: 5%;">CÓD.</th><th style="width: 40%;">DESCRIÇÃO</th><th style="width: 15%;">UNIDADE</th><th style="width: 10%;">QTD.</th><th style="width: 15%;">VALOR UNIT.</th><th style="width: 15%;">SUBTOTAL</th></tr></thead>
+				                                    <tbody id="printItemsTableBody"></tbody>
+				                                </table>
+				                            </div>
+				                            <div class="total-notes-section">
+				                                <div class="total-value"><strong>VALOR TOTAL DA NOTA:</strong> <span id="totalGeralPrint"></span></div>
+				                                <div class="notes"><p id="observacoesPedidoPrint" class="note-text"></p><p class="attention-text">Atenção: Qualquer alteração só pode ser realizada mediante autorização prévia, sob risco de não pagamento.</p></div>
+				                            </div>
+				                            <div class="signature-section">
+				                                <p><strong id="usuarioLogadoPrint"></strong></p><p id="funcaoUsuarioLogadoPrint"></p>
+				                            </div>
+				                        </div>
+				                    </div>`
