@@ -1,0 +1,63 @@
+<div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl p-8 space-y-6">
+				                        <h2 class="text-2xl font-bold text-center text-gray-800">Relatórios de Compras</h2>
+				                        <form id="reportForm" autocomplete="off" class="space-y-6">
+				                            <div class="p-4 border border-gray-200 rounded-lg">
+				                                <h3 class="text-lg font-medium text-gray-900 mb-4">Filtros</h3>
+				                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				                                    <div>
+				                                        <label for="startDate" class="block text-sm font-medium text-gray-700">Data Inicial:</label>
+				                                        <input type="date" id="startDate" name="startDate" class="mt-1 block w-full px-3 py-2 bg-gray-50 border-gray-300 rounded-md">
+				                                    </div>
+				                                    <div>
+				                                        <label for="endDate" class="block text-sm font-medium text-gray-700">Data Final:</label>
+				                                        <input type="date" id="endDate" name="endDate" class="mt-1 block w-full px-3 py-2 bg-gray-50 border-gray-300 rounded-md">
+				                                    </div>
+				                                    <div class="md:col-span-2">
+				                                        <label for="supplierSelect" class="block text-sm font-medium text-gray-700">Fornecedor:</label>
+				                                        <select id="supplierSelect" name="supplierSelect" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md">
+				                                            <option value="todos">Todos os Fornecedores</option>
+				                                        </select>
+				                                    </div>
+                                            <div class="md:col-span-2">
+                                              <label for="statusSelect" class="block text-sm font-medium text-gray-700">Status do Pedido:</label>
+                                              <select id="statusSelect" name="statusSelect" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md">
+                                                <option value="todos">Todos os Status</option>
+                                                <option value="Aprovado">Aprovado</option>
+                                                <option value="Rascunho">Rascunho</option>
+                                                <option value="Aguardando Aprovacao">Aguardando Aprovacao</option>
+                                                <option value="Cancelado">Cancelado</option>
+                                              </select>
+                                            </div>
+				                                </div>
+				                            </div>
+
+				                            <div class="p-4 border border-gray-200 rounded-lg">
+				                                <h3 class="text-lg font-medium text-gray-900 mb-4">Tipo de Relatório</h3>
+				                                <div class="flex flex-col space-y-2">
+				                                    <label class="flex items-center">
+				                                        <input type="radio" id="reportTypeDetailed" name="reportType" value="detailed" checked class="h-4 w-4 text-blue-600 border-gray-300">
+				                                        <span class="ml-3 text-sm text-gray-700">Detalhado (por Data/Fornecedor)</span>
+				                                    </label>
+				                                    <label class="flex items-center">
+				                                        <input type="radio" id="reportTypeFinancial" name="reportType" value="financial" class="h-4 w-4 text-blue-600 border-gray-300">
+				                                        <span class="ml-3 text-sm text-gray-700">Financeiro (Resumo)</span>
+				                                    </label>
+				                                </div>
+				                            </div>
+
+				                            <p id="reportMessage" class="text-center text-sm font-medium min-h-[20px]"></p>
+
+				                            <div id="reportPreviewArea" class="hidden text-center p-4 bg-blue-50 rounded-lg">
+				                                <a id="downloadLink" href="#" target="_blank" class="text-blue-600 font-semibold hover:underline">
+				                                    <i class="fas fa-download mr-2"></i>Baixar Relatório
+				                                </a>
+				                            </div>
+
+				                            <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
+				                                <button type="button" id="backToMenuFromReportsButton" class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-700">Voltar</button>
+				                                <button type="button" id="generatePdfButton" class="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700"><i class="fas fa-file-pdf mr-2"></i>Gerar PDF</button>
+				                                <button type="button" id="generateXlsButton" class="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700"><i class="fas fa-file-excel mr-2"></i>Gerar XLSX</button>
+				                                
+				                            </div>
+				                        </form>
+				                    </div>`
