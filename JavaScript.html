@@ -6294,115 +6294,94 @@ function toggleSenha(id) {
 				        // FUNÇÕES DE FORNECEDOR
 				        // ===============================================
 
-				        function preencherCombosFornecedor() {
-				            showToast('Carregando dados do fornecedor...', 'info', 'Carregando');
-				            console.log("[preencherCombosFornecedor] Iniciando busca de dados...");
+				        async function preencherCombosFornecedor() {
+  try {
+    showToast('Carregando dados do fornecedor...', 'info', 'Carregando');
+    console.log("[preencherCombosFornecedor] Iniciando busca de dados...");
 
-				            /**google.script.run
-				                .withSuccessHandler(codigo => {
-				                    const codigoInput = document.getElementById('codigo');
-				                    if (codigoInput) codigoInput.value = codigo;
-				                    console.log("[preencherCombosFornecedor] Código recebido:", codigo);
-				                    showToast('Dados carregados com sucesso!', 'success', 'Sucesso');
-				                })
-				                .withFailureHandler(error => {
-				                    console.error('[preencherCombosFornecedor] Erro ao buscar próximo código:', error);
-				                    showToast('Erro ao carregar código do fornecedor.', 'error', 'Erro');
-				                })
-				                .getProximoCodigoFornecedor();**/
+    // Exemplo resgatando código do fornecedor com controle de erro
+    // Descomente se implementar essa função no backend e no api.html
+    // const codigo = await api.getProximoCodigoFornecedor();
+    // const codigoInput = document.getElementById('codigo');
+    // if (codigoInput) codigoInput.value = codigo;
+    // console.log("[preencherCombosFornecedor] Código recebido:", codigo);
 
-				            google.script.run
-				                .withSuccessHandler(condicoes => {
-				                    console.log('[preencherCombosFornecedor] Condições de pagamento recebidas:', condicoes);
-				                    populateSelect('condicao', condicoes, 'Selecione a Condição');
-				                })
-				                .withFailureHandler(error => {
-				                    console.error('[preencherCombosFornecedor] Erro ao buscar condições de pagamento:', error);
-				                    showToast('Erro ao carregar condições de pagamento.', 'error', 'Erro');
-				                })
-				                .getCondicoesPagamento();
+    // Buscar condições de pagamento
+    const condicoes = await api.getCondicoesPagamento();
+    console.log('[preencherCombosFornecedor] Condições de pagamento recebidas:', condicoes);
+    populateSelect('condicao', condicoes, 'Selecione a Condição');
 
-				            google.script.run
-				                .withSuccessHandler(formas => {
-				                    console.log('[preencherCombosFornecedor] Formas de pagamento recebidas:', formas);
-				                    populateSelect('forma', formas, 'Selecione a Forma');
-				                })
-				                .withFailureHandler(error => {
-				                    console.error('[preencherCombosFornecedor] Erro ao buscar formas de pagamento:', error);
-				                    showToast('Erro ao carregar formas de pagamento.', 'error', 'Erro');
-				                })
-				                .getFormasPagamento();
-				        }
+    // Buscar formas de pagamento
+    const formas = await api.getFormasPagamento();
+    console.log('[preencherCombosFornecedor] Formas de pagamento recebidas:', formas);
+    populateSelect('forma', formas, 'Selecione a Forma');
 
-				        function salvarFornecedor(codigoOriginal) {
-				        const form = document.getElementById('form-fornecedor');
-				        const saveButton = document.getElementById('saveButton');
+    showToast('Dados carregados com sucesso!', 'success', 'Sucesso');
+  } catch (error) {
+    console.error('[preencherCombosFornecedor] Erro ao carregar dados do fornecedor:', error);
+    showToast('Erro ao carregar dados do fornecedor.', 'error', 'Erro');
+  }
+}
 
-				        if (!form || !saveButton) {
-				            console.error("Elementos do formulário de fornecedor não encontrados para salvar.");
-				            showToast("Erro interno: Elementos do formulário ausentes.", "error", "Erro Interno");
-				            return;
-				        }
+async function salvarFornecedor(codigoOriginal) {
+  const form = document.getElementById('form-fornecedor');
+  const saveButton = document.getElementById('saveButton');
 
-				        if (!form.checkValidity()) {
-				            showToast('Por favor, preencha todos os campos obrigatórios!', 'error', 'Campos Obrigatórios');
-				            form.reportValidity();
-				            return;
-				        }
+  if (!form || !saveButton) {
+    console.error("Elementos do formulário de fornecedor não encontrados para salvar.");
+    showToast("Erro interno: Elementos do formulário ausentes.", "error", "Erro Interno");
+    return;
+  }
 
-				        // --- CORREÇÃO PRINCIPAL ---
-				        // Mapeamos os campos do formulário para os nomes exatos que a função do backend espera.
-				        const fornecedorParaBackend = {
-				            codigo: codigoOriginal || '',
-				            razaoSocial: document.getElementById('razao').value.trim(),
-				            nomeFantasia: document.getElementById('fantasia').value.trim(),
-				            cnpj: document.getElementById('cnpj').value.trim(),
-				            endereco: document.getElementById('endereco').value.trim(),
-				            cidade: document.getElementById('cidade').value.trim(),
-				            estado: document.getElementById('estado').value.trim(),
-				            condicaoPagamento: document.getElementById('condicao').value.trim(),
-				            formaPagamento: document.getElementById('forma').value.trim(),
-				            grupo: document.getElementById('grupo').value.trim(),
-				            regimeTributario: document.getElementById('regimeTributarioInput').value || 'Outro'
-				        };
+  if (!form.checkValidity()) {
+    showToast('Por favor, preencha todos os campos obrigatórios!', 'error', 'Campos Obrigatórios');
+    form.reportValidity();
+    return;
+  }
 
-				        // Se estamos editando, passamos o código original. Se não, passamos vazio.
-				        fornecedorParaBackend.codigo = codigoOriginal || '';
+  const fornecedorParaBackend = {
+    codigo: codigoOriginal || '',
+    razaoSocial: document.getElementById('razao').value.trim(),
+    nomeFantasia: document.getElementById('fantasia').value.trim(),
+    cnpj: document.getElementById('cnpj').value.trim(),
+    endereco: document.getElementById('endereco').value.trim(),
+    cidade: document.getElementById('cidade').value.trim(),
+    estado: document.getElementById('estado').value.trim(),
+    condicaoPagamento: document.getElementById('condicao').value.trim(),
+    formaPagamento: document.getElementById('forma').value.trim(),
+    grupo: document.getElementById('grupo').value.trim(),
+    regimeTributario: document.getElementById('regimeTributarioInput').value || 'Outro'
+  };
 
-				        saveButton.disabled = true;
-				        saveButton.innerText = 'Salvando...';
-				        showToast('Salvando fornecedor...', 'info', 'Processando');
+  saveButton.disabled = true;
+  saveButton.innerText = 'Salvando...';
+  showToast('Salvando fornecedor...', 'info', 'Processando');
 
-				        // --- SIMPLIFICAÇÃO ---
-				        // Chamamos sempre a mesma função no backend. Ela é inteligente o suficiente para saber se deve criar ou atualizar.
-				        google.script.run
-				            .withSuccessHandler(res => {
-				                saveButton.disabled = false;
-				                saveButton.innerText = 'Salvar';
+  try {
+    const res = await api.salvarFornecedor(fornecedorParaBackend);
 
-				                if (res.status === 'ok') {
-				                    if (codigoOriginal) {
-				                        // Se sim, volta para a lista de fornecedores
-				                        console.log('Edição concluída. Voltando para a lista de fornecedores.');
-				                        loadPageContent('GerenciarFornecedores', setupGerenciarFornecedoresScreen);
-				                    } else {
-				                        // Se não (era um novo cadastro), volta para o menu principal
-				                        console.log('Novo cadastro concluído. Voltando para o menu.');
-				                        loadPageContent('Menu', setupMenuScreen);
-				                    }
-				                } else {
-				                    // Mostra a mensagem de erro que veio diretamente do backend (ex: "CNPJ já existe")
-				                    showToast(res.message || 'Erro ao salvar fornecedor.', 'error', 'Erro no Salvamento');
-				                }
-				            })
-				            .withFailureHandler(error => {
-				                saveButton.disabled = false;
-				                saveButton.innerText = 'Salvar';
-				                console.error('Erro na comunicação com o servidor (salvarFornecedor):', error);
-				                showToast('Ocorreu um erro inesperado ao salvar. Tente novamente.', 'error', 'Erro de Comunicação');
-				            })
-				            .adicionarOuAtualizarFornecedorv2(fornecedorParaBackend); // Chamada única e correta
-				    }
+    saveButton.disabled = false;
+    saveButton.innerText = 'Salvar';
+
+    if (res.status === 'ok') {
+      if (codigoOriginal) {
+        console.log('Edição concluída. Voltando para a lista de fornecedores.');
+        loadPageContent('GerenciarFornecedores', setupGerenciarFornecedoresScreen);
+      } else {
+        console.log('Novo cadastro concluído. Voltando para o menu.');
+        loadPageContent('Menu', setupMenuScreen);
+      }
+    } else {
+      showToast(res.message || 'Erro ao salvar fornecedor.', 'error', 'Erro no Salvamento');
+    }
+  } catch (error) {
+    saveButton.disabled = false;
+    saveButton.innerText = 'Salvar';
+    console.error('Erro na comunicação com o servidor (salvarFornecedor):', error);
+    showToast('Ocorreu um erro inesperado ao salvar. Tente novamente.', 'error', 'Erro de Comunicação');
+  }
+}
+
 
 				        /**
 				         * Formata um valor para o padrão de CPF (se tiver até 11 dígitos)
@@ -6476,56 +6455,51 @@ function toggleSenha(id) {
 				            return true;
 				        }
 
-				        // Função para lidar com o clique do botão "Consultar"
-				        function handleConsultarCnpj() {
-				            const cnpjInput = document.getElementById('cnpj');
-				            const consultarBtn = document.getElementById('consultarCnpjBtn');
-				            const cnpj = cnpjInput.value;
+				        async function handleConsultarCnpj() {
+  const cnpjInput = document.getElementById('cnpj');
+  const consultarBtn = document.getElementById('consultarCnpjBtn');
+  const cnpj = cnpjInput.value.trim();
 
-				            if (!validarCnpj(cnpj)) {
-				                showToast('O CNPJ digitado é inválido.', 'error', 'CNPJ Inválido');
-				                return;
-				            }
+  if (!validarCnpj(cnpj)) {
+    showToast('O CNPJ digitado é inválido.', 'error', 'CNPJ Inválido');
+    return;
+  }
 
-				            showToast('Consultando CNPJ...', 'info', 'Consultando');
-				            consultarBtn.disabled = true;
-				            consultarBtn.textContent = '...';
+  showToast('Consultando CNPJ...', 'info', 'Consultando');
+  consultarBtn.disabled = true;
+  consultarBtn.textContent = '...';
 
-				            google.script.run
-				                .withSuccessHandler(response => {
-				                    if (response && response.status === 'ok') {
-				                      const razao = response.data.razaoSocial || '';
-				                      const fantasia = response.data.nomeFantasia || razao;
+  try {
+    const response = await api.consultarCnpj(cnpj);
+    
+    if (response && response.status === 'ok') {
+      const data = response.data;
+      document.getElementById('razao').value = data.razaoSocial || '';
+      document.getElementById('fantasia').value = data.nomeFantasia || '';
+      document.getElementById('endereco').value = data.endereco || '';
+      document.getElementById('regimeTributarioInput').value = data.regimeTributario || 'Outro';
 
-				                        document.getElementById('razao').value = response.data.razaoSocial || '';
-				                        document.getElementById('fantasia').value = response.data.nomeFantasia || '';
-				                        document.getElementById('endereco').value = response.data.endereco || '';
-				                        document.getElementById('regimeTributarioInput').value = response.data.regimeTributario || 'Outro';
+      const estadoSelect = document.getElementById('estado');
+      if (estadoSelect && data.uf) {
+        estadoSelect.value = data.uf;
+      }
 
-				                        // Preencher o estado se disponível na resposta da API
-				                        const estadoSelect = document.getElementById('estado');
-				                        if (estadoSelect && response.data.uf) {
-				                            estadoSelect.value = response.data.uf;
-				                        }
-				                        // Preencher a cidade
-				                        const cidadeInput = document.getElementById('cidade');
-				                        if (cidadeInput && (response.data.municipio || response.data.cidade)) {
-				                           cidadeInput.value = response.data.municipio || response.data.cidade || '';
-				                        }
-				                        showToast('Dados preenchidos com sucesso!', 'success', 'CNPJ Consultado');
-				                    } else {
-				                        showToast(response.message, 'error', 'Erro na Consulta');
-				                    }
-				                    consultarBtn.disabled = false;
-				                    consultarBtn.textContent = 'Consultar';
-				                })
-				                .withFailureHandler(err => {
-				                    showToast('Erro de comunicação ao consultar CNPJ.', 'error', 'Erro de Comunicação');
-				                    consultarBtn.disabled = false;
-				                    consultarBtn.textContent = 'Consultar';
-				                })
-				                .consultarCnpj_V2(cnpj);
-				        }
+      const cidadeInput = document.getElementById('cidade');
+      if (cidadeInput && (data.municipio || data.cidade)) {
+        cidadeInput.value = data.municipio || data.cidade || '';
+      }
+      showToast('Dados preenchidos com sucesso!', 'success', 'CNPJ Consultado');
+    } else {
+      showToast(response.message || 'Erro na consulta do CNPJ.', 'error', 'Erro na Consulta');
+    }
+  } catch (err) {
+    showToast('Erro de comunicação ao consultar CNPJ.', 'error', 'Erro de Comunicação');
+    console.error('Erro ao consultar CNPJ:', err);
+  } finally {
+    consultarBtn.disabled = false;
+    consultarBtn.textContent = 'Consultar';
+  }
+}
 
 				        // Função para forçar maiúsculas
 				        function forceUppercase(event) {
@@ -6571,190 +6545,162 @@ function toggleSenha(id) {
 				            }
 				        }
 
-				        // Funções antigas de fornecedor (manter compatibilidade)
-				        function carregarCondicoesPagamento() {
-				            google.script.run
-				                .withSuccessHandler(condicoes => {
-				                    populateSelect('condicao', condicoes, 'Selecione a Condição');
-				                })
-				                .withFailureHandler(error => {
-				                    console.error('Erro ao buscar condições de pagamento:', error);
-				                    showToast('Erro ao carregar condições de pagamento.', 'error', 'Erro');
-				                })
-				                .getCondicoesPagamento();
-				        }
+				        async function carregarCondicoesPagamento() {
+  try {
+    const condicoes = await api.getCondicoesPagamento();
+    populateSelect('condicao', condicoes, 'Selecione a Condição');
+  } catch (error) {
+    console.error('Erro ao buscar condições de pagamento:', error);
+    showToast('Erro ao carregar condições de pagamento.', 'error', 'Erro');
+  }
+}
 
-				        function carregarFormasPagamento() {
-				            google.script.run
-				                .withSuccessHandler(formas => {
-				                    populateSelect('forma', formas, 'Selecione a Forma');
-				                })
-				                .withFailureHandler(error => {
-				                    console.error('Erro ao buscar formas de pagamento:', error);
-				                    showToast('Erro ao carregar formas de pagamento.', 'error', 'Erro');
-				                })
-				                .getFormasPagamento();
-				        }
 
-				        function carregarListaFornecedores() {
-				          const tbody = document.getElementById('fornecedoresTableBody');
-				          const msg = document.getElementById('fornecedorListMessage');
-				          showToast('Carregando fornecedores...', 'info', 'Aguarde');
+				        async function carregarFormasPagamento() {
+  try {
+    const formas = await api.getFormasPagamento();
+    populateSelect('forma', formas, 'Selecione a Forma');
+  } catch (error) {
+    console.error('Erro ao buscar formas de pagamento:', error);
+    showToast('Erro ao carregar formas de pagamento.', 'error', 'Erro');
+  }
+}
 
-				          google.script.run
-				              .withSuccessHandler(fornecedores => {
-				                  if (msg) msg.textContent = '';
-				                  tbody.innerHTML = '';
 
-				            if (!fornecedores || fornecedores.length === 0) {
-				                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 py-10">Nenhum fornecedor encontrado.</td></tr>';
-				                return;
-				            }
+				        async function carregarListaFornecedores() {
+  const tbody = document.getElementById('fornecedoresTableBody');
+  const msg = document.getElementById('fornecedorListMessage');
+  showToast('Carregando fornecedores...', 'info', 'Aguarde');
 
-				            fornecedores.forEach(fornecedor => {
-				                const row = document.createElement('tr');
-				                // Estilo para a linha inativa (continua igual)
-				                const rowClass = fornecedor.status === 'INATIVO' ? 'bg-gray-50 opacity-60' : '';
-				                row.className = `border-b ${rowClass}`;
+  try {
+    const fornecedores = await api.getFornecedoresParaGerenciamento();
+    if (msg) msg.textContent = '';
+    tbody.innerHTML = '';
 
-				                // Determina se o interruptor deve estar 'ligado' (checked)
-				                const isAtivo = fornecedor.status === 'ATIVO';
-				                const badgeClass = isAtivo
-				                ? 'bg-green-100 text-green-800'
-				                : 'bg-gray-200 text-gray-800';
+    if (!fornecedores || fornecedores.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 py-10">Nenhum fornecedor encontrado.</td></tr>';
+      return;
+    }
 
-				                row.innerHTML = `
-				                    <td class="px-6 py-4">${fornecedor.codigo}</td>
-				                    <td class="px-6 py-4">${fornecedor.razaoSocial || ''}</td>
-				                    <td class="px-6 py-4">${fornecedor.nomeFantasia || ''}</td>
-				                    <td class="px-6 py-4">${fornecedor.cnpj || ''}</td>
-				                    <td class="px-6 py-4">${fornecedor.grupo || ''}</td>
-				                    <td class="px-6 py-4 text-center">
-				                         <td class="px-6 py-4 text-center">
-				                            <span class="badge-status-toggle px-3 py-1 text-xs font-semibold leading-5 rounded-full cursor-pointer transition hover:opacity-80 ${badgeClass}"
-				                                  data-codigo="${fornecedor.codigo}">
-				                                ${fornecedor.status}
-				                            </span>
-				                        </td>
+    fornecedores.forEach(fornecedor => {
+      const row = document.createElement('tr');
+      const rowClass = fornecedor.status === 'INATIVO' ? 'bg-gray-50 opacity-60' : '';
+      row.className = `border-b ${rowClass}`;
 
-				                        <td class="px-6 py-4 text-center">
-				                            <button class="btn-editar-fornecedor px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded hover:bg-blue-200 transition"
-				                                    data-codigo="${fornecedor.id}">
-				                                <i class="fas fa-edit mr-1"></i> Editar
-				                            </button>
-				                        </td>
-				                        `;
-				                tbody.appendChild(row);
-				            });
+      const isAtivo = fornecedor.status === 'ATIVO';
+      const badgeClass = isAtivo ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800';
 
-				            addEditFornecedorListeners();
-				        })
-				        .withFailureHandler(error => {
-				            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 py-10">Erro ao carregar fornecedores.</td></tr>';
-				            if (msg) msg.textContent = 'Erro ao carregar fornecedores.';
-				            console.error(error);
-				        })
-				        .getFornecedoresParaGerenciamento();
+      row.innerHTML = `
+          <td class="px-6 py-4">${fornecedor.codigo}</td>
+          <td class="px-6 py-4">${fornecedor.razaoSocial || ''}</td>
+          <td class="px-6 py-4">${fornecedor.nomeFantasia || ''}</td>
+          <td class="px-6 py-4">${fornecedor.cnpj || ''}</td>
+          <td class="px-6 py-4">${fornecedor.grupo || ''}</td>
+          <td class="px-6 py-4 text-center">
+              <span class="badge-status-toggle px-3 py-1 text-xs font-semibold leading-5 rounded-full cursor-pointer transition hover:opacity-80 ${badgeClass}"
+                  data-codigo="${fornecedor.codigo}">
+                  ${fornecedor.status}
+              </span>
+          </td>
+          <td class="px-6 py-4 text-center">
+              <button class="btn-editar-fornecedor px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded hover:bg-blue-200 transition"
+                  data-codigo="${fornecedor.id}">
+                  <i class="fas fa-edit mr-1"></i> Editar
+              </button>
+          </td>
+      `;
+      tbody.appendChild(row);
+    });
 
-				}
-        
-          function renderAndSetupFornecedores() {
-         const tbody = document.getElementById('fornecedoresTableBody'); // Garanta que o <tbody> da sua tabela tenha este ID
-          if (!tbody) return;
+    addEditFornecedorListeners();
 
-          tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i>A carregar fornecedores...</td></tr>';
+  } catch (error) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 py-10">Erro ao carregar fornecedores.</td></tr>';
+    if (msg) msg.textContent = 'Erro ao carregar fornecedores.';
+    console.error(error);
+  }
+}
 
-          google.script.run
-              .withSuccessHandler(fornecedores => {
-                console.log("Dados recebidos do backend (getFornecedoresParaGerenciamento):", fornecedores);
+        async function renderAndSetupFornecedores() {
+  const tbody = document.getElementById('fornecedoresTableBody');
+  if (!tbody) return;
 
-                  tbody.innerHTML = '';
-                  if (!fornecedores || fornecedores.length === 0) {
-                      tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-500 italic">Nenhum fornecedor cadastrado.</td></tr>';
-                      return;
-                  }
+  tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i>A carregar fornecedores...</td></tr>';
 
-                  fornecedores.forEach(fornecedor => {
-                      const tr = document.createElement('tr');
-                      const statusClass = fornecedor.status === 'ATIVO' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800';
-                      const rowClass = fornecedor.status === 'ATIVO' ? 'hover:bg-gray-50' : 'bg-gray-50 opacity-60';
-                      tr.className = `border-b ${rowClass}`;
-                      
-                      // ✅ CORREÇÃO: O HTML agora gera 7 <td>s para alinhar com os 7 <th>s da sua tabela.
-                      tr.innerHTML = `
-                          <td class="p-4 align-top text-gray-700 font-medium">${fornecedor.codigo || 'N/A'}</td>
-                          <td class="p-4 align-top text-gray-800 font-semibold">${fornecedor.razaoSocial || ''}</td>
-                          <td class="p-4 align-top text-gray-700">${fornecedor.nomeFantasia || ''}</td>
-                          <td class="p-4 align-top text-gray-700">${fornecedor.cnpj || 'N/A'}</td>
-                          <td class="p-4 align-top text-gray-700">${fornecedor.grupo || 'N/A'}</td>
-                          <td class="p-4 align-top text-center">
-                              <span class="badge-status-toggle px-3 py-1 text-xs font-semibold leading-5 rounded-full cursor-pointer transition hover:opacity-80 ${statusClass}" data-id="${fornecedor.codigo}">
-                                  ${fornecedor.status}
-                              </span>
-                          </td>
-                          <td class="p-4 align-top text-center">
-                              <button title="Editar" class="btn-editar-fornecedor text-gray-400 hover:text-blue-600 text-xl" data-id="${fornecedor.codigo}">
-                                  <i class="fas fa-pencil-alt"></i>
-                              </button>
-                          </td>
-                      `;
-                      tbody.appendChild(tr);
-                  });
+  try {
+    const fornecedores = await api.getFornecedoresParaGerenciamento();
+    tbody.innerHTML = '';
 
-                  // --- ATIVAÇÃO DOS LISTENERS (DELEGAÇÃO DE EVENTOS) ---
-                  const newTbody = tbody.cloneNode(true);
-                  tbody.parentNode.replaceChild(newTbody, tbody);
+    if (!fornecedores || fornecedores.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-500 italic">Nenhum fornecedor cadastrado.</td></tr>';
+      return;
+    }
 
-                  newTbody.addEventListener('click', function(e) {
-                      const editButton = e.target.closest('.btn-editar-fornecedor');
-                      if (editButton) {
-                        console.log("Elemento do botão de edição clicado:", editButton);
-                          console.log("Propriedade 'dataset' do botão:", editButton.dataset);
-                          const codigoFornecedor = editButton.dataset.id;
-                          
-                          console.log("A editar fornecedor:", codigoFornecedor);
-                          if (codigoFornecedor) {
-                              loadPageContent('CadastroFornecedor', () => setupCadastroFornecedorScreen(codigoFornecedor));
-                          }
-                          return;
-                      }
+    fornecedores.forEach(fornecedor => {
+      const tr = document.createElement('tr');
+      const statusClass = fornecedor.status === 'ATIVO' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800';
+      const rowClass = fornecedor.status === 'ATIVO' ? 'hover:bg-gray-50' : 'bg-gray-50 opacity-60';
+      tr.className = `border-b ${rowClass}`;
 
-                      const statusBadge = e.target.closest('.badge-status-toggle');
-                        if (statusBadge) {
-                          const codigoFornecedor = statusBadge.dataset.id;
-                          console.log("A ativar/desativar:". codigo);
-                          const statusAtual = statusBadge.textContent.trim();
-                          
-                                        showToast('Alterando status...', 'info');
+      tr.innerHTML = `
+        <td class="p-4 align-top text-gray-700 font-medium">${fornecedor.codigo || 'N/A'}</td>
+        <td class="p-4 align-top text-gray-800 font-semibold">${fornecedor.razaoSocial || ''}</td>
+        <td class="p-4 align-top text-gray-700">${fornecedor.nomeFantasia || ''}</td>
+        <td class="p-4 align-top text-gray-700">${fornecedor.cnpj || 'N/A'}</td>
+        <td class="p-4 align-top text-gray-700">${fornecedor.grupo || 'N/A'}</td>
+        <td class="p-4 align-top text-center">
+          <span class="badge-status-toggle px-3 py-1 text-xs font-semibold leading-5 rounded-full cursor-pointer transition hover:opacity-80 ${statusClass}" data-id="${fornecedor.codigo}">
+            ${fornecedor.status}
+          </span>
+        </td>
+        <td class="p-4 align-top text-center">
+          <button title="Editar" class="btn-editar-fornecedor text-gray-400 hover:text-blue-600 text-xl" data-id="${fornecedor.codigo}">
+            <i class="fas fa-pencil-alt"></i>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
 
-                                        google.script.run
-                                            .withSuccessHandler(response => {
-                                                if (response && response.status === 'ok') {
-                                                    showToast(response.message, 'success');
+    // Delegação de eventos para editar e alterar status
+    tbody.addEventListener('click', async e => {
+      const editButton = e.target.closest('.btn-editar-fornecedor');
+      if (editButton) {
+        const codigoFornecedor = editButton.dataset.id;
+        if (codigoFornecedor) {
+          loadPageContent('CadastroFornecedor', () => setupCadastroFornecedorScreen(codigoFornecedor));
+        }
+        return;
+      }
 
-                                                    // Atualiza a aparência do badge e da linha
-                                                    const isAgoraAtivo = response.novoStatus === 'ATIVO';
-                                                    statusBadge.textContent = response.novoStatus;
-                                                    statusBadge.className = 'badge-status-toggle px-3 py-1 text-xs font-semibold leading-5 rounded-full cursor-pointer transition hover:opacity-80 ' +
-                                                                            (isAgoraAtivo ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800');
-                                                    statusBadge.closest('tr').className = 'border-b ' + (isAgoraAtivo ? '' : 'bg-gray-50 opacity-60');
-                                                } else {
-                                                    showToast(response ? response.message : 'Erro desconhecido.', 'error');
-                                                }
-                                            })
-                                            .withFailureHandler(err => {
-                                                showToast('Erro de comunicação.', 'error');
-                                                console.error(err);
-                                            })
-                                            .alternarStatusFornecedorv2(codigoFornecedor);
-                      }
-                  });
-              })
-              .withFailureHandler(err => {
-                  tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-red-500">Erro ao carregar fornecedores.</td></tr>';
-              })
-              .getFornecedoresParaGerenciamento();
-            }
+      const statusBadge = e.target.closest('.badge-status-toggle');
+      if (statusBadge) {
+        const codigoFornecedor = statusBadge.dataset.id;
+        showToast('Alterando status...', 'info');
+        try {
+          const response = await api.alternarStatusFornecedorv2(codigoFornecedor);
+          if (response && response.status === 'ok') {
+            showToast(response.message, 'success');
+            const isAgoraAtivo = response.novoStatus === 'ATIVO';
+            statusBadge.textContent = response.novoStatus;
+            statusBadge.className = 'badge-status-toggle px-3 py-1 text-xs font-semibold leading-5 rounded-full cursor-pointer transition hover:opacity-80 ' + (isAgoraAtivo ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800');
+            statusBadge.closest('tr').className = 'border-b ' + (isAgoraAtivo ? '' : 'bg-gray-50 opacity-60');
+          } else {
+            showToast(response ? response.message : 'Erro desconhecido.', 'error');
+          }
+        } catch (err) {
+          showToast('Erro de comunicação.', 'error');
+          console.error(err);
+        }
+      }
+    });
+
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-red-500">Erro ao carregar fornecedores.</td></tr>';
+    console.error(err);
+  }
+}
+
 
 				      function addEditFornecedorListeners() {
 				        document.querySelectorAll('.btn-editar-fornecedor').forEach(btn => {
@@ -6844,62 +6790,52 @@ function toggleSenha(id) {
 
 				        // Função para recarregar dados dos selects
 				        async function recarregarDadosSelects() {
-				            console.log("🔄 Recarregando dados dos selects...");
+  console.log("🔄 Recarregando dados dos selects...");
 
-				            return Promise.all([
-				                new Promise((resolve) => {
-				                    google.script.run
-				                        .withSuccessHandler(fornecedores => {
-				                            const selectFornecedor = document.getElementById('fornecedorPedido');
-				                            if (selectFornecedor) {
-				                                selectFornecedor.innerHTML = '<option value="">Selecione um Fornecedor</option>';
-				                                fornecedores.forEach(f => {
-				                                    const option = document.createElement('option');
-				                                    option.value = f.razao || f.codigo;
-				                                    option.textContent = f.razao || f.codigo;
-				                                    selectFornecedor.appendChild(option);
-				                                });
-				                            }
-				                            resolve(fornecedores);
-				                        })
-				                        .withFailureHandler(() => resolve([]))
-				                        .getFornecedoresListv2();
-				                }),
-				                new Promise((resolve) => {
-				                    google.script.run
-				                        .withSuccessHandler(veiculos => {
-				                            const selectVeiculo = document.getElementById('nomeVeiculo');
-				                            if (selectVeiculo) {
-				                                selectVeiculo.innerHTML = '<option value="">Selecione um veículo</option>';
-				                                console.log('📋 Recarregar - Dados brutos dos veículos:', veiculos);
+  try {
+    const [fornecedores, veiculos] = await Promise.all([
+      api.getFornecedoresListv2(),
+      api.getVeiculosList()
+    ]);
 
-				                                veiculos.forEach((v, index) => {
-				                                    // Tentar diferentes propriedades para encontrar o nome
-				                                    let nomeVeiculo = null;
+    const selectFornecedor = document.getElementById('fornecedorPedido');
+    if (selectFornecedor) {
+      selectFornecedor.innerHTML = '<option value="">Selecione um Fornecedor</option>';
+      fornecedores.forEach(f => {
+        const option = document.createElement('option');
+        option.value = f.razao || f.codigo;
+        option.textContent = f.razao || f.codigo;
+        selectFornecedor.appendChild(option);
+      });
+    }
 
-				                                    if (typeof v === 'string' && v.trim() !== '' && v !== 'undefined') {
-				                                        nomeVeiculo = v.trim();
-				                                    } else if (typeof v === 'object' && v !== null) {
-				                                        nomeVeiculo = v.nomeVeiculo || v.nome || v.veiculo || v.descricao;
-				                                    }
+    const selectVeiculo = document.getElementById('nomeVeiculo');
+    if (selectVeiculo) {
+      selectVeiculo.innerHTML = '<option value="">Selecione um veículo</option>';
+      veiculos.forEach((v, index) => {
+        let nomeVeiculo = null;
 
-				                                    if (nomeVeiculo && nomeVeiculo.trim() !== '' && nomeVeiculo !== 'undefined') {
-				                                        const option = document.createElement('option');
-				                                        option.value = nomeVeiculo.trim();
-				                                        option.textContent = nomeVeiculo.trim();
-				                                        selectVeiculo.appendChild(option);
-				                                    } else {
-				                                        console.warn(`⚠️ Recarregar - Veículo inválido no índice ${index}:`, v);
-				                                    }
-				                                });
-				                            }
-				                            resolve(veiculos);
-				                        })
-				                        .withFailureHandler(() => resolve([]))
-				                        .getVeiculosList();
-				                })
-				            ]);
-				        }
+        if (typeof v === 'string' && v.trim() !== '' && v !== 'undefined') {
+          nomeVeiculo = v.trim();
+        } else if (typeof v === 'object' && v !== null) {
+          nomeVeiculo = v.nomeVeiculo || v.nome || v.veiculo || v.descricao;
+        }
+
+        if (nomeVeiculo && nomeVeiculo.trim() !== '' && nomeVeiculo !== 'undefined') {
+          const option = document.createElement('option');
+          option.value = nomeVeiculo.trim();
+          option.textContent = nomeVeiculo.trim();
+          selectVeiculo.appendChild(option);
+        } else {
+          console.warn(`⚠️ Veículo inválido no índice ${index}:`, v);
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Erro ao recarregar dados dos selects:', error);
+  }
+}
+
 
 				        // Função melhorada para preencher campos do formulário
 				        async function preencherCamposFormulario(dados) {
@@ -7274,38 +7210,32 @@ function baixarPedidoHTML(pedidoCompleto, numeroPedido) {
 				        // FUNÇÕES GLOBAIS PARA GERENCIAR RASCUNHOS
 				        // ===============================================
 
-				        function editarRascunho(rascunhoId) {
-				            console.log('✏️ Editando rascunho:', rascunhoId);
+				        async function editarRascunho(rascunhoId) {
+  console.log('✏️ Editando rascunho:', rascunhoId);
+  showToast('Carregando rascunho para edição...', 'info');
 
-				            showToast('Carregando rascunho para edição...', 'info');
+  try {
+    const response = await api.buscarRascunhoPorId(rascunhoId);
+    if (response.status === 'success' && response.rascunho) {
+      localStorage.setItem('editandoRascunho', 'true');
+      localStorage.setItem('rascunhoId', rascunhoId);
+      localStorage.setItem('dadosRascunho', JSON.stringify(response.rascunho));
 
-				            google.script.run
-				                .withSuccessHandler(response => {
-				                    if (response.status === 'success' && response.rascunho) {
-				                        // Salvar dados do rascunho para edição
-				                        localStorage.setItem('editandoRascunho', 'true');
-				                        localStorage.setItem('rascunhoId', rascunhoId);
-				                        localStorage.setItem('dadosRascunho', JSON.stringify(response.rascunho));
+      loadPageContent('Pedido', setupPedidoScreen);
 
-				                        // Ir para tela de pedido
-				                        loadPageContent('Pedido', setupPedidoScreen);
+      setTimeout(() => {
+        preencherFormularioComRascunho(response.rascunho);
+        mostrarIndicadorRascunho(rascunhoId);
+      }, 500);
+    } else {
+      showToast('Erro ao carregar rascunho: ' + response.message, 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao buscar rascunho:', error);
+    showToast('Erro de comunicação: ' + error.message, 'error');
+  }
+}
 
-				                        // Aguardar carregamento da tela e preencher dados
-				                        setTimeout(() => {
-				                            preencherFormularioComRascunho(response.rascunho);
-				                            mostrarIndicadorRascunho(rascunhoId);
-				                        }, 500);
-
-				                    } else {
-				                        showToast('Erro ao carregar rascunho: ' + response.message, 'error');
-				                    }
-				                })
-				                .withFailureHandler(error => {
-				                    console.error('Erro ao buscar rascunho:', error);
-				                    showToast('Erro de comunicação: ' + error.message, 'error');
-				                })
-				                .buscarRascunhoPorId(rascunhoId);
-				        }
 
 				        function finalizarRascunho(rascunhoId) {
 				            console.log('✅ Finalizando rascunho:', rascunhoId);
@@ -7380,28 +7310,26 @@ function baixarPedidoHTML(pedidoCompleto, numeroPedido) {
 				            modalContainer.appendChild(okButton);
 				        }
 
-				        function processarFinalizacaoRascunho(rascunhoId) {
-				            showToast('Finalizando rascunho...', 'info');
+				        async function processarFinalizacaoRascunho(rascunhoId) {
+  showToast('Finalizando rascunho...', 'info');
 
-				            google.script.run
-				                .withSuccessHandler(response => {
-				                    if (response.status === 'success') {
-				                        showToast(`Rascunho finalizado com sucesso! Pedido: ${response.numeroPedido}`, 'success', 'Pedido Criado');
+  try {
+    const response = await api.finalizarRascunho(rascunhoId);
 
-				                        // Recarregar lista de rascunhos
-				                        if (typeof setupGerenciarRascunhosScreen === 'function') {
-				                            setupGerenciarRascunhosScreen();
-				                        }
-				                    } else {
-				                        showToast('Erro ao finalizar rascunho: ' + response.message, 'error');
-				                    }
-				                })
-				                .withFailureHandler(error => {
-				                    console.error('Erro ao finalizar rascunho:', error);
-				                    showToast('Erro de comunicação: ' + error.message, 'error');
-				                })
-				                .finalizarRascunho(rascunhoId);
-				        }
+    if (response.status === 'success') {
+      showToast(`Rascunho finalizado com sucesso! Pedido: ${response.numeroPedido}`, 'success', 'Pedido Criado');
+
+      if (typeof setupGerenciarRascunhosScreen === 'function') {
+        setupGerenciarRascunhosScreen();
+      }
+    } else {
+      showToast('Erro ao finalizar rascunho: ' + response.message, 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao finalizar rascunho:', error);
+    showToast('Erro de comunicação: ' + error.message, 'error');
+  }
+}
 
 				        function excluirRascunho(rascunhoId) {
 				            console.log('🗑️ Excluindo rascunho:', rascunhoId);
@@ -7456,28 +7384,26 @@ function baixarPedidoHTML(pedidoCompleto, numeroPedido) {
 				            });
 				        }
 
-				        function processarExclusaoRascunho(rascunhoId) {
-				            showToast('Excluindo rascunho...', 'info');
+				        async function processarExclusaoRascunho(rascunhoId) {
+  showToast('Excluindo rascunho...', 'info');
 
-				            google.script.run
-				                .withSuccessHandler(response => {
-				                    if (response.status === 'success') {
-				                        showToast('Rascunho excluído com sucesso!', 'success');
+  try {
+    const response = await api.excluirRascunho(rascunhoId);
 
-				                        // Recarregar lista de rascunhos
-				                        if (typeof setupGerenciarRascunhosScreen === 'function') {
-				                            setupGerenciarRascunhosScreen();
-				                        }
-				                    } else {
-				                        showToast('Erro ao excluir rascunho: ' + response.message, 'error');
-				                    }
-				                })
-				                .withFailureHandler(error => {
-				                    console.error('Erro ao excluir rascunho:', error);
-				                    showToast('Erro de comunicação: ' + error.message, 'error');
-				                })
-				                .excluirRascunho(rascunhoId);
-				        }
+    if (response.status === 'success') {
+      showToast('Rascunho excluído com sucesso!', 'success');
+
+      if (typeof setupGerenciarRascunhosScreen === 'function') {
+        setupGerenciarRascunhosScreen();
+      }
+    } else {
+      showToast('Erro ao excluir rascunho: ' + response.message, 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao excluir rascunho:', error);
+    showToast('Erro de comunicação: ' + error.message, 'error');
+  }
+}
 
 				        function preencherFormularioComRascunho(dadosRascunho) {
                     
@@ -7691,90 +7617,84 @@ function baixarPedidoHTML(pedidoCompleto, numeroPedido) {
                 // ===============================================
 				        // FUNÇÃO DO MODAL DE CALCULO ST
 				        // ===============================================
-                function setupModalSt() {                  
-                  const btnAbrir = document.getElementById('btnAbrirModalSt');
-                  const modal = document.getElementById('modalCalculoSt');
-                  const btnCalcular = document.getElementById('btnCalcularSt');
-                  const inputValor = document.getElementById('valorProdutoSt');
-                  const selectEstado = document.getElementById('selectEstadoSt');
-                  const divResultado = document.getElementById('resultadoSt');
+                async function setupModalSt() {                  
+  const btnAbrir = document.getElementById('btnAbrirModalSt');
+  const modal = document.getElementById('modalCalculoSt');
+  const btnCalcular = document.getElementById('btnCalcularSt');
+  const inputValor = document.getElementById('valorProdutoSt');
+  const selectEstado = document.getElementById('selectEstadoSt');
+  const divResultado = document.getElementById('resultadoSt');
 
-                  const closeModal = () => {
-                      if (modal) {
-                          modal.classList.add('modal-hidden');
-                      }
-                  };
+  const closeModal = () => {
+      if (modal) {
+          modal.classList.add('modal-hidden');
+      }
+  };
 
-                  const closeModalBtn = modal.querySelector('.modal-close-btn');
-                  const modalOverlay = modal.querySelector('.modal-overlay');
+  const closeModalBtn = modal.querySelector('.modal-close-btn');
+  const modalOverlay = modal.querySelector('.modal-overlay');
 
-                  // Lógica para popular o dropdown de estados (exemplo)
-                  const estados = ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"];
-                  const optionsHtml = estados.map(uf => `<option value="${uf}">${uf}</option>`).join('');
-                  selectEstado.innerHTML = `<option value="">Selecione...</option>${optionsHtml}`;
+  const estados = ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"];
+  const optionsHtml = estados.map(uf => `<option value="${uf}">${uf}</option>`).join('');
+  selectEstado.innerHTML = `<option value="">Selecione...</option>${optionsHtml}`;
 
-                  // Abrir o modal
-                  if (btnAbrir) {
-                  btnAbrir.addEventListener('click', (event) => {
-                    event.preventDefault(); 
-                    console.log('🟢 Botão de abrir modal clicado');
-                      // Limpa campos antigos antes de abrir
-                      inputValor.value = '';
-                      selectEstado.value = '';
-                      divResultado.innerHTML = '';
-                       if (modal) {
-                              modal.classList.remove('modal-hidden');
-                          }
-                      });
-                  }
+  if (btnAbrir) {
+    btnAbrir.addEventListener('click', (event) => {
+      event.preventDefault();
+      console.log('🟢 Botão de abrir modal clicado');
+      inputValor.value = '';
+      selectEstado.value = '';
+      divResultado.innerHTML = '';
+      if (modal) {
+        modal.classList.remove('modal-hidden');
+      }
+    });
+  }
 
-                  if (closeModalBtn) {
-                      closeModalBtn.addEventListener('click', closeModal);
-                  }
-                  if (modalOverlay) {
-                      modalOverlay.addEventListener('click', closeModal);
-                  }
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', closeModal);
+  }
+  if (modalOverlay) {
+    modalOverlay.addEventListener('click', closeModal);
+  }
 
-                  // Lógica do cálculo
-                   if (btnCalcular) {
-                  btnCalcular.addEventListener('click', () => {
-                      const valor = parseFloat(inputValor.value);
-                      const estado = selectEstado.value;
+  if (btnCalcular) {
+    btnCalcular.addEventListener('click', async () => {
+      const valor = parseFloat(inputValor.value);
+      const estado = selectEstado.value;
 
-                      if (isNaN(valor) || valor <= 0 || !estado) {
-                          divResultado.innerHTML = `<p class="text-red-500 text-sm">Por favor, preencha todos os campos corretamente.</p>`;
-                          return;
-                      }
+      if (isNaN(valor) || valor <= 0 || !estado) {
+        divResultado.innerHTML = `<p class="text-red-500 text-sm">Por favor, preencha todos os campos corretamente.</p>`;
+        return;
+      }
 
-                      // Mostra um spinner de carregamento
-                      divResultado.innerHTML = `<div class="flex items-center space-x-2 text-gray-500 text-sm">
-                        <div class="spinner-small"></div>
-                        <span>Calculando...</span>
-                      </div>`;
-                      btnCalcular.disabled = true; // Desabilita o botão para evitar cliques duplos
+      divResultado.innerHTML = `<div class="flex items-center space-x-2 text-gray-500 text-sm">
+        <div class="spinner-small"></div>
+        <span>Calculando...</span>
+        </div>`;
+      btnCalcular.disabled = true;
 
-                      google.script.run
-                          .withSuccessHandler(response => {
-                              btnCalcular.disabled = false; // Reabilita o botão
-                              if (response.status === 'success') {
-                                  const valorFormatado = response.valorCalculado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                                  const aliquotaParaExibir = Math.round(response.aliquotaUsada * 100);
-                                  divResultado.innerHTML = `
-                                      <p class="text-sm text-gray-600">Alíquota para ${estado}: <span class="font-bold">${aliquotaParaExibir}%</span></p>
-                                      <p class="text-lg font-bold text-blue-600">Valor do Imposto: ${valorFormatado}</p>
-                                  `;
-                              } else {
-                                  divResultado.innerHTML = `<p class="text-red-500 text-sm">${response.message}</p>`;
-                              }
-                          })
-                          .withFailureHandler(err => {
-                              btnCalcular.disabled = false;
-                              divResultado.innerHTML = `<p class="text-red-500 text-sm">Erro de comunicação com o servidor.</p>`;
-                          })
-                          .calcularStModal({valor: valor, estado: estado});
-                  });
-              }
-            }
+      try {
+        const response = await api.calcularStModal({ valor, estado });
+        btnCalcular.disabled = false;
+
+        if (response.status === 'success') {
+          const valorFormatado = response.valorCalculado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          const aliquotaParaExibir = Math.round(response.aliquotaUsada * 100);
+          divResultado.innerHTML = `
+            <p class="text-sm text-gray-600">Alíquota para ${estado}: <span class="font-bold">${aliquotaParaExibir}%</span></p>
+            <p class="text-lg font-bold text-blue-600">Valor do Imposto: ${valorFormatado}</p>
+          `;
+        } else {
+          divResultado.innerHTML = `<p class="text-red-500 text-sm">${response.message}</p>`;
+        }
+      } catch (err) {
+        btnCalcular.disabled = false;
+        divResultado.innerHTML = `<p class="text-red-500 text-sm">Erro de comunicação com o servidor.</p>`;
+      }
+    });
+  }
+}
 
                 function aplicarUppercaseNosCampos() {
                   document.querySelectorAll('input.auto-uppercase').forEach(input => {
