@@ -1,0 +1,257 @@
+		<style>
+			@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+			/* Estilos globais para a aplicação */
+			body {
+			    background-color: #f1f5f9; /* Um cinza claro e suave */
+			    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			}
+
+			/* Esconde todas as "telas" por defeito */
+			.screen {
+			    display: none;
+			}
+
+			/* Mostra apenas a tela ativa */
+			.screen.active {
+			    display: block;
+			}
+
+			/* Animação de carregamento (spinner) */
+			@keyframes spin {
+			    to { transform: rotate(360deg); }
+			}
+			.spinner {
+			    border: 4px solid rgba(0, 0, 0, 0.1);
+			    border-left-color: #3b82f6; /* Azul */
+			    border-radius: 50%;
+			    width: 40px;
+			    height: 40px;
+			    animation: spin 1s linear infinite;
+			}
+
+			.modal-backdrop {
+			    display: flex;
+			}
+			.modal-container {
+			    transition: opacity 0.3s ease, visibility 0.3s ease;
+			}
+
+			/* Sistema de Toasts - Notificações modernas */
+			.toast-container {
+			    position: fixed;
+			    top: 20px;
+			    right: 20px;
+			    z-index: 9999;
+			    pointer-events: none;
+			    display: flex;
+			    flex-direction: column;
+			    gap: 12px;
+			    max-width: 400px;
+			}
+
+			.toast {
+			    pointer-events: auto;
+			    padding: 16px 20px;
+			    border-radius: 12px;
+			    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 6px rgba(0, 0, 0, 0.05);
+			    backdrop-filter: blur(8px);
+			    transform: translateX(100%);
+			    opacity: 0;
+			    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+			    position: relative;
+			    overflow: hidden;
+			    border-left: 4px solid;
+			    min-width: 320px;
+			    max-width: 400px;
+			}
+
+			.toast.show {
+			    transform: translateX(0);
+			    opacity: 1;
+			}
+
+			.toast.hide {
+			    transform: translateX(100%);
+			    opacity: 0;
+			}
+
+			.toast-success {
+			    background: linear-gradient(135deg, rgba(34, 197, 94, 0.95) 0%, rgba(21, 128, 61, 0.95) 100%);
+			    border-left-color: #10b981;
+			    color: white;
+			}
+
+			.toast-error {
+			    background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(185, 28, 28, 0.95) 100%);
+			    border-left-color: #ef4444;
+			    color: white;
+			}
+
+			.toast-warning {
+			    background: linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(180, 83, 9, 0.95) 100%);
+			    border-left-color: #f59e0b;
+			    color: white;
+			}
+
+			.toast-info {
+			    background: linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(29, 78, 216, 0.95) 100%);
+			    border-left-color: #3b82f6;
+			    color: white;
+			}
+
+			.toast-header {
+			    display: flex;
+			    align-items: center;
+			    justify-content: space-between;
+			    margin-bottom: 8px;
+			}
+
+			.toast-title {
+			    font-weight: 600;
+			    font-size: 14px;
+			    display: flex;
+			    align-items: center;
+			    gap: 8px;
+			}
+
+			.toast-close {
+			    background: rgba(255, 255, 255, 0.2);
+			    border: none;
+			    color: white;
+			    border-radius: 6px;
+			    width: 24px;
+			    height: 24px;
+			    display: flex;
+			    align-items: center;
+			    justify-content: center;
+			    cursor: pointer;
+			    transition: all 0.2s ease;
+			    font-size: 12px;
+			}
+
+			.toast-close:hover {
+			    background: rgba(255, 255, 255, 0.3);
+			    transform: scale(1.1);
+			}
+
+			.toast-message {
+			    font-size: 13px;
+			    line-height: 1.5;
+			    opacity: 0.95;
+			}
+
+			.toast-progress {
+			    position: absolute;
+			    bottom: 0;
+			    left: 0;
+			    height: 3px;
+			    background: rgba(255, 255, 255, 0.4);
+			    border-radius: 0 0 12px 12px;
+			    transform-origin: left;
+			    animation: toast-progress 5s linear forwards;
+			}
+
+			@keyframes toast-progress {
+			    from { transform: scaleX(1); }
+			    to { transform: scaleX(0); }
+			}
+
+			.toast-icon {
+			    font-size: 16px;
+			    margin-right: 2px;
+			}
+			.modal-panel {
+			    transition: transform 0.3s ease, opacity 0.3s ease;
+			}
+			.modal-hidden {
+			    visibility: hidden;
+			    opacity: 0;
+			}
+			.modal-hidden .modal-panel {
+			    transform: scale(0.9);
+			    opacity: 0;
+			}
+			.tag-padrao {
+			    background-color: #e0f2fe;
+			    color: #0c4a6e;
+			    font-weight: 600;
+			    border: 1px solid #bae6fd;
+			}
+			.status-ativo { background-color: #dcfce7; color: #166534; }
+			.status-inativo { background-color: #fee2e2; color: #991b1b; }
+			.tag-padrao {
+			    background-color: #e0f2fe;
+			    color: #0c4a6e;
+			    font-weight: 600;
+			    border: 1px solid #bae6fd;
+			}
+			.status-ativo { background-color: #dcfce7; color: #166534; }
+			.status-inativo { background-color: #fee2e2; color: #991b1b; }
+
+			/* Estilos para a nova tela de busca de pedidos */
+			.canceled-row {
+			    background-color: #fee2e2; /* Red-100 */
+			    color: #b91c1c; /* Red-700 */
+			}
+			.canceled-row:hover {
+			    background-color: #fecaca; /* Red-200 */
+			}
+
+			/* Spinner de loading */
+			.spinner {
+			    width: 24px;
+			    height: 24px;
+			    border: 3px solid #f3f4f6;
+			    border-top: 3px solid #3b82f6;
+			    border-radius: 50%;
+			    animation: spin 1s linear infinite;
+			}
+
+			@keyframes spin {
+			    0% { transform: rotate(0deg); }
+			    100% { transform: rotate(360deg); }
+			}
+
+			/* Estilo para a marca d'água */
+			.print-watermark {
+			    position: relative;
+			}
+			.print-watermark::after {
+			    content: 'CANCELADO';
+			    position: absolute;
+			    top: 50%;
+			    left: 50%;
+			    transform: translate(-50%, -50%) rotate(-45deg);
+			    font-size: 8rem;
+			    color: rgba(255, 0, 0, 0.15);
+			    font-weight: bold;
+			    z-index: 10;
+			    pointer-events: none;
+			}
+
+      /* Posicionamento relativo para o container do input */
+      .autocomplete-container {
+          position: relative;
+      }
+
+      /* Estilo para cada item na lista de resultados */
+      .autocomplete-item {
+          padding: 10px 12px;
+          cursor: pointer;
+          border-bottom: 1px solid #f0f0f0;
+      }
+
+      /* Efeito hover para os itens */
+      .autocomplete-item:hover {
+          background-color: #f2f7fc; /* Azul claro, combinando com seu tema */
+      }
+
+      /* O último item não precisa de borda */
+      .autocomplete-item:last-child {
+          border-bottom: none;
+      }
+
+      .auto-uppercase {
+        text-transform: uppercase;
+      }
+		</style>
