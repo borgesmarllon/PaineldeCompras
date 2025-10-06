@@ -26,17 +26,25 @@ function doGet() {
   }
 }
 
-/**function doGet() {
-  return HtmlService.createHtmlOutput('<h1>✅ Seu Web App está funcionando!</h1>');
-}*/
+/**
+ * Função para incluir arquivos HTML parciais
+ */
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+/**
+ * Função auxiliar para ler o conteúdo de um arquivo HTML e retorná-lo como string.
+ * @param {string} filename O nome do arquivo HTML (sem a extensão .html).
+ * @returns {string} O conteúdo do arquivo.
+ */
+function getHtmlContent(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
 
 function incluir(pagina) {
   return HtmlService.createTemplateFromFile(pagina).evaluate().getContent();
 }
-
-
-    // Crie esta função auxiliar no seu backend
-    
 
 /**
      * ===============================================
