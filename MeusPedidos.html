@@ -1,0 +1,37 @@
+<div class="max-w-7xl mx-auto">
+				                        <div class="flex justify-between items-center mb-6">
+				                            <div>
+				                                <h2 class="text-2xl font-bold text-gray-800">Meus Pedidos Aprovados</h2>
+				                                <p class="text-gray-500">Aqui está o histórico de todos os seus pedidos que já foram aprovados.</p>
+				                            </div>
+				                            <button onclick="loadPageContent('Menu', setupMenuScreen)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+				                                &larr; Voltar ao Menu
+				                            </button>
+				                        </div>
+
+				                        <div class="bg-white p-6 rounded-xl shadow-lg">
+				                            <div class="overflow-x-auto">
+				                                <table class="w-full text-sm text-left text-gray-500">
+				                                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+				                                        <tr>
+				                                            <th scope="col" class="px-6 py-3">Nº Pedido</th>
+				                                            <th scope="col" class="px-6 py-3">Data</th>
+				                                            <th scope="col" class="px-6 py-3">Fornecedor</th>
+				                                            <th scope="col" class="px-6 py-3">Empresa</th>
+				                                            <th scope="col" class="px-6 py-3 text-right">Valor Total</th>
+				                                            <th scope="col" class="px-6 py-3 text-center">Ações</th>
+				                                        </tr>
+				                                    </thead>
+				                                    <tbody id="tabela-meus-pedidos">
+				                                        <!-- O conteúdo da tabela será carregado aqui -->
+				                                        <tr>
+				                                            <td colspan="6" class="text-center p-8">
+				                                                <div class="spinner mx-auto"></div>
+				                                                <p class="mt-2 text-gray-500">Carregando seus pedidos...</p>
+				                                            </td>
+				                                        </tr>
+				                                    </tbody>
+				                                </table>
+				                            </div>
+				                        </div>
+				                    </div>`
