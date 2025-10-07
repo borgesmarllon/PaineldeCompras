@@ -9,10 +9,25 @@
      */
     _call(functionName, ...args) {
       return new Promise((resolve, reject) => {
-        google.script.run
-          .withSuccessHandler(resolve)
-          .withFailureHandler(reject)
-          [functionName](...args);
+        try {
+          //console.log(`Chamando função: ${functionName} com argumentos:`, args);
+          
+          // Verifica se a função existe antes de tentar chamá-la
+          if (typeof google.script.run[functionName] !== 'function') {
+            throw new Error(`Função '${functionName}' não encontrada no servidor`);
+          }
+          
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler((error) => {
+              console.error(`Erro ao chamar ${functionName}:`, error);
+              reject(error);
+            })
+            [functionName](...args);
+        } catch (error) {
+          console.error(`Erro interno ao chamar ${functionName}:`, error);
+          reject(error);
+        }
       });
     },
 
@@ -29,7 +44,6 @@
       return this._call('criarUsuario', nome, senha);
     },
     alterarSenha(senhaAtual, novaSenha) {
-      // Assumindo que a função no backend pode identificar o usuário logado
       return this._call('alterarSenhaUsuario', senhaAtual, novaSenha);
     },
     
@@ -40,83 +54,207 @@
       return this._call('salvarPedido', dadosPedido);
     },
     editarPedido(dadosEdicao) {
-        return this._call('editarPedido', dadosEdicao);
+      return this._call('editarPedido', dadosEdicao);
     },
     buscarPedidos(params) {
-        return this._call('buscarPedidosv2', params);
+      return this._call('buscarPedidosv2', params);
     },
     cancelarPedido(numeroPedido, empresaId) {
-        // A função no backend precisa receber o usuário/data do cancelamento
-        return this._call('cancelarPedidoBackend', numeroPedido, empresaId);
+      return this._call('cancelarPedidoBackend', numeroPedido, empresaId);
     },
     getPedidoCompleto(numeroPedido) {
-        return this._call('getDadosCompletosDoPedido', numeroPedido);
+      return this._call('getDadosCompletosDoPedido', numeroPedido);
     },
     getProximoNumeroPedido(empresaId) {
-        return this._call('getProximoNumeroPedido', empresaId);
+      return this._call('getProximoNumeroPedido', empresaId);
     },
     getUltimosPedidosUsuario(params) {
-        return this._call('buscarUltimosPedidosDoUsuario', params);
+      return this._call('buscarUltimosPedidosDoUsuario', params);
+    },
+    getMeusPedidosAprovados() {
+      return this._call('getMeusPedidosAprovados');
+    },
+    getMeusPedidosRejeitados() {
+      return this._call('getMeusPedidosRejeitados');
+    },
+    getMinhasAprovacoesRecentes() {
+      return this._call('getMinhasAprovacoesRecentes');
+    },
+    getDadosPedidoParaImpressaoAdmin(numeroPedido, empresaId) {
+      return this._call('getDadosPedidoParaImpressaoAdmin', numeroPedido, empresaId);
     },
 
     // ===============================================
-    // DADOS GERAIS (Fornecedores, Veículos, etc.)
+    // RASCUNHOS
+    // ===============================================
+    salvarRascunho(dadosRascunho) {
+      return this._call('salvarRascunho', dadosRascunho);
+    },
+    reenviarPedidoCorrigido(dadosAtualizados) {
+      return this._call('reenviarPedidoCorrigido', dadosAtualizados);
+    },
+
+    // ===============================================
+    // PRODUTOS
+    // ===============================================
+    buscarProdutos(searchTerm) {
+      return this._call('buscarProdutos', searchTerm);
+    },
+    verificarOuCadastrarProduto(dadosProduto) {
+      return this._call('verificarOuCadastrarProduto', dadosProduto);
+    },
+    preCarregarCacheProdutos() {
+      return this._call('preCarregarCacheProdutos');
+    },
+    verificarStatusCacheProdutos() {
+      return this._call('verificarStatusCacheProdutos');
+    },
+
+    // ===============================================
+    // IMPOSTOS
+    // ===============================================
+    calcularImposto(itensParaCalculo, dadosGeraisParaCalculo) {
+      return this._call('calcularIcmsStTodos', itensParaCalculo, dadosGeraisParaCalculo);
+    },
+    calcularStModal(params) {
+      return this._call('calcularStModal', params);
+    },
+
+    // ===============================================
+    // FORNECEDORES
     // ===============================================
     getFornecedores() {
       return this._call('getFornecedoresListv2');
     },
+    obterFornecedorPorCodigo(codigoFornecedor) {
+      return this._call('obterFornecedorPorCodigo', codigoFornecedor);
+    },
+    getProximoCodigoFornecedor() {
+      return this._call('getProximoCodigoFornecedor');
+    },
+    getCondicoesPagamento() {
+      return this._call('getCondicoesPagamento');
+    },
+    getFormasPagamento() {
+      return this._call('getFormasPagamento');
+    },
+    consultarCnpj(cnpj) {
+      return this._call('consultarCnpj_V2', cnpj);
+    },
+    salvarFornecedor(dadosFornecedor) {
+      return this._call('adicionarOuAtualizarFornecedorv2', dadosFornecedor);
+    },
+
+    // ===============================================
+    // VEÍCULOS
+    // ===============================================
     getVeiculos() {
       return this._call('getVeiculosList');
     },
+    adicionarVeiculo(nome) {
+      return this._call('adicionarNovoVeiculo', nome);
+    },
+
+    // ===============================================
+    // ESTADOS E CONFIGURAÇÕES
+    // ===============================================
     getEstados() {
       return this._call('getEstadosv2');
     },
-    adicionarVeiculo(nome) {
-        return this._call('adicionarNovoVeiculo', nome);
-    },
-    consultarCnpj(cnpj) {
-        return this._call('consultarCnpj_V2', cnpj);
-    },
-    salvarFornecedor(dadosFornecedor) {
-        return this._call('adicionarOuAtualizarFornecedorv2', dadosFornecedor);
+
+    // ===============================================
+    // EMPRESAS
+    // ===============================================
+    getEmpresas() {
+      return this._call('listarEmpresas');
     },
 
     // ===============================================
     // DASHBOARD E RELATÓRIOS
     // ===============================================
     getDashboardData(filters) {
-        return this._call('getDashboardData', filters);
+      return this._call('getDashboardData', filters);
+    },
+    getDashboardAdminData() {
+      return this._call('getDashboardAdminData');
+    },
+    
+
+    gerarAnaliseABC(filtrosParaEnviar) {
+      return this._call('gerarAnaliseABC_comIA', filtrosParaEnviar);
+    },
+    gerarAnaliseEstrategica(filtrosParaEnviar) {
+      return this._call('gerarAnaliseEstrategicaComIA', filtrosParaEnviar);
     },
     gerarRelatorioPdf(params) {
-        return this._call('generatePdfReport', params);
+      return this._call('generatePdfReport', params);
     },
     gerarRelatorioXls(params) {
-        return this._call('generateXlsReport', params);
+      return this._call('generateXlsReport', params);
     },
 
     // ===============================================
-    // ADMIN (Gerenciamento de Usuários, etc.)
+    // AVISOS
+    // ===============================================
+    getAvisosAtivos() {
+      return this._call('getAvisosAtivos');
+    },
+    getTodosAvisos() {
+      return this._call('getTodosAvisos');
+    },
+    getAvisoByRow(rowNumber) {
+      return this._call('getAvisoByRow', rowNumber);
+    },
+    salvarAviso(data) {
+      return this._call('salvarAviso', data);
+    },
+    alternarStatusAviso(rowNumber, novoStatus) {
+      return this._call('alternarStatusAviso', rowNumber, novoStatus);
+    },
+
+    // ===============================================
+    // ADMIN (Gerenciamento de Usuários)
     // ===============================================
     getUsuarios() {
-        return this._call('listarUsuariosCompleto');
+      return this._call('listarUsuariosCompleto');
+    },
+    getAuditData(userId) {
+      return this._call('obterDadosAuditoria', userId);
     },
     alternarStatusUsuario(userId) {
-        return this._call('alternarStatusUsuario', userId);
+      return this._call('alternarStatusUsuario', userId);
     },
     salvarPermissoesUsuario(userId, empresas, padrao) {
-        return this._call('salvarPermissoesEmpresaUsuario', userId, empresas, padrao);
+      return this._call('salvarPermissoesEmpresaUsuario', userId, empresas, padrao);
+    },
+    atualizarPerfilUsuario(dadosParaAtualizar) {
+      return this._call('atualizarFuncaoEPerfilUsuario', dadosParaAtualizar);
     },
     adminRedefinirSenha(username, novaSenha) {
-        return this._call('adminRedefinirSenha', username, novaSenha);
+      return this._call('adminRedefinirSenha', username, novaSenha);
     },
+
+    // ===============================================
+    // APROVAÇÕES
+    // ===============================================
     getPedidosPendentesAprovacao() {
-        return this._call('getPendingApprovals');
+      return this._call('getPendingApprovals');
     },
     atualizarStatusPedido(numeroPedido, empresaId, novoStatus, motivo) {
-        // A função no backend precisa receber o usuário que aprovou/rejeitou
-        return this._call('atualizarStatusPedido', numeroPedido, novoStatus, motivo, null, empresaId);
-    }
+      return this._call('atualizarStatusPedido', numeroPedido, novoStatus, motivo, null, empresaId);
+    },
 
-    // Adicione aqui qualquer outra função do Code.gs que você precise chamar
+    // ===============================================
+    // FUNÇÕES DE DEBUG
+    // ===============================================
+    listarFuncoesDisponiveis() {
+      return this._call('listarFuncoesDisponiveis');
+    },
+    testarFuncao(nomeFuncao) {
+      return this._call('testarFuncao', nomeFuncao);
+    },
+    diagnosticoSistema() {
+      return this._call('diagnosticoSistema');
+    }
   };
 </script>
