@@ -1090,6 +1090,50 @@ function getProductsRankedByValue(pedidosAprovados) {
     return [];
   }
 }
+
+/**
+ * Realiza os cálculos da Curva ABC localmente para garantir a precisão analítica.
+ * @param {Array<Object>} rankedProducts - A lista completa de produtos, ordenada por valor.
+ * @returns {Object} Um objeto contendo o resumo da análise e os dados para o gráfico.
+ */
+function performFullABCAnalysis(rankedProducts) {
+  const totalValue = rankedProducts.reduce((sum, p) => sum + p.valor_total, 0);
+  let cumulativeValue = 0;
+  const analysisSummary = {
+    classA: { count: 0, value: 0 },
+    classB: { count: 0, value: 0 },
+    classC: { count: 0, value: 0 },
+  };
+
+  const productsWithAnalysis = rankedProducts.map(product => {
+    cumulativeValue += product.valor_total;
+    const cumulativePercent = (cumulativeValue / totalValue) * 100;
+    let abcClass = '';
+
+    if (cumulativePercent <= 70) {
+      abcClass = 'A';
+      analysisSummary.classA.count++;
+      analysisSummary.classA.value += product.valor_total;
+    } else if (cumulativePercent <= 95) { // Usando 70-95 para B, um critério comum
+      abcClass = 'B';
+      analysisSummary.classB.count++;
+      analysisSummary.classB.value += product.valor_total;
+    } else {
+      abcClass = 'C';
+      analysisSummary.classC.count++;
+      analysisSummary.classC.value += product.valor_total;
+    }
+    return { ...product, cumulativePercent, abcClass };
+  });
+
+  return {
+    summary: analysisSummary,
+    totalItems: rankedProducts.length,
+    totalValue: totalValue,
+    chartData: productsWithAnalysis.slice(0, 15) // Apenas os 15 primeiros para o gráfico
+  };
+}
+
 /**
  * Orquestra a criação da análise de Curva ABC.
  * 1. Busca os dados ranqueados dos produtos.
@@ -1108,40 +1152,35 @@ function gerarAnaliseABC_comIA(filters) {
       return JSON.stringify({ insights: {ponto1: "Nenhum dado de produto para analisar."}, chartData: {} });
     }
 
+    const analysisResult = performFullABCAnalysis(produtosRanqueados);
+    Logger.log("Análise ABC completa calculada em Apps Script. Resumo: " + JSON.stringify(analysisResult.summary));
+
     const promptCurvaABC = `
       **PERSONA:** Você é um analista de dados especialista em gestão de inventário e supply chain.
 
-      **TAREFA:** A partir da lista dos top 15 produtos ranqueados por valor total de compra, gere uma análise completa de Curva ABC. Sua saída deve ser **exclusivamente um objeto JSON bem-formado**, sem nenhum texto ou explicação adicional antes ou depois. O objeto JSON deve conter duas chaves principais: "insights" e "chartData".
+      **TAREFA:** A partir do RESUMO de uma análise de Curva ABC que já foi calculada, sua tarefa é gerar insights estratégicos e os dados para um gráfico. A análise completa incluiu ${analysisResult.totalItems} produtos. Sua saída deve ser **exclusivamente um objeto JSON bem-formado**.
 
-      1. **Na chave "insights"**: Forneça um objeto com três chaves ("ponto1", "ponto2", "ponto3"), cada uma contendo uma frase concreta e clara sobre a análise da Curva ABC considerando somente os top 15 produtos. Utilize o critério padrão ABC, onde:
-        - Classe A: itens que juntos representam aproximadamente 70% do valor acumulado.
-        - Classe B: próximos 20%.
-        - Classe C: últimos 10%.
+      **RESUMO DA ANÁLISE COMPLETA:**
+      - Itens Classe A: ${analysisResult.summary.classA.count} (Representam R$ ${analysisResult.summary.classA.value.toFixed(2).replace('.', ',')})
+      - Itens Classe B: ${analysisResult.summary.classB.count} (Representam R$ ${analysisResult.summary.classB.value.toFixed(2).replace('.', ',')})
+      - Itens Classe C: ${analysisResult.summary.classC.count} (Representam R$ ${analysisResult.summary.classC.value.toFixed(2).replace('.', ',')})
+      - Valor Total do Inventário Analisado: R$ ${analysisResult.totalValue.toFixed(2).replace('.', ',')}
 
-        As frases devem incluir, por exemplo:
-        - Quantidade de itens em cada classe.
-        - Percentual do valor total representado pela Classe A.
-        - Relevância da classe C em termos de número de itens vs. valor.
+      **DADOS DE ENTRADA PARA O GRÁFICO (TOP 15 PRODUTOS):**
+      ${JSON.stringify(analysisResult.chartData)}
 
-        Os valores monetários devem estar formatados no padrão brasileiro PT-BR (exemplo: "1.234,56").
+      **SUA SAÍDA (OBJETO JSON):**
+      1. **Na chave "insights"**: Forneça um objeto com três chaves ("ponto1", "ponto2", "ponto3"). Cada chave deve conter uma frase de insight gerencial baseada no RESUMO. Por exemplo:
+         - "Os ${analysisResult.summary.classA.count} produtos da Classe A, embora sejam poucos, concentram a maior parte do valor e exigem controle de estoque rigoroso."
+         - "A Classe C possui ${analysisResult.summary.classC.count} itens, indicando uma longa cauda de produtos de baixo valor que podem ter políticas de estoque mais flexíveis."
+         - Foque na proporção entre quantidade de itens e valor financeiro por classe.
 
-      2. **Na chave "chartData"**: Gere os dados para um gráfico de Pareto no formato do Chart.js, considerando os mesmos 15 produtos:
-        - "labels": array com as descrições dos top 15 produtos.
-        - "datasets": array com dois objetos:
-            - Primeiro objeto (barras): chave "data" contendo valores monetários puros (números) de compra de cada produto.
-            - Segundo objeto (linha): chave "data" contendo o percentual acumulado para cada produto (valores entre 0 e 100).
-
-      **DADOS DE ENTRADA:**
-      - Lista de Produtos Ranqueados: ${JSON.stringify(produtosRanqueados)}
-
-      **OBSERVAÇÕES IMPORTANTES:**
-      - Certifique-se de que os produtos estão ordenados em ordem decrescente de valor total de compra antes de gerar a análise.
-      - Caso a lista contenha menos de 15 produtos, aplique a análise com os itens disponíveis.
-      - Os valores monetários devem estar formatados no padrão brasileiro PT-BR (exemplo: "1.234,56").
-      - Os percentuais acumulados devem ser arredondados para uma casa decimal.
-
-      **SAÍDA (APENAS O OBJETO JSON):**
-  `;
+      2. **Na chave "chartData"**: Gere os dados para um gráfico de Pareto no formato do Chart.js, usando **apenas os dados do TOP 15 produtos fornecidos**.
+         - "labels": array com as descrições dos produtos.
+         - "datasets": array com dois objetos:
+             - Primeiro objeto (barras): "data" com os valores monetários puros de cada produto.
+             - Segundo objeto (linha): "data" com o percentual acumulado para cada produto (arredondado para uma casa decimal).
+    `;
     
     Logger.log("Chamando a IA para gerar a análise...");
     const respostaDaIA = callGeminiAPI(promptCurvaABC);
@@ -1241,12 +1280,30 @@ function _TESTE_filtragemDaAnaliseABC() {
 function callGeminiAPI(prompt) {
   const apiKey = _getGeminiApiKey();
   // Usando um modelo poderoso e atualizado
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+  const url = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" + apiKey;
 
   const payload = {
     "contents": [{
       "parts": [{ "text": prompt }]
     }],
+   "safetySettings": [
+      {
+        "category": "HARM_CATEGORY_HARASSMENT",
+        "threshold": "BLOCK_NONE"
+      },
+      {
+        "category": "HARM_CATEGORY_HATE_SPEECH",
+        "threshold": "BLOCK_NONE"
+      },
+      {
+        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+        "threshold": "BLOCK_NONE"
+      },
+      {
+        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+        "threshold": "BLOCK_NONE"
+      }
+    ]
   };
 
   const options = {
