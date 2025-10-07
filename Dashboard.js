@@ -1241,7 +1241,7 @@ function _TESTE_filtragemDaAnaliseABC() {
 function callGeminiAPI(prompt) {
   const apiKey = _getGeminiApiKey();
   // Usando um modelo poderoso e atualizado
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + apiKey;
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
 
   const payload = {
     "contents": [{
